@@ -1,6 +1,6 @@
 ﻿'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Database, 
   Search, 
@@ -33,43 +33,10 @@ export function RagObservatory() {
   const [convertStatus, setConvertStatus] = useState<string | null>(null);
 
   // Search State
-  const [searchQuery, setSearchQuery] = useState('MRPL furnace F-101 emergency shutdown procedure');
+  const [searchQuery, setSearchQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
-  const [searchResults, setSearchResults] = useState([
-    {
-      id: 'sop-furnace-4.1.2',
-      collection: 'mrpl_operational_sops',
-      document: 'SOP-MRPL-FURNACE-01.pdf',
-      clause: 'Clause 4.1.2',
-      similarityScore: 0.942,
-      content: 'In the event of flameout or fuel gas pressure drop below 1.2 kg/cm2, initiate immediate emergency trip of ESDV-101. Verify purge steam flow exceeds 12 MT/hr before relight attempt.',
-      tokens: 42,
-    },
-    {
-      id: 'sop-furnace-4.2.1',
-      collection: 'mrpl_operational_sops',
-      document: 'SOP-MRPL-FURNACE-01.pdf',
-      clause: 'Clause 4.2.1',
-      similarityScore: 0.887,
-      content: 'Maintain coil skin temperatures below 680 deg C during normal firing. If temperature excursion exceeds 720 deg C for >15 minutes, reduce furnace firing by 20% immediately.',
-      tokens: 38,
-    },
-    {
-      id: 'policy-safety-09',
-      collection: 'ongc_safety_policies',
-      document: '02_Health_Safety_Policy.pdf',
-      clause: 'Section 3.4',
-      similarityScore: 0.812,
-      content: 'Refinery personnel must report all furnace pressure and temperature alarms to the Shift In-charge within 10 minutes of occurrence and log into the statutory compliance ledger.',
-      tokens: 36,
-    }
-  ]);
-
-  const collections = [
-    { name: 'sop_mops', docs: 8, chunks: 1240, desc: 'Refinery SOPs, Standard Operating Procedures, and MOPs.' },
-    { name: 'security_policies', docs: 16, chunks: 650, desc: 'Corporate security policies, safety manuals, and compliance guidelines.' },
-    { name: 'mrpl_engineering', docs: 5, chunks: 290, desc: 'MRPL technical specifications, equipment standards, and blueprints.' },
-  ];
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [hasSearched, setHasSearched] = useState(false);
 
   const handleIngestFile = async () => {
     if (!uploadFile) return;
@@ -130,6 +97,26 @@ export function RagObservatory() {
       setConvertStatus(`Error converting: ${err.message}`);
     } finally {
       setIsConverting(false);
+    }
+  };
+
+  const handleSearch = async () => {
+    if (!searchQuery.trim()) return;
+    setIsSearching(true);
+    setHasSearched(true);
+
+    try {
+      const res = await fetch(`http://localhost:8000/api/rag-admin/search?q=${encodeURIComponent(searchQuery)}`);
+      const data = await res.json();
+      if (data.success) {
+        setSearchResults(data.results);
+      } else {
+        setSearchResults([]);
+      }
+    } catch (err) {
+      setSearchResults([]);
+    } finally {
+      setIsSearching(false);
     }
   };
 
@@ -196,17 +183,17 @@ export function RagObservatory() {
 
             {ingestStatus && (
               <div className={`p-3 rounded border text-xs font-mono space-y-1 ${
-                ingestStatus.success 
+                ingestStatus.status === 'success' || ingestStatus.success
                   ? 'bg-[#111111] text-[#00e599] border-[#262626]' 
                   : 'bg-[#111111] text-[#e5484d] border-[#262626]'
               }`}>
                 <div className="font-semibold flex items-center gap-1.5">
-                  {ingestStatus.success ? <CheckCircle2 className="w-3.5 h-3.5 text-[#00e599]" /> : <AlertCircle className="w-3.5 h-3.5 text-[#e5484d]" />}
+                  {ingestStatus.status === 'success' || ingestStatus.success ? <CheckCircle2 className="w-3.5 h-3.5 text-[#00e599]" /> : <AlertCircle className="w-3.5 h-3.5 text-[#e5484d]" />}
                   <span>{ingestStatus.message || ingestStatus.detail}</span>
                 </div>
-                {ingestStatus.chunks_indexed && (
+                {ingestStatus.chunks_indexed !== undefined && (
                   <div className="text-[11px] text-[#888888]">
-                    Processed: {ingestStatus.chunks_indexed} chunks | Total KB Chunks: {ingestStatus.total_collection_chunks}
+                    Processed: {ingestStatus.chunks_indexed} chunks | Total KB Chunks: {ingestStatus.total_in_chromadb || ingestStatus.total_collection_chunks}
                   </div>
                 )}
               </div>
@@ -298,15 +285,14 @@ export function RagObservatory() {
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
             className="flex-1 rounded bg-[#111111] border border-[#262626] p-2.5 text-xs text-[#ededed] font-mono focus:outline-none focus:border-[#444444]"
-            placeholder="Type search query to test vector similarity..."
+            placeholder="Type query (e.g., furnace shutdown, pump pressure) to search vector store..."
           />
           <button
-            onClick={() => {
-              setIsSearching(true);
-              setTimeout(() => setIsSearching(false), 300);
-            }}
-            className="px-4 py-2 bg-[#0070f3] hover:bg-[#0060df] text-white text-xs font-medium rounded transition-colors flex items-center gap-1.5"
+            onClick={handleSearch}
+            disabled={isSearching || !searchQuery.trim()}
+            className="px-4 py-2 bg-[#0070f3] hover:bg-[#0060df] disabled:opacity-50 text-white text-xs font-medium rounded transition-colors flex items-center gap-1.5"
           >
             <Search className="w-3.5 h-3.5" />
             {isSearching ? 'Querying...' : 'Search'}
@@ -314,25 +300,33 @@ export function RagObservatory() {
         </div>
 
         {/* Search Results List */}
-        <div className="space-y-2 pt-1">
-          {searchResults.map((res) => (
-            <div key={res.id} className="p-3 rounded bg-[#111111] border border-[#262626] space-y-1.5">
-              <div className="flex items-center justify-between text-xs">
-                <div className="flex items-center gap-2">
-                  <Bookmark className="w-3.5 h-3.5 text-[#0070f3]" />
-                  <span className="font-semibold text-[#ededed]">{res.document}</span>
-                  <span className="text-[#888888] font-mono text-[11px]">{res.clause}</span>
-                </div>
-                <span className="font-mono text-[11px] px-2 py-0.5 rounded bg-[#171717] text-[#00e599] border border-[#333333]">
-                  Score: {(res.similarityScore * 100).toFixed(1)}%
-                </span>
+        {hasSearched && (
+          <div className="space-y-2 pt-1">
+            {searchResults.length === 0 ? (
+              <div className="p-4 rounded bg-[#111111] border border-[#262626] text-center text-xs text-[#666666] font-mono">
+                No matching document clauses found in ChromaDB for "{searchQuery}".
               </div>
-              <p className="text-xs text-[#888888] font-mono leading-relaxed pl-5">
-                "{res.content}"
-              </p>
-            </div>
-          ))}
-        </div>
+            ) : (
+              searchResults.map((res, i) => (
+                <div key={res.id || i} className="p-3 rounded bg-[#111111] border border-[#262626] space-y-1.5">
+                  <div className="flex items-center justify-between text-xs">
+                    <div className="flex items-center gap-2">
+                      <Bookmark className="w-3.5 h-3.5 text-[#0070f3]" />
+                      <span className="font-semibold text-[#ededed]">{res.document}</span>
+                      <span className="text-[#888888] font-mono text-[11px]">{res.clause}</span>
+                    </div>
+                    <span className="font-mono text-[11px] px-2 py-0.5 rounded bg-[#171717] text-[#00e599] border border-[#333333]">
+                      Score: {(res.similarityScore * 100).toFixed(1)}%
+                    </span>
+                  </div>
+                  <p className="text-xs text-[#888888] font-mono leading-relaxed pl-5">
+                    "{res.content}"
+                  </p>
+                </div>
+              ))
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

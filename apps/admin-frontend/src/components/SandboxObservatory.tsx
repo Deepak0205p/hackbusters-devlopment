@@ -20,18 +20,7 @@ print(f"Hydraulic Power: {hydraulic_power_kw:.2f} kW")
 print(f"Pump Efficiency: {efficiency:.2f}%")
 `);
   const [isRunning, setIsRunning] = useState(false);
-  const [executionLog, setExecutionLog] = useState<any>({
-    status: 'SUCCESS',
-    exitCode: 0,
-    runtimeMs: 142,
-    stdout: "Hydraulic Power: 67.75 kW\nPump Efficiency: 82.12%\n",
-    stderr: "",
-    containerId: "sbx-893f4a12",
-    networkPolicy: "--network none (LOCKED)",
-    cpuQuota: "2.0 vCPU",
-    memoryLimit: "512 MB",
-    astSecurityVerdict: "PERMITTED (Zero unsafe imports)",
-  });
+  const [executionLog, setExecutionLog] = useState<any>(null);
 
   const handleExecute = () => {
     setIsRunning(true);
@@ -170,36 +159,47 @@ print(f"Pump Efficiency: {efficiency:.2f}%")
                 <Terminal className="w-3.5 h-3.5 text-[#888888]" />
                 Container Terminal Output
               </h3>
-              <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-medium border ${
-                executionLog.status === 'SUCCESS'
-                  ? 'bg-[#111111] text-[#00e599] border-[#262626]'
-                  : 'bg-[#111111] text-[#e5484d] border-[#262626]'
-              }`}>
-                {executionLog.status}
-              </span>
-            </div>
-
-            <div className="bg-[#000000] rounded p-3 border border-[#262626] font-mono text-xs text-[#ededed] min-h-[160px] whitespace-pre-wrap leading-relaxed">
-              {executionLog.stdout && <div>{executionLog.stdout}</div>}
-              {executionLog.stderr && <div className="text-[#e5484d]">{executionLog.stderr}</div>}
-            </div>
-
-            <div className="space-y-2 text-xs pt-1">
-              <div className="flex justify-between py-1 border-b border-[#1f1f1f]">
-                <span className="text-[#888888]">AST Policy Check</span>
-                <span className={`font-mono text-[11px] ${executionLog.status === 'SUCCESS' ? 'text-[#00e599]' : 'text-[#e5484d]'}`}>
-                  {executionLog.astSecurityVerdict}
+              {executionLog && (
+                <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-medium border ${
+                  executionLog.status === 'SUCCESS'
+                    ? 'bg-[#111111] text-[#00e599] border-[#262626]'
+                    : 'bg-[#111111] text-[#e5484d] border-[#262626]'
+                }`}>
+                  {executionLog.status}
                 </span>
-              </div>
-              <div className="flex justify-between py-1 border-b border-[#1f1f1f]">
-                <span className="text-[#888888]">Execution Runtime</span>
-                <span className="font-mono text-[11px] text-[#ededed]">{executionLog.runtimeMs} ms</span>
-              </div>
-              <div className="flex justify-between py-1">
-                <span className="text-[#888888]">Sandbox ID</span>
-                <span className="font-mono text-[11px] text-[#888888]">{executionLog.containerId}</span>
-              </div>
+              )}
             </div>
+
+            {executionLog ? (
+              <>
+                <div className="bg-[#000000] rounded p-3 border border-[#262626] font-mono text-xs text-[#ededed] min-h-[160px] whitespace-pre-wrap leading-relaxed">
+                  {executionLog.stdout && <div>{executionLog.stdout}</div>}
+                  {executionLog.stderr && <div className="text-[#e5484d]">{executionLog.stderr}</div>}
+                </div>
+
+                <div className="space-y-2 text-xs pt-1">
+                  <div className="flex justify-between py-1 border-b border-[#1f1f1f]">
+                    <span className="text-[#888888]">AST Policy Check</span>
+                    <span className={`font-mono text-[11px] ${executionLog.status === 'SUCCESS' ? 'text-[#00e599]' : 'text-[#e5484d]'}`}>
+                      {executionLog.astSecurityVerdict}
+                    </span>
+                  </div>
+                  <div className="flex justify-between py-1 border-b border-[#1f1f1f]">
+                    <span className="text-[#888888]">Execution Runtime</span>
+                    <span className="font-mono text-[11px] text-[#ededed]">{executionLog.runtimeMs} ms</span>
+                  </div>
+                  <div className="flex justify-between py-1">
+                    <span className="text-[#888888]">Sandbox ID</span>
+                    <span className="font-mono text-[11px] text-[#888888]">{executionLog.containerId}</span>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <div className="p-8 text-center text-xs text-[#666666] font-mono flex flex-col items-center justify-center space-y-2">
+                <Terminal className="w-6 h-6 text-[#333333]" />
+                <p>No container execution initiated. Click "Run in Container" to execute Python script in sandbox.</p>
+              </div>
+            )}
           </div>
         </div>
       </div>

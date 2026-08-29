@@ -9,7 +9,6 @@ import {
   Database, 
   Box, 
   ArrowUpRight,
-  Activity,
   HardDrive
 } from 'lucide-react';
 
@@ -20,7 +19,23 @@ interface OverviewDeckProps {
 export function OverviewDeck({ onNavigate }: OverviewDeckProps) {
   const { metrics } = useSovereigntyStore();
   const { models, vram } = useModelStore();
-  const [ragStats, setRagStats] = useState({ documents: 14, chunks: 2180, collections: 3 });
+  const [ragStats, setRagStats] = useState({ documents: 0, chunks: 0, collections: 0 });
+
+  useEffect(() => {
+    // Fetch live dynamic RAG stats from backend
+    fetch('http://localhost:8000/api/rag-admin/stats')
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          setRagStats({
+            documents: data.documents,
+            chunks: data.chunks,
+            collections: data.collections
+          });
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   const activeModels = models.filter(m => m.status === 'active');
   const usedVramGb = (vram.used_mb / 1024).toFixed(2);
