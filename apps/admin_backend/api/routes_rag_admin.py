@@ -232,6 +232,49 @@ async def get_rag_statistics():
             "error": str(e)
         }
 
+@router.get("/files")
+async def list_available_documents():
+    """
+    Scans and returns all physical documents, reports, and generated files present
+    in the codebase repository grouped by format (.pdf, .docx, .xlsx, .pptx, .txt, .csv, .py).
+    """
+    files_list = []
+    
+    # Scanned folders
+    scan_folders = [
+        ("data/annual_reports", "Annual & Sustainability Reports"),
+        ("data/mrpl_documents", "MRPL Technical & Safety Policies"),
+        ("data/ongc_policies", "ONGC Corporate & Compliance Policies"),
+        ("data/sample_inputs", "Engineering Drawings & Field Inputs"),
+        ("data/outputs/docx", "Generated Word Reports"),
+        ("data/outputs/xlsx", "Asset & Calculation Spreadsheets"),
+        ("data/outputs/pptx", "Executive Briefing Slides"),
+        ("data/outputs/scripts", "Python Calculation Scripts"),
+    ]
+
+    for rel_dir, category_label in scan_folders:
+        abs_dir = os.path.abspath(os.path.join(BASE_DATA_DIR, "..", rel_dir))
+        if os.path.exists(abs_dir):
+            for fname in os.listdir(abs_dir):
+                fpath = os.path.join(abs_dir, fname)
+                if os.path.isfile(fpath) and not fname.startswith('.'):
+                    size_bytes = os.path.getsize(fpath)
+                    ext = os.path.splitext(fname)[1].lower().replace('.', '')
+                    files_list.append({
+                        "id": f"{rel_dir}/{fname}",
+                        "name": fname,
+                        "relative_path": f"{rel_dir}/{fname}",
+                        "format": ext or "txt",
+                        "size_kb": round(size_bytes / 1024, 1),
+                        "category": category_label,
+                    })
+
+    return {
+        "success": True,
+        "total_files": len(files_list),
+        "files": files_list
+    }
+
 @router.get("/search")
 async def search_rag_knowledge(q: str = "MRPL furnace emergency shutdown", top_k: int = 4):
     """

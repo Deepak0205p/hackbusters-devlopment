@@ -31,12 +31,25 @@ export function RagObservatory() {
   const [targetFormat, setTargetFormat] = useState('docx');
   const [isConverting, setIsConverting] = useState(false);
   const [convertStatus, setConvertStatus] = useState<string | null>(null);
+  const [existingFiles, setExistingFiles] = useState<any[]>([]);
 
   // Search State
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [hasSearched, setHasSearched] = useState(false);
+
+  useEffect(() => {
+    // Fetch live codebase file inventory
+    fetch('http://localhost:8000/api/rag-admin/files')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && data.files) {
+          setExistingFiles(data.files);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   const handleIngestFile = async () => {
     if (!uploadFile) return;
@@ -291,75 +304,164 @@ export function RagObservatory() {
         </div>
       )}
 
-      {/* SECTION 2: UNIVERSAL DOCUMENT FORMAT CONVERTER */}
+      {/* SECTION 2: UNIVERSAL DOCUMENT FORMAT CONVERTER & AVAILABLE REPOSITORY FORMATS */}
       {activeTab === 'converter' && (
-        <div className="rounded-md bg-[#0a0a0a] border border-[#262626] p-5 space-y-4">
-          <div className="flex items-center justify-between border-b border-[#262626] pb-3">
-            <h3 className="text-xs font-semibold text-[#ededed] flex items-center gap-2">
-              <Download className="w-3.5 h-3.5 text-[#00e599]" />
-              Universal Document Format Converter
-            </h3>
-            <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[#111111] text-[#00e599] border border-[#262626]">
-              ON-PREMISE ENGINE
-            </span>
+        <div className="space-y-4">
+          {/* Converter Action Box */}
+          <div className="rounded-md bg-[#0a0a0a] border border-[#262626] p-5 space-y-4">
+            <div className="flex items-center justify-between border-b border-[#262626] pb-3">
+              <h3 className="text-xs font-semibold text-[#ededed] flex items-center gap-2">
+                <Download className="w-3.5 h-3.5 text-[#00e599]" />
+                Universal Document Format Converter
+              </h3>
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[#111111] text-[#00e599] border border-[#262626]">
+                ON-PREMISE ENGINE
+              </span>
+            </div>
+
+            <div className="space-y-4 max-w-3xl">
+              <div className="space-y-1.5">
+                <label className="text-xs text-[#888888]">Input File (.pdf, .docx, .txt, .csv, .xlsx, .pptx)</label>
+                <input
+                  type="file"
+                  accept=".pdf,.docx,.txt,.csv,.xlsx,.pptx"
+                  onChange={(e) => setConvertFile(e.target.files?.[0] || null)}
+                  className="w-full text-xs text-[#888888] file:mr-3 file:py-2 file:px-3 file:rounded file:border-0 file:text-xs file:font-medium file:bg-[#171717] file:text-[#ededed] hover:file:bg-[#262626] cursor-pointer"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs text-[#888888]">Target Export Format</label>
+                <div className="grid grid-cols-4 gap-2">
+                  {[
+                    { id: 'docx', label: 'Word (.docx)', icon: FileText },
+                    { id: 'xlsx', label: 'Excel (.xlsx)', icon: FileSpreadsheet },
+                    { id: 'pptx', label: 'PowerPoint (.pptx)', icon: Presentation },
+                    { id: 'txt', label: 'Text (.txt)', icon: FileCode },
+                  ].map((fmt) => {
+                    const Icon = fmt.icon;
+                    const isSel = targetFormat === fmt.id;
+                    return (
+                      <button
+                        key={fmt.id}
+                        type="button"
+                        onClick={() => setTargetFormat(fmt.id)}
+                        className={`p-3 rounded border text-center flex flex-col items-center gap-1.5 transition-all ${
+                          isSel
+                            ? 'bg-[#171717] border-[#00e599] text-[#ededed]'
+                            : 'bg-[#111111] border-[#262626] text-[#888888] hover:border-[#444444]'
+                        }`}
+                      >
+                        <Icon className={`w-4 h-4 ${isSel ? 'text-[#00e599]' : 'text-[#888888]'}`} />
+                        <span className="text-xs font-medium">{fmt.id.toUpperCase()}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <button
+                onClick={handleConvertDocument}
+                disabled={!convertFile || isConverting}
+                className="w-full py-2.5 bg-[#171717] hover:bg-[#262626] text-[#ededed] border border-[#333333] disabled:opacity-50 text-xs font-medium rounded transition-colors flex items-center justify-center gap-1.5"
+              >
+                <Download className="w-3.5 h-3.5 text-[#00e599]" />
+                {isConverting ? 'Converting Document...' : 'Convert & Download File'}
+              </button>
+
+              {convertStatus && (
+                <div className="p-3 rounded bg-[#111111] border border-[#262626] text-xs font-mono text-[#00e599] flex items-center gap-2">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-[#00e599]" />
+                  <span>{convertStatus}</span>
+                </div>
+              )}
+            </div>
           </div>
 
-          <div className="space-y-4 max-w-2xl">
-            <div className="space-y-1.5">
-              <label className="text-xs text-[#888888]">Input File (.pdf, .docx, .txt, .csv)</label>
-              <input
-                type="file"
-                accept=".pdf,.docx,.txt,.csv"
-                onChange={(e) => setConvertFile(e.target.files?.[0] || null)}
-                className="w-full text-xs text-[#888888] file:mr-3 file:py-2 file:px-3 file:rounded file:border-0 file:text-xs file:font-medium file:bg-[#171717] file:text-[#ededed] hover:file:bg-[#262626] cursor-pointer"
-              />
-            </div>
+          {/* Existing Document Formats & Codebase File Library */}
+          <div className="rounded-md bg-[#0a0a0a] border border-[#262626] p-5 space-y-4">
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#262626] pb-3">
+              <div>
+                <h3 className="text-xs font-semibold text-[#ededed] flex items-center gap-2">
+                  <FileText className="w-3.5 h-3.5 text-[#0070f3]" />
+                  Codebase File Formats &amp; Physical Document Library
+                </h3>
+                <p className="text-[11px] text-[#888888] mt-0.5">
+                  Live inventory of all physical documents, manuals, spreadsheets, and scripts currently stored in local repository.
+                </p>
+              </div>
 
-            <div className="space-y-1.5">
-              <label className="text-xs text-[#888888]">Target Export Format</label>
-              <div className="grid grid-cols-4 gap-2">
-                {[
-                  { id: 'docx', label: 'Word (.docx)', icon: FileText },
-                  { id: 'xlsx', label: 'Excel (.xlsx)', icon: FileSpreadsheet },
-                  { id: 'pptx', label: 'PowerPoint (.pptx)', icon: Presentation },
-                  { id: 'txt', label: 'Text (.txt)', icon: FileCode },
-                ].map((fmt) => {
-                  const Icon = fmt.icon;
-                  const isSel = targetFormat === fmt.id;
-                  return (
-                    <button
-                      key={fmt.id}
-                      type="button"
-                      onClick={() => setTargetFormat(fmt.id)}
-                      className={`p-3 rounded border text-center flex flex-col items-center gap-1.5 transition-all ${
-                        isSel
-                          ? 'bg-[#171717] border-[#00e599] text-[#ededed]'
-                          : 'bg-[#111111] border-[#262626] text-[#888888] hover:border-[#444444]'
-                      }`}
-                    >
-                      <Icon className={`w-4 h-4 ${isSel ? 'text-[#00e599]' : 'text-[#888888]'}`} />
-                      <span className="text-xs font-medium">{fmt.id.toUpperCase()}</span>
-                    </button>
-                  );
-                })}
+              {/* Supported Format Tags */}
+              <div className="flex flex-wrap gap-1.5 font-mono text-[10px]">
+                <span className="px-2 py-0.5 rounded bg-[#171717] border border-[#333333] text-[#e5484d]">PDF</span>
+                <span className="px-2 py-0.5 rounded bg-[#171717] border border-[#333333] text-[#0070f3]">DOCX</span>
+                <span className="px-2 py-0.5 rounded bg-[#171717] border border-[#333333] text-[#00e599]">XLSX</span>
+                <span className="px-2 py-0.5 rounded bg-[#171717] border border-[#333333] text-[#f5a623]">PPTX</span>
+                <span className="px-2 py-0.5 rounded bg-[#171717] border border-[#333333] text-[#a78bfa]">PY</span>
+                <span className="px-2 py-0.5 rounded bg-[#171717] border border-[#333333] text-[#38bdf8]">PNG/P&amp;ID</span>
               </div>
             </div>
 
-            <button
-              onClick={handleConvertDocument}
-              disabled={!convertFile || isConverting}
-              className="w-full py-2.5 bg-[#171717] hover:bg-[#262626] text-[#ededed] border border-[#333333] disabled:opacity-50 text-xs font-medium rounded transition-colors flex items-center justify-center gap-1.5"
-            >
-              <Download className="w-3.5 h-3.5 text-[#00e599]" />
-              {isConverting ? 'Converting Document...' : 'Convert & Download File'}
-            </button>
+            {/* Live Document Table */}
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs text-left">
+                <thead className="bg-[#111111] text-[#888888] text-[11px] font-mono border-b border-[#262626]">
+                  <tr>
+                    <th className="py-2 px-3">Document Name</th>
+                    <th className="py-2 px-3">Format</th>
+                    <th className="py-2 px-3">Category</th>
+                    <th className="py-2 px-3 text-right">Size</th>
+                    <th className="py-2 px-3 text-right">Action</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[#262626]/50 font-mono text-[11px]">
+                  {existingFiles.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="py-6 text-center text-[#666666]">
+                        Loading codebase document library...
+                      </td>
+                    </tr>
+                  ) : (
+                    existingFiles.map((doc) => {
+                      const extColor = 
+                        doc.format === 'pdf' ? 'text-[#e5484d] border-[#e5484d]/30 bg-[#e5484d]/10' :
+                        doc.format === 'docx' ? 'text-[#0070f3] border-[#0070f3]/30 bg-[#0070f3]/10' :
+                        doc.format === 'xlsx' ? 'text-[#00e599] border-[#00e599]/30 bg-[#00e599]/10' :
+                        doc.format === 'pptx' ? 'text-[#f5a623] border-[#f5a623]/30 bg-[#f5a623]/10' :
+                        'text-[#ededed] border-[#333333] bg-[#1a1a1a]';
 
-            {convertStatus && (
-              <div className="p-3 rounded bg-[#111111] border border-[#262626] text-xs font-mono text-[#00e599] flex items-center gap-2">
-                <CheckCircle2 className="w-3.5 h-3.5 text-[#00e599]" />
-                <span>{convertStatus}</span>
-              </div>
-            )}
+                      return (
+                        <tr key={doc.id} className="hover:bg-[#111111]">
+                          <td className="py-2 px-3 text-[#ededed] font-medium flex items-center gap-2">
+                            <FileText className="w-3 h-3 text-[#888888]" />
+                            <span>{doc.name}</span>
+                          </td>
+                          <td className="py-2 px-3">
+                            <span className={`px-1.5 py-0.5 rounded text-[10px] font-semibold border ${extColor}`}>
+                              .{doc.format.toUpperCase()}
+                            </span>
+                          </td>
+                          <td className="py-2 px-3 text-[#888888]">{doc.category}</td>
+                          <td className="py-2 px-3 text-right text-[#666666]">{doc.size_kb} KB</td>
+                          <td className="py-2 px-3 text-right">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setConvertFile(new File([""], doc.name));
+                                window.scrollTo({ top: 0, behavior: 'smooth' });
+                              }}
+                              className="px-2 py-0.5 rounded bg-[#171717] hover:bg-[#222222] border border-[#333333] text-[#ededed] text-[10px] transition-colors"
+                            >
+                              Select for Convert
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       )}
