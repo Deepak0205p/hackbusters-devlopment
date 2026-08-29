@@ -1,4 +1,4 @@
-﻿# HackBuster: Sovereign On-Premise Agentic AI Workbench (SIH26117)
+# HackBuster: Sovereign On-Premise Agentic AI Workbench (SIH26117)
 
 [![Python](https://img.shields.io/badge/Python-3.11-3776AB.svg?style=flat&logo=python&logoColor=white)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.111.0-009688.svg?style=flat&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
@@ -70,7 +70,7 @@ graph TD
 | **Backend Framework** | **Python / FastAPI** | `3.11` / `0.111.0` | Asynchronous API, WebSocket streaming & static file server |
 | **ASGI Server** | **Uvicorn** | `0.30.1` | ASGI server listening on `0.0.0.0:8000` |
 | **Agent Framework** | **LangChain** | `0.2.11` | Strict ReAct (Reason + Act) loop execution |
-| **Model Runtime** | **Ollama** | Latest | Local GGUF model runner (`qwen2.5:3b`, `qwen2.5-coder:3b`, `llama3.2:3b`) |
+| **Model Runtime** | **Ollama** | Latest | Local GGUF open-weight model serving & dynamic VRAM swapping |
 | **Vector DB & RAG** | **ChromaDB** | `0.5.4` | Embedded local vector store in `data/chroma_db/` |
 | **Embeddings** | **Sentence-Transformers** | `3.0.1` | Local `BAAI/bge-small-en-v1.5` embeddings (384-dim) |
 | **OCR & Parsing** | **PaddleOCR / Tesseract** | `2.8.1` / `5.3+` | Offline multimodal document and P&ID schematic parsing |
@@ -92,7 +92,7 @@ G:/SIH/p/
 ├── AGENT.md                            # Binding operational and engineering rules for AI/devs
 │
 ├── apps/                               # Application Core Layer
-│   ├── chat-frontend/                  # Public Gemini-Style Chat Interface (Next.js 14)
+│   ├── chat-frontend/                  # Public Conversational Chat Interface (Next.js 14)
 │   │   ├── src/                        # React components, pages & Zustand stores
 │   │   ├── out/                        # Static HTML/JS build (served at http://host:8000/)
 │   │   ├── package.json                # Frontend dependencies
@@ -146,7 +146,7 @@ G:/SIH/p/
 ## 🔍 Folder-by-Folder Guide
 
 ### 1. `apps/chat-frontend/` (Public Chat Interface)
-- **Role:** The primary end-user interaction interface replicating the Gemini clean UI.
+- **Role:** The primary end-user conversational interaction interface.
 - **Key Modules:**
   - `src/components/chat/`: Message bubbles, streaming markdown renderer, tool execution cards.
   - `src/components/deliverables/`: In-browser preview & download cards for `.docx`, `.xlsx`, and `.pptx`.
@@ -217,17 +217,15 @@ pip install -r apps/admin_backend/requirements.txt
 
 ---
 
-### Step 3: Start & Pull Models in Ollama
+### Step 3: Start Ollama Local Service
 
 1. Start the Ollama local daemon (if not already running):
    ```bash
    ollama serve
    ```
-2. Pull required open-weight models:
+2. Ensure your required local models configured in `models/models.yaml` are pulled and available in Ollama:
    ```bash
-   ollama pull qwen2.5:3b
-   ollama pull qwen2.5-coder:3b
-   ollama pull llama3.2:3b
+   ollama list
    ```
 
 ---
