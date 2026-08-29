@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useEffect } from 'react';
 import Link from 'next/link';
@@ -65,13 +65,7 @@ const subsystemTiles = [
     description: 'Programmatic synthesis of Word (.docx), Excel (.xlsx), and PowerPoint (.pptx).'
   },
   {
-    title: '8. Agent Interactive Console',
-    href: '/chat',
-    icon: MessageSquare,
-    description: 'Full ReAct reasoning agent loop with live thought streams & tool call execution.'
-  },
-  {
-    title: '9. Remote Access & QR Pairing',
+    title: '8. Remote Access & QR Pairing',
     href: '/connect',
     icon: QrCode,
     description: 'Pair evaluator devices over closed host Wi-Fi hotspot without internet gateway.'
