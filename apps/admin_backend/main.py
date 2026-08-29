@@ -10,6 +10,7 @@ from apps.admin_backend.api.routes_sovereignty import router as sovereignty_rout
 from apps.admin_backend.api.routes_chat import router as chat_router
 from apps.admin_backend.api.routes_upload import router as upload_router
 from apps.admin_backend.api.routes_files import router as files_router
+from apps.admin_backend.api.routes_rag_admin import router as rag_admin_router
 
 # 1. Instantiate Core FastAPI Application
 app = FastAPI(
@@ -38,6 +39,7 @@ app.include_router(sovereignty_router)
 app.include_router(chat_router)
 app.include_router(upload_router)
 app.include_router(files_router)
+app.include_router(rag_admin_router)
 
 # 4. Mount Dual Next.js Static Export Bundles
 CHAT_FRONTEND_OUT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "chat-frontend", "out"))
