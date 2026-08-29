@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState, useEffect } from 'react';
 import { 
@@ -120,6 +120,9 @@ export function RagObservatory() {
     }
   };
 
+  // Sub-Tab Selection State ('ingest' | 'converter')
+  const [activeTab, setActiveTab] = useState<'ingest' | 'converter'>('ingest');
+
   return (
     <div className="space-y-4">
       {/* Header Banner */}
@@ -133,49 +136,80 @@ export function RagObservatory() {
         </p>
       </div>
 
-      {/* Two Operations Panels: Ingestion & Conversion */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {/* Panel 1: Live RAG Ingestion */}
-        <div className="rounded-md bg-[#0a0a0a] border border-[#262626] p-5 space-y-4">
-          <div className="flex items-center justify-between border-b border-[#262626] pb-3">
-            <h3 className="text-xs font-semibold text-[#ededed] flex items-center gap-2">
-              <UploadCloud className="w-3.5 h-3.5 text-[#0070f3]" />
-              Ingest SOP / MOP / Security Policy into RAG
-            </h3>
-            <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[#111111] text-[#00e599] border border-[#262626]">
-              REAL-TIME UPSERT
-            </span>
-          </div>
+      {/* Sub-Tab Navigation Strip */}
+      <div className="flex items-center gap-2 border-b border-[#262626] pb-2">
+        <button
+          type="button"
+          onClick={() => setActiveTab('ingest')}
+          className={`flex items-center gap-2 px-3.5 py-2 rounded-md text-xs font-medium transition-all ${
+            activeTab === 'ingest'
+              ? 'bg-[#171717] text-[#0070f3] border border-[#0070f3]/40 shadow-sm font-semibold'
+              : 'text-[#888888] hover:text-[#ededed] hover:bg-[#111111] border border-transparent'
+          }`}
+        >
+          <UploadCloud className="w-3.5 h-3.5" />
+          <span>1. Ingest SOP / MOP / Security Policy into RAG</span>
+        </button>
 
-          <div className="space-y-3">
-            <div className="space-y-1">
-              <label className="text-xs text-[#888888]">Knowledge Category</label>
-              <select
-                value={selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value)}
-                className="w-full rounded bg-[#111111] border border-[#262626] p-2 text-xs text-[#ededed] focus:outline-none focus:border-[#444444]"
-              >
-                <option value="sop_mops">Refinery SOPs & MOPs (Operations)</option>
-                <option value="security_policies">Security Policies & Statutory Compliance</option>
-                <option value="mrpl_engineering">MRPL Technical Engineering Standards</option>
-                <option value="ongc_compliance">ONGC Corporate Compliance Standards</option>
-              </select>
+        <button
+          type="button"
+          onClick={() => setActiveTab('converter')}
+          className={`flex items-center gap-2 px-3.5 py-2 rounded-md text-xs font-medium transition-all ${
+            activeTab === 'converter'
+              ? 'bg-[#171717] text-[#00e599] border border-[#00e599]/40 shadow-sm font-semibold'
+              : 'text-[#888888] hover:text-[#ededed] hover:bg-[#111111] border border-transparent'
+          }`}
+        >
+          <Download className="w-3.5 h-3.5" />
+          <span>2. Universal Document Format Converter</span>
+        </button>
+      </div>
+
+      {/* SECTION 1: INGESTION & SEMANTIC VECTOR SEARCH */}
+      {activeTab === 'ingest' && (
+        <div className="space-y-4">
+          {/* Ingest SOP Card */}
+          <div className="rounded-md bg-[#0a0a0a] border border-[#262626] p-5 space-y-4">
+            <div className="flex items-center justify-between border-b border-[#262626] pb-3">
+              <h3 className="text-xs font-semibold text-[#ededed] flex items-center gap-2">
+                <UploadCloud className="w-3.5 h-3.5 text-[#0070f3]" />
+                Ingest SOP / MOP / Security Policy into RAG
+              </h3>
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[#111111] text-[#00e599] border border-[#262626]">
+                REAL-TIME UPSERT
+              </span>
             </div>
 
-            <div className="space-y-1">
-              <label className="text-xs text-[#888888]">Select Document (.pdf, .docx, .txt, .md)</label>
-              <input
-                type="file"
-                accept=".pdf,.docx,.txt,.md"
-                onChange={(e) => setUploadFile(e.target.files?.[0] || null)}
-                className="w-full text-xs text-[#888888] file:mr-3 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-xs file:font-medium file:bg-[#171717] file:text-[#ededed] hover:file:bg-[#262626] cursor-pointer"
-              />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-1">
+                <label className="text-xs text-[#888888]">Knowledge Category</label>
+                <select
+                  value={selectedCategory}
+                  onChange={(e) => setSelectedCategory(e.target.value)}
+                  className="w-full rounded bg-[#111111] border border-[#262626] p-2.5 text-xs text-[#ededed] focus:outline-none focus:border-[#444444]"
+                >
+                  <option value="sop_mops">Refinery SOPs & MOPs (Operations)</option>
+                  <option value="security_policies">Security Policies & Statutory Compliance</option>
+                  <option value="mrpl_engineering">MRPL Technical Engineering Standards</option>
+                  <option value="ongc_compliance">ONGC Corporate Compliance Standards</option>
+                </select>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs text-[#888888]">Select Document (.pdf, .docx, .txt, .md)</label>
+                <input
+                  type="file"
+                  accept=".pdf,.docx,.txt,.md"
+                  onChange={(e) => setUploadFile(e.target.files?.[0] || null)}
+                  className="w-full text-xs text-[#888888] file:mr-3 file:py-2 file:px-3 file:rounded file:border-0 file:text-xs file:font-medium file:bg-[#171717] file:text-[#ededed] hover:file:bg-[#262626] cursor-pointer"
+                />
+              </div>
             </div>
 
             <button
               onClick={handleIngestFile}
               disabled={!uploadFile || isIngesting}
-              className="w-full py-2 bg-[#0070f3] hover:bg-[#0060df] disabled:opacity-50 text-white text-xs font-medium rounded transition-colors flex items-center justify-center gap-1.5"
+              className="w-full py-2.5 bg-[#0070f3] hover:bg-[#0060df] disabled:opacity-50 text-white text-xs font-medium rounded transition-colors flex items-center justify-center gap-1.5"
             >
               <RefreshCw className={`w-3.5 h-3.5 ${isIngesting ? 'animate-spin' : ''}`} />
               {isIngesting ? 'Extracting Clauses & Embedding...' : 'Build / Upsert to ChromaDB RAG'}
@@ -199,9 +233,66 @@ export function RagObservatory() {
               </div>
             )}
           </div>
-        </div>
 
-        {/* Panel 2: Universal Document Converter */}
+          {/* Semantic Search Tester */}
+          <div className="rounded-md bg-[#0a0a0a] border border-[#262626] p-5 space-y-4">
+            <h3 className="text-xs font-semibold text-[#ededed] flex items-center gap-2">
+              <Search className="w-3.5 h-3.5 text-[#0070f3]" />
+              Semantic RAG Knowledge Explorer
+            </h3>
+
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                className="flex-1 rounded bg-[#111111] border border-[#262626] p-2.5 text-xs text-[#ededed] font-mono focus:outline-none focus:border-[#444444]"
+                placeholder="Type query (e.g., furnace shutdown, pump pressure) to search vector store..."
+              />
+              <button
+                onClick={handleSearch}
+                disabled={isSearching || !searchQuery.trim()}
+                className="px-4 py-2 bg-[#0070f3] hover:bg-[#0060df] disabled:opacity-50 text-white text-xs font-medium rounded transition-colors flex items-center gap-1.5"
+              >
+                <Search className="w-3.5 h-3.5" />
+                {isSearching ? 'Querying...' : 'Search'}
+              </button>
+            </div>
+
+            {hasSearched && (
+              <div className="space-y-2 pt-1">
+                {searchResults.length === 0 ? (
+                  <div className="p-4 rounded bg-[#111111] border border-[#262626] text-center text-xs text-[#666666] font-mono">
+                    No matching document clauses found in ChromaDB for "{searchQuery}".
+                  </div>
+                ) : (
+                  searchResults.map((res, i) => (
+                    <div key={res.id || i} className="p-3 rounded bg-[#111111] border border-[#262626] space-y-1.5">
+                      <div className="flex items-center justify-between text-xs">
+                        <div className="flex items-center gap-2">
+                          <Bookmark className="w-3.5 h-3.5 text-[#0070f3]" />
+                          <span className="font-semibold text-[#ededed]">{res.document}</span>
+                          <span className="text-[#888888] font-mono text-[11px]">{res.clause}</span>
+                        </div>
+                        <span className="font-mono text-[11px] px-2 py-0.5 rounded bg-[#171717] text-[#00e599] border border-[#333333]">
+                          Score: {(res.similarityScore * 100).toFixed(1)}%
+                        </span>
+                      </div>
+                      <p className="text-xs text-[#888888] font-mono leading-relaxed pl-5">
+                        "{res.content}"
+                      </p>
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* SECTION 2: UNIVERSAL DOCUMENT FORMAT CONVERTER */}
+      {activeTab === 'converter' && (
         <div className="rounded-md bg-[#0a0a0a] border border-[#262626] p-5 space-y-4">
           <div className="flex items-center justify-between border-b border-[#262626] pb-3">
             <h3 className="text-xs font-semibold text-[#ededed] flex items-center gap-2">
@@ -213,18 +304,18 @@ export function RagObservatory() {
             </span>
           </div>
 
-          <div className="space-y-3">
-            <div className="space-y-1">
+          <div className="space-y-4 max-w-2xl">
+            <div className="space-y-1.5">
               <label className="text-xs text-[#888888]">Input File (.pdf, .docx, .txt, .csv)</label>
               <input
                 type="file"
                 accept=".pdf,.docx,.txt,.csv"
                 onChange={(e) => setConvertFile(e.target.files?.[0] || null)}
-                className="w-full text-xs text-[#888888] file:mr-3 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-xs file:font-medium file:bg-[#171717] file:text-[#ededed] hover:file:bg-[#262626] cursor-pointer"
+                className="w-full text-xs text-[#888888] file:mr-3 file:py-2 file:px-3 file:rounded file:border-0 file:text-xs file:font-medium file:bg-[#171717] file:text-[#ededed] hover:file:bg-[#262626] cursor-pointer"
               />
             </div>
 
-            <div className="space-y-1">
+            <div className="space-y-1.5">
               <label className="text-xs text-[#888888]">Target Export Format</label>
               <div className="grid grid-cols-4 gap-2">
                 {[
@@ -240,14 +331,14 @@ export function RagObservatory() {
                       key={fmt.id}
                       type="button"
                       onClick={() => setTargetFormat(fmt.id)}
-                      className={`p-2 rounded border text-center flex flex-col items-center gap-1 transition-all ${
+                      className={`p-3 rounded border text-center flex flex-col items-center gap-1.5 transition-all ${
                         isSel
-                          ? 'bg-[#171717] border-[#0070f3] text-[#ededed]'
+                          ? 'bg-[#171717] border-[#00e599] text-[#ededed]'
                           : 'bg-[#111111] border-[#262626] text-[#888888] hover:border-[#444444]'
                       }`}
                     >
-                      <Icon className="w-3.5 h-3.5" />
-                      <span className="text-[10px] font-medium">{fmt.id.toUpperCase()}</span>
+                      <Icon className={`w-4 h-4 ${isSel ? 'text-[#00e599]' : 'text-[#888888]'}`} />
+                      <span className="text-xs font-medium">{fmt.id.toUpperCase()}</span>
                     </button>
                   );
                 })}
@@ -257,77 +348,21 @@ export function RagObservatory() {
             <button
               onClick={handleConvertDocument}
               disabled={!convertFile || isConverting}
-              className="w-full py-2 bg-[#171717] hover:bg-[#262626] text-[#ededed] border border-[#333333] disabled:opacity-50 text-xs font-medium rounded transition-colors flex items-center justify-center gap-1.5"
+              className="w-full py-2.5 bg-[#171717] hover:bg-[#262626] text-[#ededed] border border-[#333333] disabled:opacity-50 text-xs font-medium rounded transition-colors flex items-center justify-center gap-1.5"
             >
               <Download className="w-3.5 h-3.5 text-[#00e599]" />
               {isConverting ? 'Converting Document...' : 'Convert & Download File'}
             </button>
 
             {convertStatus && (
-              <div className="p-2.5 rounded bg-[#111111] border border-[#262626] text-xs font-mono text-[#00e599] flex items-center gap-2">
+              <div className="p-3 rounded bg-[#111111] border border-[#262626] text-xs font-mono text-[#00e599] flex items-center gap-2">
                 <CheckCircle2 className="w-3.5 h-3.5 text-[#00e599]" />
                 <span>{convertStatus}</span>
               </div>
             )}
           </div>
         </div>
-      </div>
-
-      {/* Semantic Search Tester & Collections */}
-      <div className="rounded-md bg-[#0a0a0a] border border-[#262626] p-5 space-y-4">
-        <h3 className="text-xs font-semibold text-[#ededed] flex items-center gap-2">
-          <Search className="w-3.5 h-3.5 text-[#0070f3]" />
-          Semantic RAG Knowledge Explorer
-        </h3>
-
-        <div className="flex gap-2">
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-            className="flex-1 rounded bg-[#111111] border border-[#262626] p-2.5 text-xs text-[#ededed] font-mono focus:outline-none focus:border-[#444444]"
-            placeholder="Type query (e.g., furnace shutdown, pump pressure) to search vector store..."
-          />
-          <button
-            onClick={handleSearch}
-            disabled={isSearching || !searchQuery.trim()}
-            className="px-4 py-2 bg-[#0070f3] hover:bg-[#0060df] disabled:opacity-50 text-white text-xs font-medium rounded transition-colors flex items-center gap-1.5"
-          >
-            <Search className="w-3.5 h-3.5" />
-            {isSearching ? 'Querying...' : 'Search'}
-          </button>
-        </div>
-
-        {/* Search Results List */}
-        {hasSearched && (
-          <div className="space-y-2 pt-1">
-            {searchResults.length === 0 ? (
-              <div className="p-4 rounded bg-[#111111] border border-[#262626] text-center text-xs text-[#666666] font-mono">
-                No matching document clauses found in ChromaDB for "{searchQuery}".
-              </div>
-            ) : (
-              searchResults.map((res, i) => (
-                <div key={res.id || i} className="p-3 rounded bg-[#111111] border border-[#262626] space-y-1.5">
-                  <div className="flex items-center justify-between text-xs">
-                    <div className="flex items-center gap-2">
-                      <Bookmark className="w-3.5 h-3.5 text-[#0070f3]" />
-                      <span className="font-semibold text-[#ededed]">{res.document}</span>
-                      <span className="text-[#888888] font-mono text-[11px]">{res.clause}</span>
-                    </div>
-                    <span className="font-mono text-[11px] px-2 py-0.5 rounded bg-[#171717] text-[#00e599] border border-[#333333]">
-                      Score: {(res.similarityScore * 100).toFixed(1)}%
-                    </span>
-                  </div>
-                  <p className="text-xs text-[#888888] font-mono leading-relaxed pl-5">
-                    "{res.content}"
-                  </p>
-                </div>
-              ))
-            )}
-          </div>
-        )}
-      </div>
+      )}
     </div>
   );
 }
