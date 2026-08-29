@@ -78,7 +78,12 @@ class SocketWatchdog:
             f"Deployment topology set to {mode}. Host IP: {self.host_ip}:{self.port}"
         )
 
-    def scan_sockets(self, scope: str = "workbench_and_system") -> SovereigntySnapshot:
+    def scan_sockets(self, scope: str = "workbench_only") -> SovereigntySnapshot:
+        """
+        Exclusively scans and audits sockets and processes belonging to the
+        MRPL Sovereign AI Workbench (FastAPI Backend, Chat Frontend, Admin Frontend,
+        Ollama LLM daemon, and Docker Sandbox). All unrelated OS/system processes are excluded.
+        """
         sockets_list: List[SocketEntry] = []
         loc_count = 0
         lan_count = 0
@@ -90,18 +95,32 @@ class SocketWatchdog:
         except (psutil.AccessDenied, PermissionError):
             connections = []
 
-        # Current process tree
+        # 1. Discover all workbench-owned PIDs (FastAPI, child workers, Ollama, Node frontends)
+        workbench_ports = {8000, 3000, 3001, 11434}
+        workbench_pids = set(self.workbench_pids)
         current_pid = os.getpid()
-        workbench_related_pids = {current_pid}
+        workbench_pids.add(current_pid)
+
         try:
             cur_proc = psutil.Process(current_pid)
             for child in cur_proc.children(recursive=True):
-                workbench_related_pids.add(child.pid)
+                workbench_pids.add(child.pid)
         except Exception:
             pass
 
+        # Also identify PIDs bound to workbench ports (3000, 3001, 8000, 11434)
+        for conn in connections:
+            l_port = conn.laddr.port if conn.laddr else 0
+            r_port = conn.raddr.port if conn.raddr else 0
+            if (l_port in workbench_ports or r_port in workbench_ports) and conn.pid:
+                workbench_pids.add(conn.pid)
+
+        # 2. Iterate and audit ONLY workbench-related socket connections
         socket_idx = 1
         for conn in connections:
+            if not conn.pid or conn.pid not in workbench_pids:
+                continue
+
             l_ip = conn.laddr.ip if conn.laddr else "0.0.0.0"
             l_port = conn.laddr.port if conn.laddr else 0
             r_ip = conn.raddr.ip if conn.raddr else ""
@@ -110,19 +129,31 @@ class SocketWatchdog:
             check_ip = r_ip if r_ip else l_ip
             tier = classify_ip_address(check_ip)
 
-            # Retrieve Process Name (Sanitized: NO cmdline or env secrets exposed)
-            p_name = "System / Kernel"
-            if conn.pid:
-                try:
-                    proc = psutil.Process(conn.pid)
+            # Friendly workbench service names
+            p_name = f"Workbench PID {conn.pid}"
+            try:
+                proc = psutil.Process(conn.pid)
+                raw_name = proc.name().lower()
+                if l_port == 8000 or r_port == 8000:
+                    p_name = f"FastAPI Gateway (PID {conn.pid})"
+                elif l_port == 3000 or r_port == 3000:
+                    p_name = f"Chat Frontend (PID {conn.pid})"
+                elif l_port == 3001 or r_port == 3001:
+                    p_name = f"Admin Observatory (PID {conn.pid})"
+                elif l_port == 11434 or r_port == 11434 or "ollama" in raw_name:
+                    p_name = f"Ollama LLM Daemon (PID {conn.pid})"
+                elif "docker" in raw_name:
+                    p_name = f"Docker Code Sandbox (PID {conn.pid})"
+                elif "python" in raw_name:
+                    p_name = f"Backend Worker (PID {conn.pid})"
+                elif "node" in raw_name:
+                    p_name = f"Frontend Runtime (PID {conn.pid})"
+                else:
                     p_name = f"{proc.name()} (PID {conn.pid})"
-                except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
-                    p_name = f"Process {conn.pid}"
+            except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
+                pass
 
-            # Filter for workbench scope if requested or evaluate full topology
-            is_workbench_process = conn.pid in workbench_related_pids
-
-            is_breach = (tier == "EXTERNAL_WAN") and is_workbench_process
+            is_breach = (tier == "EXTERNAL_WAN")
             verdict = "BREACH_FLAGGED" if is_breach else "PERMITTED"
 
             if tier == "LOCALHOST":
@@ -130,24 +161,22 @@ class SocketWatchdog:
             elif tier == "LAN_HOTSPOT":
                 lan_count += 1
             else:
-                if is_workbench_process:
-                    ext_count += 1
-                    breaches.append(f"Unauthorized external socket to {r_ip}:{r_port} by {p_name}")
+                ext_count += 1
+                breaches.append(f"Unauthorized external socket to {r_ip}:{r_port} by {p_name}")
 
-            if socket_idx <= 20:
-                sockets_list.append(SocketEntry(
-                    id=f"s-{socket_idx}",
-                    pid=conn.pid,
-                    process_name=p_name,
-                    local_address=format_endpoint(l_ip, l_port),
-                    remote_address=format_endpoint(r_ip, r_port),
-                    tier=tier,
-                    status=conn.status,
-                    security_verdict=verdict
-                ))
+            sockets_list.append(SocketEntry(
+                id=f"wb-sock-{socket_idx}",
+                pid=conn.pid,
+                process_name=p_name,
+                local_address=format_endpoint(l_ip, l_port),
+                remote_address=format_endpoint(r_ip, r_port),
+                tier=tier,
+                status=conn.status,
+                security_verdict=verdict
+            ))
             socket_idx += 1
 
-        self.localhost_packets += 2
+        self.localhost_packets += 1
         if lan_count > 0:
             self.lan_hotspot_packets += 1
 
