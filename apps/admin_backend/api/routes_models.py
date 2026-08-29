@@ -34,6 +34,13 @@ async def get_vram_telemetry():
     """
     return model_manager.get_vram_telemetry()
 
+@router.get("/swaps", response_model=List[SwapEvent])
+async def get_swap_history():
+    """
+    Returns the real-time LRU model swapping and eviction event logs.
+    """
+    return model_manager.swap_history
+
 @router.post("/swap", response_model=SwapEvent)
 async def swap_model(request: SwapRequest):
     """
