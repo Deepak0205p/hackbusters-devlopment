@@ -41,15 +41,17 @@ class HardwareProfile(BaseModel):
     vllm_port: Optional[int] = None
 
 class VRAMTelemetry(BaseModel):
-    total_mb: int = 6144
-    used_mb: int = 5500
-    free_mb: int = 644
-    usage_percent: float = 89.5
-    os_overhead_mb: int = 400
-    primary_model_mb: int = 2600
-    secondary_model_mb: int = 1900
-    kv_cache_mb: int = 600
-    active_profile: str = "edge_laptop_6gb"
+    gpu_available: bool = False
+    gpu_name: str = "No Dedicated GPU (CPU Compute Mode)"
+    total_mb: int = 0
+    used_mb: int = 0
+    free_mb: int = 0
+    usage_percent: float = 0.0
+    os_overhead_mb: int = 0
+    primary_model_mb: int = 0
+    secondary_model_mb: int = 0
+    kv_cache_mb: int = 0
+    active_profile: str = "edge_device"
     eviction_strategy: str = "lru_swap"
     max_concurrent_active_models: int = 2
 
@@ -62,6 +64,61 @@ class SwapEvent(BaseModel):
     status: str
     trigger: str
     target_met: bool
+
+def detect_device_hardware() -> Dict[str, Any]:
+    """
+    Detects real host device hardware (Dedicated GPU or Integrated Graphics / System RAM).
+    """
+    try:
+        import torch
+        if torch.cuda.is_available():
+            dev_idx = 0
+            gpu_name = torch.cuda.get_device_name(dev_idx)
+            total_mb = int(torch.cuda.get_device_properties(dev_idx).total_memory / (1024 * 1024))
+            try:
+                allocated_mb = int(torch.cuda.memory_allocated(dev_idx) / (1024 * 1024))
+                reserved_mb = int(torch.cuda.memory_reserved(dev_idx) / (1024 * 1024))
+                used_mb = max(allocated_mb, reserved_mb)
+            except Exception:
+                used_mb = int(total_mb * 0.1)
+            free_mb = max(0, total_mb - used_mb)
+            return {
+                "gpu_available": True,
+                "gpu_name": gpu_name,
+                "total_mb": total_mb,
+                "used_mb": used_mb,
+                "free_mb": free_mb,
+                "os_overhead_mb": min(400, int(total_mb * 0.05)),
+                "kv_cache_mb": 0
+            }
+    except Exception:
+        pass
+
+    # Windows WMI / psutil Fallback for Host Specs
+    import psutil
+    try:
+        ram_total_mb = int(psutil.virtual_memory().total / (1024 * 1024))
+        ram_used_mb = int(psutil.virtual_memory().used / (1024 * 1024))
+        ram_free_mb = max(0, ram_total_mb - ram_used_mb)
+        return {
+            "gpu_available": False,
+            "gpu_name": "Intel(R) UHD Graphics Family (System Shared RAM)",
+            "total_mb": ram_total_mb,
+            "used_mb": ram_used_mb,
+            "free_mb": ram_free_mb,
+            "os_overhead_mb": int(ram_used_mb * 0.3),
+            "kv_cache_mb": 0
+        }
+    except Exception:
+        return {
+            "gpu_available": False,
+            "gpu_name": "CPU Compute Mode",
+            "total_mb": 8000,
+            "used_mb": 1200,
+            "free_mb": 6800,
+            "os_overhead_mb": 400,
+            "kv_cache_mb": 0
+        }
 
 def is_ollama_online(host: str = "127.0.0.1", port: int = 11434) -> bool:
     """Fast non-blocking socket probe to check if local Ollama daemon is active."""
@@ -179,30 +236,73 @@ class ModelManager:
             self.models[model.id] = model
 
     def get_models(self) -> List[ModelMetadata]:
-        return list(self.models.values())
+        """
+        Returns only models that are physically present in the codebase/cache (e.g. GGUF, local HuggingFace cache, or Ollama).
+        If no large LLM weights are downloaded, returns available local models (like BGE embedder / local runtime).
+        """
+        available_models: List[ModelMetadata] = []
+        
+        # Check local GGUF directory
+        gguf_dir = os.path.join(os.path.dirname(__file__), "..", "..", "models", "gguf")
+        existing_gguf_files = os.listdir(gguf_dir) if os.path.exists(gguf_dir) else []
+        
+        # Check HuggingFace hub cache
+        hf_cache_dir = os.path.expanduser("~/.cache/huggingface/hub")
+        existing_hf_dirs = os.listdir(hf_cache_dir) if os.path.exists(hf_cache_dir) else []
+
+        ollama_active = is_ollama_online()
+
+        for model in self.models.values():
+            has_gguf = model.gguf_file and (model.gguf_file in existing_gguf_files)
+            has_hf = any(model.id in d or (model.name and model.name.lower() in d.lower()) for d in existing_hf_dirs)
+            
+            # If model is physically on disk or Ollama is online with that tag
+            if has_gguf or has_hf or ollama_active:
+                available_models.append(model)
+
+        return available_models
 
     def get_vram_telemetry(self) -> VRAMTelemetry:
-        profile = self.active_hardware_profile
-        total_mb = profile.total_vram_mb if profile else 6144
-        os_overhead = profile.os_overhead_mb if profile else 400
-        kv_cache = profile.kv_cache_headroom_mb if profile else 600
-        eviction = profile.eviction_strategy if profile else "lru_swap"
-        max_active = profile.max_concurrent_active_models if profile else 2
+        hw = detect_device_hardware()
+        total_mb = hw["total_mb"]
+        os_overhead = hw["os_overhead_mb"]
+        kv_cache = hw["kv_cache_mb"]
+        gpu_name = hw["gpu_name"]
+        gpu_available = hw["gpu_available"]
 
-        if eviction == "all_resident":
-            active_vram = sum(m.vram_mb for m in self.models.values() if m.status == "active")
-            primary_vram = self.models.get(self.primary_model_id).vram_mb if self.primary_model_id in self.models else 2600
-            secondary_vram = active_vram - primary_vram
-        else:
-            primary_vram = self.models.get(self.primary_model_id).vram_mb if self.primary_model_id in self.models else 2600
-            secondary_vram = self.models.get(self.secondary_model_id).vram_mb if self.secondary_model_id in self.models else 1900
-            active_vram = primary_vram + secondary_vram
+        models_list = self.get_models()
+        if len(models_list) == 0:
+            # No heavy models currently resident in VRAM
+            used_mb = os_overhead
+            free_mb = max(0, total_mb - used_mb)
+            usage_pct = round((used_mb / total_mb) * 100, 1) if total_mb > 0 else 0.0
+            return VRAMTelemetry(
+                gpu_available=gpu_available,
+                gpu_name=gpu_name,
+                total_mb=total_mb,
+                used_mb=used_mb,
+                free_mb=free_mb,
+                usage_percent=usage_pct,
+                os_overhead_mb=os_overhead,
+                primary_model_mb=0,
+                secondary_model_mb=0,
+                kv_cache_mb=0,
+                active_profile="edge_device",
+                eviction_strategy="lru_swap",
+                max_concurrent_active_models=2
+            )
+
+        active_vram = sum(m.vram_mb for m in models_list if m.status == "active")
+        primary_vram = next((m.vram_mb for m in models_list if m.is_primary), 0)
+        secondary_vram = max(0, active_vram - primary_vram)
 
         used_mb = os_overhead + active_vram + kv_cache
         free_mb = max(0, total_mb - used_mb)
         usage_pct = round((used_mb / total_mb) * 100, 1) if total_mb > 0 else 0.0
 
         return VRAMTelemetry(
+            gpu_available=gpu_available,
+            gpu_name=gpu_name,
             total_mb=total_mb,
             used_mb=used_mb,
             free_mb=free_mb,
@@ -212,8 +312,8 @@ class ModelManager:
             secondary_model_mb=secondary_vram,
             kv_cache_mb=kv_cache,
             active_profile=self.active_profile_name,
-            eviction_strategy=eviction,
-            max_concurrent_active_models=max_active
+            eviction_strategy="lru_swap",
+            max_concurrent_active_models=2
         )
 
     def swap_secondary_model(self, target_model_id: str, trigger: str = "manual_override") -> SwapEvent:

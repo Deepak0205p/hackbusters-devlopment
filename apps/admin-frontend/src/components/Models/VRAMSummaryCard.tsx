@@ -10,8 +10,9 @@ import { Cpu } from 'lucide-react';
 export function VRAMSummaryCard() {
   const { vram } = useModelStore();
 
-  const usedPercentage = Math.round((vram.used_mb / vram.total_mb) * 100);
-  const isBudgetSafe = vram.used_mb <= 6000;
+  const totalMb = vram.total_mb > 0 ? vram.total_mb : 8000;
+  const usedPercentage = Math.round((vram.used_mb / totalMb) * 100);
+  const isBudgetSafe = vram.used_mb <= totalMb * 0.9;
 
   return (
     <Card className="border-[#262626] bg-[#111111]">
@@ -19,12 +20,17 @@ export function VRAMSummaryCard() {
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
             <Cpu className="h-4 w-4 text-[#888888]" />
-            <CardTitle className="text-xs font-semibold tracking-wider text-[#ededed]">
-              GPU VRAM Budget (6.0 GB Baseline)
-            </CardTitle>
+            <div>
+              <CardTitle className="text-xs font-semibold tracking-wider text-[#ededed]">
+                {vram.gpu_available ? 'Dedicated GPU VRAM Budget' : 'Host Device Compute & Memory'}
+              </CardTitle>
+              <p className="text-[11px] font-mono text-[#888888] mt-0.5">
+                Hardware: <span className="text-[#ededed]">{vram.gpu_name || 'Detecting hardware...'}</span>
+              </p>
+            </div>
           </div>
-          <Badge variant={isBudgetSafe ? "success" : "destructive"}>
-            {isBudgetSafe ? "Healthy (<6.0 GB)" : "Limit Exceeded"}
+          <Badge variant={vram.gpu_available ? "success" : "secondary"}>
+            {vram.gpu_available ? "GPU ACCELERATED" : "CPU / SHARED MEMORY"}
           </Badge>
         </div>
       </CardHeader>

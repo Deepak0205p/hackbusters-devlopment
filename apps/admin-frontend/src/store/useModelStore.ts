@@ -29,6 +29,8 @@ export interface SwapEvent {
 }
 
 export interface VRAMTelemetry {
+  gpu_available?: boolean;
+  gpu_name?: string;
   total_mb: number;
   used_mb: number;
   free_mb: number;

@@ -11,6 +11,17 @@ import { ArrowRightLeft, CheckCircle2 } from 'lucide-react';
 export function ModelCardGrid() {
   const { models, activePrimaryId, activeSecondaryId, isSwapping, triggerModelSwap } = useModelStore();
 
+  if (models.length === 0) {
+    return (
+      <div className="p-8 text-center rounded-md bg-[#0a0a0a] border border-[#262626] font-mono text-xs text-[#888888] space-y-2">
+        <p className="text-[#ededed] font-semibold">No LLM weights (.gguf / Ollama models) detected in local codebase</p>
+        <p className="text-[#666666] text-[11px]">
+          Place GGUF models in <code className="text-[#00e599]">/models/gguf</code> or pull via Ollama to activate dynamic LLM orchestration.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
       {models.map((model) => {
