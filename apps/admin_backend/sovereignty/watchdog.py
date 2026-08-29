@@ -88,7 +88,7 @@ class SocketWatchdog:
         except (psutil.AccessDenied, PermissionError):
             connections = []
 
-        # 1. Discover all workbench-owned PIDs (FastAPI, child workers, Ollama, Node frontends)
+        # 1. Discover ONLY server engine PIDs listening on workbench ports (8000, 3000, 3001, 11434)
         workbench_ports = {8000, 3000, 3001, 11434}
         workbench_pids = set(self.workbench_pids)
         current_pid = os.getpid()
@@ -101,17 +101,32 @@ class SocketWatchdog:
         except Exception:
             pass
 
-        # Also identify PIDs bound to workbench ports (3000, 3001, 8000, 11434)
+        # Identify ONLY server daemon PIDs (listening locally on our ports, not outbound client browsers)
         for conn in connections:
             l_port = conn.laddr.port if conn.laddr else 0
-            r_port = conn.raddr.port if conn.raddr else 0
-            if (l_port in workbench_ports or r_port in workbench_ports) and conn.pid:
-                workbench_pids.add(conn.pid)
+            if l_port in workbench_ports and conn.pid:
+                # Exclude browser binaries if they somehow bind locally
+                try:
+                    proc = psutil.Process(conn.pid)
+                    proc_name = proc.name().lower()
+                    if not any(b in proc_name for b in ['chrome', 'msedge', 'firefox', 'brave', 'opera']):
+                        workbench_pids.add(conn.pid)
+                except Exception:
+                    pass
 
-        # 2. Iterate and audit ONLY workbench-related socket connections
+        # 2. Iterate and audit ONLY workbench server daemon socket connections
         socket_idx = 1
         for conn in connections:
             if not conn.pid or conn.pid not in workbench_pids:
+                continue
+
+            try:
+                proc = psutil.Process(conn.pid)
+                proc_name = proc.name().lower()
+                # Double check: never track client browsers as server sockets
+                if any(b in proc_name for b in ['chrome', 'msedge', 'firefox', 'brave', 'opera']):
+                    continue
+            except Exception:
                 continue
 
             l_ip = conn.laddr.ip if conn.laddr else "0.0.0.0"
