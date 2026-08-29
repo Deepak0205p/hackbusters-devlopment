@@ -31,6 +31,14 @@ export function RagObservatory() {
   const [targetFormat, setTargetFormat] = useState('docx');
   const [isConverting, setIsConverting] = useState(false);
   const [convertStatus, setConvertStatus] = useState<string | null>(null);
+  const [existingFiles, setExistingFiles] = useState<any[]>([]);
+
+  // Search State
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isSearching, setIsSearching] = useState(false);
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [hasSearched, setHasSearched] = useState(false);
+
   // Sub-Tab Selection State ('ingest' | 'converter') synced with URL Hash #ingest / #converter
   const [activeTab, setActiveTab] = useState<'ingest' | 'converter'>('ingest');
 
