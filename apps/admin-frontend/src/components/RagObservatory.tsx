@@ -31,13 +31,29 @@ export function RagObservatory() {
   const [targetFormat, setTargetFormat] = useState('docx');
   const [isConverting, setIsConverting] = useState(false);
   const [convertStatus, setConvertStatus] = useState<string | null>(null);
-  const [existingFiles, setExistingFiles] = useState<any[]>([]);
+  // Sub-Tab Selection State ('ingest' | 'converter') synced with URL Hash #ingest / #converter
+  const [activeTab, setActiveTab] = useState<'ingest' | 'converter'>('ingest');
 
-  // Search State
-  const [searchQuery, setSearchQuery] = useState('');
-  const [isSearching, setIsSearching] = useState(false);
-  const [searchResults, setSearchResults] = useState<any[]>([]);
-  const [hasSearched, setHasSearched] = useState(false);
+  useEffect(() => {
+    // Sync tab from URL Hash on mount or hash change
+    const syncFromHash = () => {
+      const hash = window.location.hash.toLowerCase().replace('#', '');
+      if (hash === 'converter' || hash === 'format-converter') {
+        setActiveTab('converter');
+      } else if (hash === 'ingest' || hash === 'rag-ingest') {
+        setActiveTab('ingest');
+      }
+    };
+
+    syncFromHash();
+    window.addEventListener('hashchange', syncFromHash);
+    return () => window.removeEventListener('hashchange', syncFromHash);
+  }, []);
+
+  const changeTab = (tab: 'ingest' | 'converter') => {
+    setActiveTab(tab);
+    window.location.hash = tab === 'converter' ? 'converter' : 'ingest';
+  };
 
   useEffect(() => {
     // Fetch live codebase file inventory
@@ -133,9 +149,6 @@ export function RagObservatory() {
     }
   };
 
-  // Sub-Tab Selection State ('ingest' | 'converter')
-  const [activeTab, setActiveTab] = useState<'ingest' | 'converter'>('ingest');
-
   return (
     <div className="space-y-4">
       {/* Header Banner */}
@@ -149,11 +162,11 @@ export function RagObservatory() {
         </p>
       </div>
 
-      {/* Sub-Tab Navigation Strip */}
+      {/* Sub-Tab Navigation Strip (Synced with URL Hash /rag#ingest and /rag#converter) */}
       <div className="flex items-center gap-2 border-b border-[#262626] pb-2">
         <button
           type="button"
-          onClick={() => setActiveTab('ingest')}
+          onClick={() => changeTab('ingest')}
           className={`flex items-center gap-2 px-3.5 py-2 rounded-md text-xs font-medium transition-all ${
             activeTab === 'ingest'
               ? 'bg-[#171717] text-[#0070f3] border border-[#0070f3]/40 shadow-sm font-semibold'
@@ -162,11 +175,12 @@ export function RagObservatory() {
         >
           <UploadCloud className="w-3.5 h-3.5" />
           <span>1. Ingest SOP / MOP / Security Policy into RAG</span>
+          <span className="text-[10px] font-mono text-[#666666] ml-1">#ingest</span>
         </button>
 
         <button
           type="button"
-          onClick={() => setActiveTab('converter')}
+          onClick={() => changeTab('converter')}
           className={`flex items-center gap-2 px-3.5 py-2 rounded-md text-xs font-medium transition-all ${
             activeTab === 'converter'
               ? 'bg-[#171717] text-[#00e599] border border-[#00e599]/40 shadow-sm font-semibold'
@@ -175,6 +189,7 @@ export function RagObservatory() {
         >
           <Download className="w-3.5 h-3.5" />
           <span>2. Universal Document Format Converter</span>
+          <span className="text-[10px] font-mono text-[#666666] ml-1">#converter</span>
         </button>
       </div>
 
