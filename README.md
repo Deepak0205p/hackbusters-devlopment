@@ -1,4 +1,4 @@
-# HackBuster: Sovereign On-Premise Agentic AI Workbench (SIH26117)
+﻿# HackBuster: Sovereign On-Premise Agentic AI Workbench (SIH26117)
 
 [![Python](https://img.shields.io/badge/Python-3.11-3776AB.svg?style=flat&logo=python&logoColor=white)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.111.0-009688.svg?style=flat&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
@@ -9,6 +9,17 @@
 [![Compliance](https://img.shields.io/badge/Compliance-100%25%20Air--Gapped-success.svg?style=flat)]()
 
 An enterprise-grade, **100% air-gapped, on-premise agentic AI workstation** built for industrial operations (e.g., MRPL / ONGC / critical infrastructure). It runs completely offline on standard hardware ($\le 6.0\text{ GB}$ VRAM) with zero external internet egress.
+
+---
+
+## 🌐 Port Allocation & Access Rules (Fixed Standard)
+
+| Service | Port | Local URL | Role |
+| :--- | :--- | :--- | :--- |
+| **Public Chat UI** | `3000` | [`http://localhost:3000/`](http://localhost:3000/) | Next.js Chat Frontend (Client interaction) |
+| **Admin Observatory UI** | `3001` | [`http://localhost:3001/`](http://localhost:3001/) | Next.js Admin Dashboard (Telemetry & Hardware Observatory) |
+| **Python Backend Gateway** | `8000` | [`http://localhost:8000/`](http://localhost:8000/) | FastAPI Application, Agent loop, RAG & WebSocket APIs |
+| **Local LLM Engine** | `11434` | [`http://localhost:11434/`](http://localhost:11434/) | Ollama Daemon |
 
 ---
 
@@ -27,38 +38,34 @@ An enterprise-grade, **100% air-gapped, on-premise agentic AI workstation** buil
 
 ```mermaid
 graph TD
-    A["👤 User / Judge"] -->|HTTP / WebSocket :8000| B["FastAPI Gateway (apps/admin_backend)"]
+    User["👤 Public User / Operator"] -->|Port 3000| ChatUI["🎨 Public Chat UI (apps/chat-frontend)"]
+    Admin["🛡 System Admin / Jury"] -->|Port 3001| AdminUI["📊 Admin Observatory UI (apps/admin-frontend)"]
     
-    subgraph UI_Layer ["🎨 UI Layer (Static Next.js 14 Exports)"]
-        C["Public Chat UI (/ -> apps/chat-frontend/out)"]
-        D["Admin Observatory (/admin/ -> apps/admin-frontend/out)"]
+    ChatUI -->|REST / WebSocket Proxy :8000| Backend["⚡ Python FastAPI Backend (apps/admin_backend)"]
+    AdminUI -->|REST / WebSocket Proxy :8000| Backend
+    
+    subgraph Intelligence_Layer ["🧠 Backend Intelligence & Agent Core (:8000)"]
+        Router["Two-Stage Router (Regex + Semantic)"]
+        Agent["LangChain ReAct Engine"]
+        VRAMMgr["LRU Dynamic Dual-Slot VRAM Manager"]
+        ChromaStore["ChromaDB Vector Store (BAAI/bge-small-en-v1.5)"]
+        OCR["Local OCR Pipeline (PaddleOCR / Tesseract)"]
+        OfficeGen["Office Generator (Docx, Xlsx, PPTX)"]
     end
     
-    B --> C
-    B --> D
-    
-    subgraph Intelligence_Layer ["🧠 Backend Intelligence & Agent Core"]
-        E["Two-Stage Router (Regex + Semantic)"]
-        F["LangChain ReAct Engine"]
-        G["LRU Dynamic Dual-Slot VRAM Manager"]
-        H["ChromaDB Vector Store (BAAI/bge-small-en-v1.5)"]
-        I["Local OCR Pipeline (PaddleOCR / Tesseract)"]
-        J["Office Generator (Docx, Xlsx, PPTX)"]
-    end
-    
-    B --> E --> F
-    F --> G --> K["Local Ollama Service (:11434)"]
-    F --> H
-    F --> I
-    F --> J
-    F --> L["Docker Sandbox (--network none)"]
+    Backend --> Router --> Agent
+    Agent --> VRAMMgr --> Ollama["Local Ollama Service (:11434)"]
+    Agent --> ChromaStore
+    Agent --> OCR
+    Agent --> OfficeGen
+    Agent --> Sandbox["Docker Sandbox (--network none)"]
     
     subgraph Sovereignty_Daemon ["🛡 Air-Gap & Sovereignty Daemon"]
-        M["Socket Watchdog (psutil - WAN Egress = 0)"]
-        N["SHA-256 Tamper-Evident Audit Ledger"]
+        Watchdog["Socket Watchdog (psutil - WAN Egress = 0)"]
+        AuditLedger["SHA-256 Tamper-Evident Audit Ledger"]
     end
-    B --> M
-    B --> N
+    Backend --> Watchdog
+    Backend --> AuditLedger
 ```
 
 ---
@@ -67,8 +74,8 @@ graph TD
 
 | Domain | Technology / Library | Version | Description / Role |
 | :--- | :--- | :--- | :--- |
-| **Backend Framework** | **Python / FastAPI** | `3.11` / `0.111.0` | Asynchronous API, WebSocket streaming & static file server |
-| **ASGI Server** | **Uvicorn** | `0.30.1` | ASGI server listening on `0.0.0.0:8000` |
+| **Backend Framework** | **Python / FastAPI** | `3.11` / `0.111.0` | Asynchronous API, WebSocket streaming & agent gateway |
+| **ASGI Server** | **Uvicorn** | `0.30.1` | ASGI server running backend on `0.0.0.0:8000` |
 | **Agent Framework** | **LangChain** | `0.2.11` | Strict ReAct (Reason + Act) loop execution |
 | **Model Runtime** | **Ollama** | Latest | Local GGUF open-weight model serving & dynamic VRAM swapping |
 | **Vector DB & RAG** | **ChromaDB** | `0.5.4` | Embedded local vector store in `data/chroma_db/` |
@@ -77,7 +84,8 @@ graph TD
 | **Deliverables** | **python-docx / openpyxl / pptx**| `1.1.2` / `3.1.5` / `0.6.23`| Auto-generates `.docx`, `.xlsx`, and `.pptx` documents |
 | **Execution Sandbox** | **Docker Engine** | `24.0+` | `python:3.11-slim` container with `--network none` |
 | **Sovereignty Daemon**| **psutil** | `6.0.0` | Real-time network socket auditor & SHA-256 audit ledger |
-| **Frontends** | **Next.js (App Router)** | `14.2.5` | Dual frontends exported as pure static assets (`output: 'export'`) |
+| **Chat Frontend** | **Next.js 14 (Port 3000)** | `14.2.5` | End-user conversational interface |
+| **Admin Frontend** | **Next.js 14 (Port 3001)** | `14.2.5` | Real-time system observatory dashboard |
 | **Styling & Icons** | **Tailwind CSS / Lucide** | `3.4.4` / `0.395.0` | Dark industrial design theme (`#020617`, `#0f172a`, emerald/amber) |
 | **State Management** | **Zustand** | `4.5.4` | In-memory reactive state stores (Chat, Model, Sovereignty) |
 
@@ -92,20 +100,18 @@ G:/SIH/p/
 ├── AGENT.md                            # Binding operational and engineering rules for AI/devs
 │
 ├── apps/                               # Application Core Layer
-│   ├── chat-frontend/                  # Public Conversational Chat Interface (Next.js 14)
+│   ├── chat-frontend/                  # Public Conversational Chat Interface (Port 3000)
 │   │   ├── src/                        # React components, pages & Zustand stores
-│   │   ├── out/                        # Static HTML/JS build (served at http://host:8000/)
-│   │   ├── package.json                # Frontend dependencies
-│   │   └── next.config.mjs             # Static export configuration
+│   │   ├── package.json                # Scripts: "dev": "next dev -p 3000"
+│   │   └── next.config.mjs             # Next.js configuration & API proxying
 │   │
-│   ├── admin-frontend/                 # Admin Observatory Dashboard (Next.js 14)
+│   ├── admin-frontend/                 # Admin Observatory Dashboard (Port 3001)
 │   │   ├── src/                        # 6-Screen observatory components & live charts
-│   │   ├── out/                        # Static HTML/JS build (served at http://host:8000/admin/)
-│   │   ├── package.json                # Admin dependencies
-│   │   └── next.config.mjs             # Static export configuration
+│   │   ├── package.json                # Scripts: "dev": "next dev -p 3001"
+│   │   └── next.config.mjs             # Next.js configuration
 │   │
-│   └── admin_backend/                  # Unified FastAPI Gateway & Intelligence Layer
-│       ├── main.py                     # App entry point, CORS, WebSockets & Static mounts
+│   └── admin_backend/                  # Unified FastAPI Gateway (Port 8000)
+│       ├── main.py                     # App entry point, CORS, WebSockets & APIs
 │       ├── requirements.txt            # Python dependencies
 │       ├── config/                     # Settings & environment configurations
 │       ├── models/                     # Dual-slot LRU VRAM memory manager & Ollama client
@@ -145,16 +151,17 @@ G:/SIH/p/
 
 ## 🔍 Folder-by-Folder Guide
 
-### 1. `apps/chat-frontend/` (Public Chat Interface)
+### 1. `apps/chat-frontend/` (Port 3000)
 - **Role:** The primary end-user conversational interaction interface.
+- **Port:** Runs on **`http://localhost:3000/`**
 - **Key Modules:**
   - `src/components/chat/`: Message bubbles, streaming markdown renderer, tool execution cards.
   - `src/components/deliverables/`: In-browser preview & download cards for `.docx`, `.xlsx`, and `.pptx`.
   - `src/store/useChatStore.ts`: Manages chat history, active websocket stream, and UI state.
-- **Build Mode:** Pre-compiled via `output: 'export'` into `apps/chat-frontend/out`.
 
-### 2. `apps/admin-frontend/` (Admin Observatory Dashboard)
+### 2. `apps/admin-frontend/` (Port 3001)
 - **Role:** Operator & Jury technical observatory showing real-time under-the-hood engine state.
+- **Port:** Runs on **`http://localhost:3001/`**
 - **Key Screens:**
   1. **VRAM Status Panel:** Live dual-slot VRAM memory gauges & LRU swapping metrics.
   2. **Code Sandbox Monitor:** Real-time Docker AST execution logs and resource caps.
@@ -163,8 +170,9 @@ G:/SIH/p/
   5. **Model Registry Manager:** Inspect and hot-reload `models.yaml`.
   6. **Jury Connect:** Live QR code generator for multi-device LAN/Hotspot pairing.
 
-### 3. `apps/admin_backend/` (FastAPI Intelligence Gateway)
-- **Role:** Single unified backend server hosting the intelligence loop, serving both static frontends, and exposing APIs over port `8000`.
+### 3. `apps/admin_backend/` (Port 8000)
+- **Role:** Single unified Python FastAPI server hosting the intelligence loop, agent tools, RAG, and APIs.
+- **Port:** Runs on **`http://localhost:8000/`**
 - **Key Sub-packages:**
   - `models/`: Manages model swapping in GPU memory so VRAM never exceeds 6.0 GB.
   - `core/`: Routes user queries (Direct Chat vs RAG Search vs Python Calculation vs Deliverable Synthesis).
@@ -200,7 +208,7 @@ cd hackbusters-devlopment
 
 ---
 
-### Step 2: Configure Python Virtual Environment & Dependencies
+### Step 2: Set Up Python Backend (Port 8000)
 
 ```bash
 # Windows (PowerShell)
@@ -213,79 +221,58 @@ source venv/bin/activate
 
 # Install backend dependencies
 pip install -r apps/admin_backend/requirements.txt
+
+# Run FastAPI Backend Server
+python -m uvicorn apps.admin_backend.main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
 ---
 
-### Step 3: Start Ollama Local Service
+### Step 3: Start Ollama Local Service (Port 11434)
 
-1. Start the Ollama local daemon (if not already running):
+1. Start the Ollama daemon:
    ```bash
    ollama serve
    ```
-2. Ensure your required local models configured in `models/models.yaml` are pulled and available in Ollama:
+2. Verify models from `models/models.yaml` are loaded:
    ```bash
    ollama list
    ```
 
 ---
 
-### Step 4: Build Frontends (Static Export)
+### Step 4: Run Public Chat Frontend (Port 3000)
 
-Build both frontend apps into their respective `out/` folders:
-
+In a new terminal window:
 ```bash
-# 1. Build Chat Frontend
 cd apps/chat-frontend
 npm install
-npm run build
-cd ../..
+npm run dev
+```
+👉 Open **`http://localhost:3000`** in your browser.
 
-# 2. Build Admin Frontend
+---
+
+### Step 5: Run Admin Observatory Frontend (Port 3001)
+
+In another new terminal window:
+```bash
 cd apps/admin-frontend
 npm install
-npm run build
-cd ../..
+npm run dev
 ```
-
-> **Developer Tip (Live Development Mode):**  
-> If you are actively developing frontend UI components with hot-reload, run `npm run dev` inside `apps/chat-frontend` (runs on `http://localhost:3000`) or `apps/admin-frontend` (runs on `http://localhost:3001`). `next.config.mjs` has built-in rewrites to proxy `/api/*` requests to port `8000`.
-
----
-
-### Step 5: Run the Unified Backend Server
-
-From the **project root directory**:
-
-```bash
-python -m uvicorn apps.admin_backend.main:app --host 0.0.0.0 --port 8000 --reload
-```
-
----
-
-### Step 6: Access the Application
-
-- **💬 Public Chat App:** [http://localhost:8000/](http://localhost:8000/)
-- **🛡 Admin Observatory Dashboard:** [http://localhost:8000/admin/](http://localhost:8000/admin/)
-- **📖 FastAPI Swagger Documentation:** [http://localhost:8000/docs](http://localhost:8000/docs)
-- **❤️ Health Check:** [http://localhost:8000/api/health](http://localhost:8000/api/health)
+👉 Open **`http://localhost:3001`** in your browser.
 
 ---
 
 ## 🤝 Developer Guidelines & Contribution Workflow
 
-1. **Zero External API Calls at Runtime:** Never add imports or calls to remote AI APIs (OpenAI, Anthropic, Gemini API, Azure). All intelligence must run via local Ollama or local embedded models.
-2. **Strict Folder Boundary:**
+1. **Port Separation Invariant:**
+   - Public Chat: **Port 3000**
+   - Admin Observatory: **Port 3001**
+   - Python Backend: **Port 8000**
+2. **Zero External API Calls at Runtime:** Never add imports or calls to remote AI APIs (OpenAI, Anthropic, Gemini API, Azure). All intelligence must run via local Ollama or local embedded models.
+3. **Strict Folder Boundary:**
    - Python code belongs strictly in `apps/admin_backend/`.
    - React/TypeScript code belongs strictly in `apps/chat-frontend/` or `apps/admin-frontend/`.
-3. **Commit Clean Code:** Do not commit `node_modules`, `.next/`, or `.env` files. Ensure `.gitignore` is respected before pushing:
-   ```bash
-   git status
-   git add .
-   git commit -m "feat(module): descriptive commit message"
-   git push origin <your-branch-name>
-   ```
-4. **Refer to Project Documentation:**
-   - Architecture & memory details: [`docs/architecture.md`](docs/architecture.md)
-   - PRD & problem statement: [`docs/PRD.md`](docs/PRD.md)
-   - Presentation runbook: [`docs/DEMO_DAY_RUNBOOK.md`](docs/DEMO_DAY_RUNBOOK.md)
+4. **Commit Clean Code:** Do not commit `node_modules`, `.next/`, or `.env` files.
