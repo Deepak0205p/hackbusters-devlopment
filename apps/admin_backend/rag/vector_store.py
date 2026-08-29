@@ -278,3 +278,6 @@ class ChromaVectorStore:
 
 # Global Singleton
 chroma_store = ChromaVectorStore()
+
+def get_vector_store():
+    return chroma_store
