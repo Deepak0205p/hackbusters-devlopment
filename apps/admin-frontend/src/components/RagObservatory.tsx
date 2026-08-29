@@ -401,28 +401,122 @@ export function RagObservatory() {
             </div>
           </div>
 
-          {/* Existing Document Formats & Codebase File Library */}
+          {/* Supported File Formats & Conversion Matrix */}
+          <div className="rounded-md bg-[#0a0a0a] border border-[#262626] p-5 space-y-4">
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#262626] pb-3">
+              <div>
+                <h3 className="text-xs font-semibold text-[#ededed] flex items-center gap-2">
+                  <Layers className="w-3.5 h-3.5 text-[#0070f3]" />
+                  Supported Document Formats &amp; Engine Specifications
+                </h3>
+                <p className="text-[11px] text-[#888888] mt-0.5">
+                  Universal multi-format parser and generator running 100% on-premise without external cloud APIs.
+                </p>
+              </div>
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[#111111] text-[#00e599] border border-[#262626]">
+                6 NATIVE FORMATS
+              </span>
+            </div>
+
+            {/* Format Cards Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+              {[
+                {
+                  ext: 'DOCX',
+                  label: 'Microsoft Word Document',
+                  mime: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                  engine: 'python-docx',
+                  color: 'text-[#0070f3] border-[#0070f3]/30 bg-[#0070f3]/10',
+                  icon: FileText,
+                  useCase: 'Refinery Inspection Notes, SOP Formats & Approval Memorandums'
+                },
+                {
+                  ext: 'XLSX',
+                  label: 'Microsoft Excel Spreadsheet',
+                  mime: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                  engine: 'openpyxl & pandas',
+                  color: 'text-[#00e599] border-[#00e599]/30 bg-[#00e599]/10',
+                  icon: FileSpreadsheet,
+                  useCase: 'Hydraulic Calculations, Asset Registers & Multi-tab Data Sheets'
+                },
+                {
+                  ext: 'PPTX',
+                  label: 'PowerPoint Presentation',
+                  mime: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+                  engine: 'python-pptx',
+                  color: 'text-[#f5a623] border-[#f5a623]/30 bg-[#f5a623]/10',
+                  icon: Presentation,
+                  useCase: 'Executive Turnaround Briefings & Safety Training Slide Decks'
+                },
+                {
+                  ext: 'PDF',
+                  label: 'Portable Document Format',
+                  mime: 'application/pdf',
+                  engine: 'pypdf & PyMuPDF (fitz)',
+                  color: 'text-[#e5484d] border-[#e5484d]/30 bg-[#e5484d]/10',
+                  icon: FileText,
+                  useCase: 'Statutory Policies, Contractor Safety Guidelines & Audit Reports'
+                },
+                {
+                  ext: 'TXT / MD',
+                  label: 'Plain Text & Markdown',
+                  mime: 'text/plain, text/markdown',
+                  engine: 'Native UTF-8 Stream Parser',
+                  color: 'text-[#ededed] border-[#333333] bg-[#1a1a1a]',
+                  icon: FileCode,
+                  useCase: 'Raw Semantic Clauses, System Logs & Technical Transcripts'
+                },
+                {
+                  ext: 'PY / CODE',
+                  label: 'Executable Python Calculation',
+                  mime: 'text/x-python',
+                  engine: 'Docker Sandbox (python:3.11-slim)',
+                  color: 'text-[#a78bfa] border-[#a78bfa]/30 bg-[#a78bfa]/10',
+                  icon: FileCode,
+                  useCase: 'Deterministic Engineering & Hydraulic Simulation Scripts'
+                },
+              ].map((fmt) => {
+                const Icon = fmt.icon;
+                return (
+                  <div key={fmt.ext} className="p-3.5 rounded-md bg-[#111111] border border-[#262626] space-y-2 hover:border-[#333333] transition-colors">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Icon className="w-4 h-4 text-[#888888]" />
+                        <span className="text-xs font-semibold text-[#ededed]">{fmt.label}</span>
+                      </div>
+                      <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold border ${fmt.color}`}>
+                        .{fmt.ext}
+                      </span>
+                    </div>
+
+                    <p className="text-[11px] text-[#888888] leading-relaxed">
+                      {fmt.useCase}
+                    </p>
+
+                    <div className="pt-2 border-t border-[#1f1f1f] flex items-center justify-between text-[10px] font-mono text-[#666666]">
+                      <span>Engine: <span className="text-[#ededed]">{fmt.engine}</span></span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Physical Document Library */}
           <div className="rounded-md bg-[#0a0a0a] border border-[#262626] p-5 space-y-4">
             <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#262626] pb-3">
               <div>
                 <h3 className="text-xs font-semibold text-[#ededed] flex items-center gap-2">
                   <FileText className="w-3.5 h-3.5 text-[#0070f3]" />
-                  Codebase File Formats &amp; Physical Document Library
+                  Codebase Physical Documents Library
                 </h3>
                 <p className="text-[11px] text-[#888888] mt-0.5">
-                  Live inventory of all physical documents, manuals, spreadsheets, and scripts currently stored in local repository.
+                  Live inventory of all physical documents and manuals stored across repository directories.
                 </p>
               </div>
-
-              {/* Supported Format Tags */}
-              <div className="flex flex-wrap gap-1.5 font-mono text-[10px]">
-                <span className="px-2 py-0.5 rounded bg-[#171717] border border-[#333333] text-[#e5484d]">PDF</span>
-                <span className="px-2 py-0.5 rounded bg-[#171717] border border-[#333333] text-[#0070f3]">DOCX</span>
-                <span className="px-2 py-0.5 rounded bg-[#171717] border border-[#333333] text-[#00e599]">XLSX</span>
-                <span className="px-2 py-0.5 rounded bg-[#171717] border border-[#333333] text-[#f5a623]">PPTX</span>
-                <span className="px-2 py-0.5 rounded bg-[#171717] border border-[#333333] text-[#a78bfa]">PY</span>
-                <span className="px-2 py-0.5 rounded bg-[#171717] border border-[#333333] text-[#38bdf8]">PNG/P&amp;ID</span>
-              </div>
+              <span className="text-[10px] font-mono text-[#888888]">
+                Total: <span className="text-[#ededed]">{existingFiles.length} files</span>
+              </span>
             </div>
 
             {/* Live Document Table */}
