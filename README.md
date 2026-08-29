@@ -54,7 +54,7 @@ graph TD
     F --> L["Docker Sandbox (--network none)"]
     
     subgraph Sovereignty_Daemon ["🛡 Air-Gap & Sovereignty Daemon"]
-        M["Scapy Packet Sniffer (WAN Egress = 0)"]
+        M["Socket Watchdog (psutil - WAN Egress = 0)"]
         N["SHA-256 Tamper-Evident Audit Ledger"]
     end
     B --> M
@@ -76,7 +76,7 @@ graph TD
 | **OCR & Parsing** | **PaddleOCR / Tesseract** | `2.8.1` / `5.3+` | Offline multimodal document and P&ID schematic parsing |
 | **Deliverables** | **python-docx / openpyxl / pptx**| `1.1.2` / `3.1.5` / `0.6.23`| Auto-generates `.docx`, `.xlsx`, and `.pptx` documents |
 | **Execution Sandbox** | **Docker Engine** | `24.0+` | `python:3.11-slim` container with `--network none` |
-| **Sovereignty Daemon**| **Scapy / psutil** | `2.5.0` / `6.0.0` | Real-time network socket sniffer & SHA-256 audit ledger |
+| **Sovereignty Daemon**| **psutil** | `6.0.0` | Real-time network socket auditor & SHA-256 audit ledger |
 | **Frontends** | **Next.js (App Router)** | `14.2.5` | Dual frontends exported as pure static assets (`output: 'export'`) |
 | **Styling & Icons** | **Tailwind CSS / Lucide** | `3.4.4` / `0.395.0` | Dark industrial design theme (`#020617`, `#0f172a`, emerald/amber) |
 | **State Management** | **Zustand** | `4.5.4` | In-memory reactive state stores (Chat, Model, Sovereignty) |
@@ -114,7 +114,7 @@ G:/SIH/p/
 │       ├── rag/                        # ChromaDB ingestion, retrieval & citation linking
 │       ├── ocr/                        # PaddleOCR / Tesseract PDF & CAD schematic pipeline
 │       ├── deliverables/               # Word (.docx), Excel (.xlsx), and PPTX generators
-│       ├── sovereignty/                # Scapy socket sniffer & SHA-256 tamper-evident log
+│       ├── sovereignty/                # Socket watchdog & SHA-256 tamper-evident log
 │       ├── api/                        # REST & WebSocket route handlers
 │       └── tests/                      # Unit & integration regression test suites
 │
@@ -159,7 +159,7 @@ G:/SIH/p/
   1. **VRAM Status Panel:** Live dual-slot VRAM memory gauges & LRU swapping metrics.
   2. **Code Sandbox Monitor:** Real-time Docker AST execution logs and resource caps.
   3. **Multimodal Ingestion Hub:** OCR extraction logs, P&ID tag detections, and bounding boxes.
-  4. **Network Sovereignty Terminal:** Real-time packet sniffer showing **0 WAN egress** and SHA-256 hash chains.
+  4. **Network Sovereignty Terminal:** Real-time socket watchdog showing **0 WAN egress** and SHA-256 hash chains.
   5. **Model Registry Manager:** Inspect and hot-reload `models.yaml`.
   6. **Jury Connect:** Live QR code generator for multi-device LAN/Hotspot pairing.
 
@@ -172,7 +172,7 @@ G:/SIH/p/
   - `rag/`: Queries ChromaDB embeddings with strict source citation matching.
   - `ocr/`: Offline PaddleOCR and Tesseract document extraction.
   - `deliverables/`: Templated programmatic generation of Word documents, spreadsheets, and slides.
-  - `sovereignty/`: Background thread sniffing network interfaces to prove 100% air-gap compliance.
+  - `sovereignty/`: Background socket watchdog auditing network interfaces to prove 100% air-gap compliance.
 
 ### 4. `data/` (Air-Gapped Data Repository)
 - Holds all persistent offline assets: pre-indexed ChromaDB embeddings, refinery SOPs, annual reports, test blueprints, and generated outputs.
