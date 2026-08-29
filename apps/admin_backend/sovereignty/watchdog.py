@@ -101,32 +101,17 @@ class SocketWatchdog:
         except Exception:
             pass
 
-        # Identify ONLY server daemon PIDs (listening locally on our ports, not outbound client browsers)
+        # Identify PIDs bound to workbench ports (3000, 3001, 8000, 11434) and their connected clients
         for conn in connections:
             l_port = conn.laddr.port if conn.laddr else 0
-            if l_port in workbench_ports and conn.pid:
-                # Exclude browser binaries if they somehow bind locally
-                try:
-                    proc = psutil.Process(conn.pid)
-                    proc_name = proc.name().lower()
-                    if not any(b in proc_name for b in ['chrome', 'msedge', 'firefox', 'brave', 'opera']):
-                        workbench_pids.add(conn.pid)
-                except Exception:
-                    pass
+            r_port = conn.raddr.port if conn.raddr else 0
+            if (l_port in workbench_ports or r_port in workbench_ports) and conn.pid:
+                workbench_pids.add(conn.pid)
 
-        # 2. Iterate and audit ONLY workbench server daemon socket connections
+        # 2. Iterate and audit workbench socket connections & connected client sessions
         socket_idx = 1
         for conn in connections:
             if not conn.pid or conn.pid not in workbench_pids:
-                continue
-
-            try:
-                proc = psutil.Process(conn.pid)
-                proc_name = proc.name().lower()
-                # Double check: never track client browsers as server sockets
-                if any(b in proc_name for b in ['chrome', 'msedge', 'firefox', 'brave', 'opera']):
-                    continue
-            except Exception:
                 continue
 
             l_ip = conn.laddr.ip if conn.laddr else "0.0.0.0"
@@ -137,12 +122,20 @@ class SocketWatchdog:
             check_ip = r_ip if r_ip else l_ip
             tier = classify_ip_address(check_ip)
 
-            # Friendly workbench service names
+            # Friendly workbench service & client names
             p_name = f"Workbench PID {conn.pid}"
             try:
                 proc = psutil.Process(conn.pid)
                 raw_name = proc.name().lower()
-                if l_port == 8000 or r_port == 8000:
+                if "chrome" in raw_name:
+                    p_name = f"Chrome Web Client (PID {conn.pid})"
+                elif "msedge" in raw_name or "edge" in raw_name:
+                    p_name = f"Edge Web Client (PID {conn.pid})"
+                elif "firefox" in raw_name:
+                    p_name = f"Firefox Web Client (PID {conn.pid})"
+                elif "brave" in raw_name:
+                    p_name = f"Brave Web Client (PID {conn.pid})"
+                elif l_port == 8000 or r_port == 8000:
                     p_name = f"FastAPI Gateway (PID {conn.pid})"
                 elif l_port == 3000 or r_port == 3000:
                     p_name = f"Chat Frontend (PID {conn.pid})"
