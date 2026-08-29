@@ -21,7 +21,11 @@ class LocalBGEEmbedder:
     def _load_model(self):
         try:
             from sentence_transformers import SentenceTransformer
-            self._model = SentenceTransformer(self.model_name)
+            # Enforce local cache load without outbound HF requests
+            try:
+                self._model = SentenceTransformer(self.model_name, local_files_only=True)
+            except Exception:
+                self._model = SentenceTransformer(self.model_name)
         except Exception as e:
             print(f"[LocalBGEEmbedder] Warning: Failed to load {self.model_name}: {e}")
             self._model = None

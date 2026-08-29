@@ -83,7 +83,7 @@ export function ActiveSocketTable() {
                   </td>
                   <td className="py-2 px-3.5 text-[#888888]">{sock.status}</td>
                   <td className="py-2 px-3.5 text-right">
-                    <Badge variant="success" className="text-[10px] py-0">
+                    <Badge variant={sock.security_verdict === 'BREACH_FLAGGED' ? 'destructive' : 'success'} className="text-[10px] py-0">
                       {sock.security_verdict}
                     </Badge>
                   </td>

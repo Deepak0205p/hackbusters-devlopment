@@ -1,4 +1,17 @@
 import os
+import sys
+
+# ==============================================================================
+# ENFORCE 100% AIR-GAP OFFLINE MODE (Zero HuggingFace / ChromaDB WAN Telemetry)
+# ==============================================================================
+os.environ["HF_HUB_OFFLINE"] = "1"
+os.environ["TRANSFORMERS_OFFLINE"] = "1"
+os.environ["HF_DATASETS_OFFLINE"] = "1"
+os.environ["ANONYMIZED_TELEMETRY"] = "False"
+os.environ["CHROMA_TELEMETRY"] = "False"
+os.environ["HF_HUB_DISABLE_SYMLINKS_WARNING"] = "1"
+os.environ["DO_NOT_TRACK"] = "1"
+
 import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware

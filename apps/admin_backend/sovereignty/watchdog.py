@@ -71,13 +71,6 @@ class SocketWatchdog:
         """Registers a child or auxiliary process (Ollama, Docker, worker) to be audited."""
         self.workbench_pids.add(pid)
 
-    def set_deployment_mode(self, mode: str):
-        self.current_deployment_mode = mode
-        audit_log.append_event(
-            "TOPOLOGY_MODE_SWITCH",
-            f"Deployment topology set to {mode}. Host IP: {self.host_ip}:{self.port}"
-        )
-
     def scan_sockets(self, scope: str = "workbench_only") -> SovereigntySnapshot:
         """
         Exclusively scans and audits sockets and processes belonging to the
@@ -199,10 +192,14 @@ class SocketWatchdog:
         )
 
     def set_deployment_mode(self, mode: str) -> str:
-        """Switches between HOTSPOT_OPTION_B (default host hotspot) and LAN_OPTION_A."""
-        if mode in ("HOTSPOT_OPTION_B", "LAN_OPTION_A", "AIRGAP_LOCAL"):
+        """Switches between HOTSPOT_OPTION_B (default host hotspot), LAN_OPTION_A, and STANDALONE_LOCAL."""
+        if mode in ("HOTSPOT_OPTION_B", "LAN_OPTION_A", "STANDALONE_LOCAL", "AIRGAP_LOCAL"):
             self.current_deployment_mode = mode
-            self.resolve_host_ip()
+            self._detect_host_ip()
+            audit_log.append_event(
+                "TOPOLOGY_MODE_SWITCH",
+                f"Deployment topology set to {mode}. Host IP: {self.host_ip}:{self.port}"
+            )
             return self.current_deployment_mode
         raise ValueError(f"Unknown deployment mode: '{mode}'")
 
