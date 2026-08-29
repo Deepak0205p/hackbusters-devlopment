@@ -1,10 +1,17 @@
-﻿'use client';
+'use client';
 
 import React from 'react';
 import { Header } from '@/components/Header';
 import { SovereigntyDashboard } from '@/components/Sovereignty/SovereigntyDashboard';
+import { useSovereigntyStore } from '@/store/useSovereigntyStore';
 
 export default function SovereigntyPage() {
+  const fetchNetworkStatus = useSovereigntyStore((s) => s.fetchNetworkStatus);
+
+  React.useEffect(() => {
+    fetchNetworkStatus();
+  }, [fetchNetworkStatus]);
+
   return (
     <div className="flex flex-col min-h-screen bg-[#000000] text-[#ededed] font-sans">
       <Header />

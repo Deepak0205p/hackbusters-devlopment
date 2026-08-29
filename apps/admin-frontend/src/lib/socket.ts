@@ -51,10 +51,17 @@ class WebSocketClientManager {
               external_packets: payload.sovereignty.external_packets || 0,
               localhost_packets: payload.sovereignty.localhost_packets || 0,
               lan_hotspot_packets: payload.sovereignty.lan_hotspot_packets || 0,
-              daemon_heartbeat_hz: 1.0,
+              localhost_sockets: payload.sovereignty.localhost_connections || 0,
+              lan_hotspot_sockets: payload.sovereignty.lan_hotspot_connections || 0,
+              external_sockets: payload.sovereignty.external_internet_connections || 0,
+              verdict: payload.sovereignty.verdict || '100% AIR-GAPPED & SOVEREIGN',
+              daemon_heartbeat_hz: payload.sovereignty.daemon_heartbeat_hz || 1.0,
             });
             if (payload.sovereignty.sockets) {
               useSovereigntyStore.getState().setSockets(payload.sovereignty.sockets);
+            }
+            if (payload.sovereignty.audit_logs && payload.sovereignty.audit_logs.length > 0) {
+              useSovereigntyStore.getState().setAuditLogs(payload.sovereignty.audit_logs);
             }
           }
           if (payload.vram) {

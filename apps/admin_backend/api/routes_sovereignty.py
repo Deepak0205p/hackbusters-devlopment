@@ -23,20 +23,58 @@ async def audit_stream_websocket(websocket: WebSocket):
             # 2. Capture Real-Time VRAM Telemetry
             vram_telemetry = model_manager.get_vram_telemetry()
 
-            # 3. Construct Unified Telemetry Frame matching docs/BACKEND_API_CHECKLIST.md
+            # 3. Capture Real Cryptographic SHA-256 Audit Log Blocks
+            current_audit_blocks = [
+                {
+                    "sequence": entry.index,
+                    "timestamp": entry.timestamp,
+                    "event": entry.event_type,
+                    "block_hash": entry.current_hash,
+                    "prev_hash": entry.previous_hash,
+                    "verified": entry.verified,
+                    "details": entry.details
+                }
+                for entry in audit_log.entries[-25:]
+            ]
+
+            # 4. Construct Unified Telemetry Frame
             payload = {
                 "timestamp": time.time(),
                 "deployment_mode": socket_watchdog.current_deployment_mode,
                 "host_ip": socket_watchdog.host_ip,
                 "port": socket_watchdog.port,
                 "vram": vram_telemetry.dict(),
-                "sovereignty": sov_snapshot.dict()
+                "sovereignty": {
+                    **sov_snapshot.dict(),
+                    "audit_logs": current_audit_blocks
+                }
             }
 
             await websocket.send_json(payload)
             await asyncio.sleep(1.0)
     except (WebSocketDisconnect, asyncio.CancelledError):
         pass
+
+@router.get("/api/sovereignty/logs")
+async def get_audit_logs():
+    """
+    Returns real-time SHA-256 chained audit logs from tamper-evident ledger.
+    """
+    return {
+        "success": True,
+        "logs": [
+            {
+                "sequence": entry.index,
+                "timestamp": entry.timestamp,
+                "event": entry.event_type,
+                "block_hash": entry.current_hash,
+                "prev_hash": entry.previous_hash,
+                "verified": entry.verified,
+                "details": entry.details
+            }
+            for entry in audit_log.entries
+        ]
+    }
 
 @router.get("/api/sovereignty-audit/export")
 async def export_audit_certificate():

@@ -37,16 +37,26 @@ class SocketWatchdog:
     Enumerates system sockets, audits endpoints, and tracks packet traffic.
     """
     def __init__(self):
-        self.localhost_packets = 3420
-        self.lan_hotspot_packets = 840
+        self.localhost_packets = 0
+        self.lan_hotspot_packets = 0
         self.external_packets = 0
         self.external_bytes = 0
         self.last_tick_time = time.time()
         self.current_deployment_mode = "HOTSPOT_OPTION_B"
-        self.host_ip = "192.168.137.1"
+        self.host_ip = "127.0.0.1"
         self.port = 8000
         self.workbench_pids = {os.getpid()}
         self._detect_host_ip()
+        self._init_network_counters()
+
+    def _init_network_counters(self):
+        try:
+            counters = psutil.net_io_counters()
+            if counters:
+                self.localhost_packets = int(counters.packets_recv or 0)
+                self.lan_hotspot_packets = int(counters.packets_sent or 0)
+        except Exception:
+            pass
 
     def _detect_host_ip(self):
         try:
@@ -55,7 +65,7 @@ class SocketWatchdog:
             self.host_ip = s.getsockname()[0]
             s.close()
         except Exception:
-            self.host_ip = "192.168.137.1"
+            self.host_ip = "127.0.0.1"
 
     def register_pid(self, pid: int):
         """Registers a child or auxiliary process (Ollama, Docker, worker) to be audited."""

@@ -72,21 +72,21 @@ function getApiHost(): string {
 }
 
 export const useSovereigntyStore = create<SovereigntyState>((set, get) => ({
-  deploymentMode: 'HOTSPOT_OPTION_B',
-  hostIp: '192.168.0.106',
+  deploymentMode: 'STANDALONE_LOCAL',
+  hostIp: '127.0.0.1',
   port: 8000,
   metrics: {
-    localhost_sockets: 4,
-    lan_hotspot_sockets: 1,
+    localhost_sockets: 0,
+    lan_hotspot_sockets: 0,
     external_sockets: 0,
-    localhost_packets: 120,
-    lan_hotspot_packets: 40,
+    localhost_packets: 0,
+    lan_hotspot_packets: 0,
     external_packets: 0,
     external_bytes: 0,
-    total_packets_sniffed: 160,
+    total_packets_sniffed: 0,
     verdict: '100% AIR-GAPPED & SOVEREIGN',
     daemon_heartbeat_hz: 1.0,
-    last_updated: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+    last_updated: ''
   },
   sockets: [],
   auditLogs: [],
@@ -102,8 +102,17 @@ export const useSovereigntyStore = create<SovereigntyState>((set, get) => ({
         set({
           hostIp: data.host_ip || host,
           port: data.port || 8000,
-          deploymentMode: (data.deployment_mode as DeploymentMode) || 'HOTSPOT_OPTION_B'
+          deploymentMode: (data.deployment_mode as DeploymentMode) || 'STANDALONE_LOCAL'
         });
+      }
+
+      // Fetch live audit chain
+      const logsRes = await fetch(`http://${host}:8000/api/sovereignty/logs`);
+      if (logsRes.ok) {
+        const logsData = await logsRes.json();
+        if (logsData.success && logsData.logs) {
+          set({ auditLogs: logsData.logs });
+        }
       }
     } catch {
       // Graceful fallback
