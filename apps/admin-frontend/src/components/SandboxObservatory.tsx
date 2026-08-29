@@ -69,107 +69,136 @@ print(f"Pump Efficiency: {efficiency:.2f}%")
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Header Banner */}
-      <div className="rounded-xl bg-[#090d16] border border-[#1e293b] p-6 space-y-2">
-        <div className="flex items-center gap-2 text-amber-400">
-          <Box className="w-5 h-5" />
-          <h2 className="text-lg font-bold text-white">Docker Code Execution Sandbox Observatory</h2>
+      <div className="rounded-md bg-[#0a0a0a] border border-[#262626] p-5 space-y-1.5">
+        <div className="flex items-center gap-2 text-[#ededed]">
+          <Box className="w-4 h-4 text-[#f5a623]" />
+          <h2 className="text-sm font-semibold text-[#ededed]">Air-Gapped Docker Code Execution Sandbox</h2>
         </div>
-        <p className="text-xs text-slate-400">
-          Air-gapped compute environment executing generated Python analytics inside hardened <code>python:3.11-slim</code> containers with <code>--network none</code> and strict resource quotas.
+        <p className="text-xs text-[#888888]">
+          Executes untrusted engineering scripts and mathematical simulations inside hardened, zero-egress Docker micro-containers with static AST policy filters.
         </p>
       </div>
 
-      {/* Security Guardrails Strip */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-xs font-mono">
-        <div className="p-4 rounded-xl bg-[#090d16] border border-[#1e293b] space-y-1">
-          <span className="text-slate-400 font-sans flex items-center gap-1.5">
-            <Network className="w-3.5 h-3.5 text-emerald-400" />
-            Network Policy
-          </span>
-          <p className="font-bold text-emerald-400">--network none</p>
-        </div>
-        <div className="p-4 rounded-xl bg-[#090d16] border border-[#1e293b] space-y-1">
-          <span className="text-slate-400 font-sans flex items-center gap-1.5">
-            <Shield className="w-3.5 h-3.5 text-cyan-400" />
-            CPU Quota
-          </span>
-          <p className="font-bold text-cyan-400">2.0 vCPU Max</p>
-        </div>
-        <div className="p-4 rounded-xl bg-[#090d16] border border-[#1e293b] space-y-1">
-          <span className="text-slate-400 font-sans flex items-center gap-1.5">
-            <HardDrive className="w-3.5 h-3.5 text-violet-400" />
-            Memory Cap
-          </span>
-          <p className="font-bold text-violet-400">512 MB RAM</p>
-        </div>
-        <div className="p-4 rounded-xl bg-[#090d16] border border-[#1e293b] space-y-1">
-          <span className="text-slate-400 font-sans flex items-center gap-1.5">
-            <Clock className="w-3.5 h-3.5 text-amber-400" />
-            Hard Timeout
-          </span>
-          <p className="font-bold text-amber-400">15.0 Seconds</p>
-        </div>
-      </div>
-
-      {/* Script Editor and Execution Terminal */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Editor */}
-        <div className="lg:col-span-6 space-y-3">
-          <div className="rounded-xl bg-[#090d16] border border-[#1e293b] p-4 space-y-3">
-            <div className="flex items-center justify-between pb-2 border-b border-slate-800">
-              <span className="text-xs font-semibold text-white flex items-center gap-2">
-                <Terminal className="w-4 h-4 text-amber-400" />
-                Sandbox Python Runner
+      {/* Main Execution Bench */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+        {/* Left: Code Editor Simulator */}
+        <div className="lg:col-span-7 space-y-4">
+          <div className="rounded-md bg-[#0a0a0a] border border-[#262626] p-5 space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-xs font-semibold text-[#ededed] flex items-center gap-2">
+                <Terminal className="w-3.5 h-3.5 text-[#f5a623]" />
+                Python Script Runner
+              </h3>
+              <span className="text-[10px] font-mono text-[#888888] px-2 py-0.5 rounded bg-[#111111] border border-[#262626]">
+                python:3.11-slim
               </span>
+            </div>
+
+            <textarea
+              value={testScript}
+              onChange={(e) => setTestScript(e.target.value)}
+              rows={11}
+              className="w-full rounded bg-[#000000] border border-[#262626] p-3 text-xs text-[#00e599] font-mono focus:outline-none focus:border-[#444444] transition-colors resize-none leading-relaxed"
+            />
+
+            <div className="flex items-center justify-between pt-1">
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setTestScript(`import numpy as np\n# Standard industrial code\nprint('MRPL Refinery Unit 04 OK')`)}
+                  className="px-2.5 py-1 rounded bg-[#171717] hover:bg-[#222222] border border-[#333333] text-[11px] text-[#ededed] transition-colors"
+                >
+                  Safe Code
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setTestScript(`import socket\n# Malicious socket egress attempt\ns = socket.socket()\ns.connect(('8.8.8.8', 53))`)}
+                  className="px-2.5 py-1 rounded bg-[#171717] hover:bg-[#222222] border border-[#333333] text-[11px] text-[#e5484d] transition-colors"
+                >
+                  Test Unsafe Import
+                </button>
+              </div>
+
               <button
                 type="button"
                 onClick={handleExecute}
                 disabled={isRunning}
-                className="px-3 py-1.5 bg-amber-600 hover:bg-amber-500 disabled:opacity-50 text-slate-950 font-semibold text-xs rounded-lg transition-colors flex items-center gap-1.5 shadow-lg shadow-amber-900/30"
+                className="px-4 py-1.5 bg-[#f5a623] hover:bg-[#e09612] disabled:opacity-50 text-black font-semibold text-xs rounded transition-colors flex items-center gap-1.5"
               >
-                <Play className="w-3.5 h-3.5 fill-current" />
-                {isRunning ? 'Executing...' : 'Run in Sandbox'}
+                <Play className="w-3.5 h-3.5 fill-black" />
+                {isRunning ? 'Running...' : 'Run in Container'}
               </button>
             </div>
-            <textarea
-              value={testScript}
-              onChange={(e) => setTestScript(e.target.value)}
-              rows={12}
-              className="w-full rounded-lg bg-[#030712] border border-[#1e293b] p-3 text-xs text-slate-200 font-mono focus:outline-none focus:border-amber-500 transition-colors"
-            />
+          </div>
+
+          {/* Security Guardrails Strip */}
+          <div className="rounded-md bg-[#0a0a0a] border border-[#262626] p-4">
+            <h4 className="text-xs font-semibold text-[#ededed] mb-3">Hardened Isolation Guardrails</h4>
+            <div className="grid grid-cols-3 gap-3 text-xs">
+              <div className="p-3 rounded bg-[#111111] border border-[#262626]">
+                <div className="flex items-center gap-1.5 text-[#00e599] font-medium text-[11px]">
+                  <Network className="w-3.5 h-3.5" />
+                  <span>Network Egress</span>
+                </div>
+                <p className="text-[11px] text-[#888888] mt-1 font-mono">--network none</p>
+              </div>
+              <div className="p-3 rounded bg-[#111111] border border-[#262626]">
+                <div className="flex items-center gap-1.5 text-[#0070f3] font-medium text-[11px]">
+                  <HardDrive className="w-3.5 h-3.5" />
+                  <span>Memory Quota</span>
+                </div>
+                <p className="text-[11px] text-[#888888] mt-1 font-mono">512 MB Max</p>
+              </div>
+              <div className="p-3 rounded bg-[#111111] border border-[#262626]">
+                <div className="flex items-center gap-1.5 text-[#f5a623] font-medium text-[11px]">
+                  <Clock className="w-3.5 h-3.5" />
+                  <span>Execution Limit</span>
+                </div>
+                <p className="text-[11px] text-[#888888] mt-1 font-mono">15.0s Timeout</p>
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* Live Container Log Output */}
-        <div className="lg:col-span-6 space-y-3">
-          <div className="rounded-xl bg-[#090d16] border border-[#1e293b] p-4 space-y-3 h-full flex flex-col">
-            <div className="flex items-center justify-between pb-2 border-b border-slate-800">
-              <span className="text-xs font-semibold text-white">Live Execution Terminal</span>
-              <span className={`text-[11px] font-mono px-2 py-0.5 rounded border ${
-                executionLog.status === 'SUCCESS' 
-                  ? 'bg-emerald-950/80 text-emerald-400 border-emerald-800' 
-                  : 'bg-red-950/80 text-red-400 border-red-800'
+        {/* Right: Terminal Output & Logs */}
+        <div className="lg:col-span-5 space-y-4">
+          <div className="rounded-md bg-[#0a0a0a] border border-[#262626] p-5 space-y-3">
+            <div className="flex items-center justify-between border-b border-[#262626] pb-3">
+              <h3 className="text-xs font-semibold text-[#ededed] flex items-center gap-2">
+                <Terminal className="w-3.5 h-3.5 text-[#888888]" />
+                Container Terminal Output
+              </h3>
+              <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-medium border ${
+                executionLog.status === 'SUCCESS'
+                  ? 'bg-[#111111] text-[#00e599] border-[#262626]'
+                  : 'bg-[#111111] text-[#e5484d] border-[#262626]'
               }`}>
-                STATUS: {executionLog.status} (exit {executionLog.exitCode})
+                {executionLog.status}
               </span>
             </div>
 
-            <div className="flex-1 rounded-lg bg-[#030712] border border-slate-800 p-3 font-mono text-xs text-slate-300 space-y-2 overflow-auto">
-              <div className="text-slate-500 text-[11px]">
-                [CONTAINER] ID: {executionLog.containerId} | DURATION: {executionLog.runtimeMs}ms
+            <div className="bg-[#000000] rounded p-3 border border-[#262626] font-mono text-xs text-[#ededed] min-h-[160px] whitespace-pre-wrap leading-relaxed">
+              {executionLog.stdout && <div>{executionLog.stdout}</div>}
+              {executionLog.stderr && <div className="text-[#e5484d]">{executionLog.stderr}</div>}
+            </div>
+
+            <div className="space-y-2 text-xs pt-1">
+              <div className="flex justify-between py-1 border-b border-[#1f1f1f]">
+                <span className="text-[#888888]">AST Policy Check</span>
+                <span className={`font-mono text-[11px] ${executionLog.status === 'SUCCESS' ? 'text-[#00e599]' : 'text-[#e5484d]'}`}>
+                  {executionLog.astSecurityVerdict}
+                </span>
               </div>
-              <div className="text-slate-500 text-[11px]">
-                [AST SECURITY] {executionLog.astSecurityVerdict}
+              <div className="flex justify-between py-1 border-b border-[#1f1f1f]">
+                <span className="text-[#888888]">Execution Runtime</span>
+                <span className="font-mono text-[11px] text-[#ededed]">{executionLog.runtimeMs} ms</span>
               </div>
-              <hr className="border-slate-800" />
-              {executionLog.stdout && (
-                <pre className="text-emerald-400 whitespace-pre-wrap">{executionLog.stdout}</pre>
-              )}
-              {executionLog.stderr && (
-                <pre className="text-red-400 whitespace-pre-wrap">{executionLog.stderr}</pre>
-              )}
+              <div className="flex justify-between py-1">
+                <span className="text-[#888888]">Sandbox ID</span>
+                <span className="font-mono text-[11px] text-[#888888]">{executionLog.containerId}</span>
+              </div>
             </div>
           </div>
         </div>

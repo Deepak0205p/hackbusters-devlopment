@@ -1,32 +1,47 @@
-'use client';
+﻿'use client';
 
 import React, { useEffect } from 'react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { useSovereigntyStore } from '@/store/useSovereigntyStore';
 import { useNetworkStore } from '@/store/useNetworkStore';
 import { socketManager } from '@/lib/socket';
-import { Shield } from 'lucide-react';
+import { Shield, ArrowLeft } from 'lucide-react';
 
 export function Header() {
+  const pathname = usePathname();
   const { metrics } = useSovereigntyStore();
   const { deploymentMode, hostIp, port } = useNetworkStore();
 
   useEffect(() => {
-    // Initiate resilient 1000ms WebSocket telemetry streaming hook (Plan 44 / 48)
     socketManager.connectAuditStream();
   }, []);
+
+  const isSubpage = pathname !== '/';
 
   return (
     <header className="border-b border-[#262626] bg-[#000000] px-6 py-3 sticky top-0 z-50">
       <div className="max-w-7xl mx-auto flex items-center justify-between">
         {/* Title */}
         <div className="flex items-center space-x-3">
-          <div className="h-5 w-5 rounded bg-[#171717] border border-[#333333] flex items-center justify-center font-mono text-[11px] text-[#ededed] font-semibold">
-            M
-          </div>
-          <span className="text-xs font-semibold tracking-tight text-[#ededed]">
+          {isSubpage ? (
+            <Link
+              href="/"
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-[#111111] border border-[#333333] hover:border-[#555555] text-xs text-[#ededed] transition-colors"
+            >
+              <ArrowLeft className="w-3.5 h-3.5 text-[#00e599]" />
+              <span className="font-mono text-[11px]">Overview</span>
+            </Link>
+          ) : (
+            <Link href="/" className="h-5 w-5 rounded bg-[#171717] border border-[#333333] flex items-center justify-center font-mono text-[11px] text-[#ededed] font-semibold">
+              M
+            </Link>
+          )}
+
+          <Link href="/" className="text-xs font-semibold tracking-tight text-[#ededed] hover:text-white transition-colors">
             MRPL Sovereign Workbench
-          </span>
+          </Link>
           <span className="text-[#333333]">/</span>
           <span className="text-xs font-mono text-[#888888]">
             {deploymentMode} ({hostIp}:{port})

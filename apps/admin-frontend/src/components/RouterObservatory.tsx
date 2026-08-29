@@ -78,33 +78,33 @@ export function RouterObservatory() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Header Banner */}
-      <div className="rounded-xl bg-[#090d16] border border-[#1e293b] p-6 space-y-2">
-        <div className="flex items-center gap-2 text-cyan-400">
-          <GitFork className="w-5 h-5" />
-          <h2 className="text-lg font-bold text-white">Two-Stage Intelligent Query Router</h2>
+      <div className="rounded-md bg-[#0a0a0a] border border-[#262626] p-5 space-y-1.5">
+        <div className="flex items-center gap-2 text-[#ededed]">
+          <GitFork className="w-4 h-4 text-[#0070f3]" />
+          <h2 className="text-sm font-semibold text-[#ededed]">Two-Stage Intelligent Query Router</h2>
         </div>
-        <p className="text-xs text-slate-400">
+        <p className="text-xs text-[#888888]">
           Determines optimal model routing and tool activation in &lt; 2ms via deterministic Stage 1 regex matching, falling back to sub-25ms Stage 2 BAAI/bge-small dense semantic centroids.
         </p>
       </div>
 
       {/* Interactive Simulator Bench */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
         <div className="lg:col-span-7 space-y-4">
-          <div className="rounded-xl bg-[#090d16] border border-[#1e293b] p-5 space-y-4">
-            <h3 className="text-sm font-semibold text-white flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-cyan-400" />
+          <div className="rounded-md bg-[#0a0a0a] border border-[#262626] p-5 space-y-4">
+            <h3 className="text-xs font-semibold text-[#ededed] flex items-center gap-2">
+              <Sparkles className="w-3.5 h-3.5 text-[#0070f3]" />
               Live Route Simulator
             </h3>
-            <div className="space-y-2">
-              <label className="text-xs text-slate-400 font-medium">Sample Prompt / Query</label>
+            <div className="space-y-1.5">
+              <label className="text-xs text-[#888888]">Sample Prompt / Query</label>
               <textarea
                 value={testQuery}
                 onChange={(e) => setTestQuery(e.target.value)}
                 rows={3}
-                className="w-full rounded-lg bg-[#030712] border border-[#1e293b] p-3 text-xs text-slate-200 font-mono focus:outline-none focus:border-cyan-500 transition-colors"
+                className="w-full rounded bg-[#111111] border border-[#262626] p-3 text-xs text-[#ededed] font-mono focus:outline-none focus:border-[#444444] transition-colors"
                 placeholder="Enter prompt to evaluate router decision..."
               />
             </div>
@@ -113,14 +113,14 @@ export function RouterObservatory() {
                 <button
                   type="button"
                   onClick={() => setTestQuery('Summarize SOP-MRPL-FURNACE-01 emergency shutdown sequence')}
-                  className="px-2.5 py-1 rounded bg-slate-800/80 hover:bg-slate-700 text-[11px] text-slate-300 transition-colors"
+                  className="px-2.5 py-1 rounded bg-[#171717] hover:bg-[#222222] border border-[#333333] text-[11px] text-[#ededed] transition-colors"
                 >
                   SOP Query
                 </button>
                 <button
                   type="button"
                   onClick={() => setTestQuery('Extract all control valves and tags from P&ID drawing')}
-                  className="px-2.5 py-1 rounded bg-slate-800/80 hover:bg-slate-700 text-[11px] text-slate-300 transition-colors"
+                  className="px-2.5 py-1 rounded bg-[#171717] hover:bg-[#222222] border border-[#333333] text-[11px] text-[#ededed] transition-colors"
                 >
                   P&ID Tag Query
                 </button>
@@ -129,7 +129,7 @@ export function RouterObservatory() {
                 type="button"
                 onClick={handleSimulateRoute}
                 disabled={isRouting}
-                className="px-4 py-2 bg-cyan-600 hover:bg-cyan-500 disabled:opacity-50 text-white text-xs font-semibold rounded-lg transition-colors flex items-center gap-2 shadow-lg shadow-cyan-900/30"
+                className="px-3.5 py-1.5 bg-[#0070f3] hover:bg-[#0060df] disabled:opacity-50 text-white text-xs font-medium rounded transition-colors flex items-center gap-1.5"
               >
                 <Send className="w-3.5 h-3.5" />
                 {isRouting ? 'Evaluating...' : 'Simulate Route'}
@@ -138,66 +138,72 @@ export function RouterObservatory() {
           </div>
 
           {/* Router Benchmark Specs */}
-          <div className="grid grid-cols-3 gap-3 text-xs">
-            <div className="p-3 rounded-lg bg-[#090d16] border border-[#1e293b] space-y-1">
-              <span className="text-slate-400">Stage 1 Latency</span>
-              <p className="font-mono font-bold text-emerald-400">&lt; 2.0 ms</p>
-            </div>
-            <div className="p-3 rounded-lg bg-[#090d16] border border-[#1e293b] space-y-1">
-              <span className="text-slate-400">Stage 2 Latency</span>
-              <p className="font-mono font-bold text-cyan-400">&lt; 25.0 ms</p>
-            </div>
-            <div className="p-3 rounded-lg bg-[#090d16] border border-[#1e293b] space-y-1">
-              <span className="text-slate-400">Accuracy Target</span>
-              <p className="font-mono font-bold text-emerald-400">&gt; 99.0%</p>
+          <div className="rounded-md bg-[#0a0a0a] border border-[#262626] p-4 space-y-3">
+            <h4 className="text-xs font-semibold text-[#ededed]">Router Pipeline Specifications</h4>
+            <div className="grid grid-cols-2 gap-3 text-xs">
+              <div className="p-3 rounded bg-[#111111] border border-[#262626] space-y-1">
+                <span className="text-[#888888] font-mono text-[10px]">STAGE 1: DETERMINISTIC</span>
+                <p className="font-medium text-[#ededed]">Regex & Tag Matching</p>
+                <p className="text-[11px] text-[#888888]">Latency: &lt; 2.0 ms (Zero GPU)</p>
+              </div>
+              <div className="p-3 rounded bg-[#111111] border border-[#262626] space-y-1">
+                <span className="text-[#888888] font-mono text-[10px]">STAGE 2: EMBEDDING</span>
+                <p className="font-medium text-[#ededed]">BAAI/bge-small-en-v1.5</p>
+                <p className="text-[11px] text-[#888888]">Latency: &lt; 25.0 ms (ONNX Local)</p>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Route Decision Outcome */}
+        {/* Route Decision Card */}
         <div className="lg:col-span-5">
-          <div className="rounded-xl bg-[#090d16] border border-[#1e293b] p-5 space-y-4 h-full">
-            <h3 className="text-sm font-semibold text-white flex items-center justify-between pb-3 border-b border-slate-800">
-              <span>Routing Decision Analysis</span>
-              <span className="text-[11px] font-mono text-emerald-400 bg-emerald-950/80 px-2 py-0.5 rounded border border-emerald-800">
-                TOTAL: {routeResult.totalLatencyMs} ms
+          <div className="rounded-md bg-[#0a0a0a] border border-[#262626] p-5 space-y-4 h-full">
+            <div className="flex items-center justify-between border-b border-[#262626] pb-3">
+              <h3 className="text-xs font-semibold text-[#ededed]">Routing Decision</h3>
+              <span className="px-2 py-0.5 rounded bg-[#111111] text-[#00e599] border border-[#262626] text-[10px] font-mono font-medium">
+                {routeResult.domain}
               </span>
-            </h3>
+            </div>
 
-            <div className="space-y-3 text-xs font-mono">
-              <div className="p-3 rounded-lg bg-[#030712] border border-slate-800 space-y-1">
-                <span className="text-slate-500 text-[10px] uppercase font-sans">Target Domain</span>
-                <p className="text-cyan-400 font-bold">{routeResult.domain}</p>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between p-3 rounded bg-[#111111] border border-[#262626]">
+                <div className="flex items-center gap-2">
+                  <Cpu className="w-4 h-4 text-[#0070f3]" />
+                  <span className="text-xs text-[#888888]">Target Model</span>
+                </div>
+                <span className="text-xs font-mono font-semibold text-[#ededed]">{routeResult.targetModel}</span>
               </div>
 
-              <div className="p-3 rounded-lg bg-[#030712] border border-slate-800 space-y-1">
-                <span className="text-slate-500 text-[10px] uppercase font-sans">Assigned Model</span>
-                <p className="text-emerald-400 font-bold flex items-center gap-1.5">
-                  <Cpu className="w-3.5 h-3.5" />
-                  {routeResult.targetModel}
-                </p>
+              <div className="flex items-center justify-between p-3 rounded bg-[#111111] border border-[#262626]">
+                <div className="flex items-center gap-2">
+                  <Clock className="w-4 h-4 text-[#00e599]" />
+                  <span className="text-xs text-[#888888]">Total Latency</span>
+                </div>
+                <span className="text-xs font-mono font-semibold text-[#00e599]">{routeResult.totalLatencyMs} ms</span>
               </div>
 
-              <div className="p-3 rounded-lg bg-[#030712] border border-slate-800 space-y-1">
-                <span className="text-slate-500 text-[10px] uppercase font-sans">Stage Match Status</span>
-                <p className="text-slate-200">
-                  {routeResult.stage1Match 
-                    ? `Stage 1 Deterministic Regex (${routeResult.matchedRule})`
-                    : `Stage 2 BGE-small Dense Semantic Fallback`}
-                </p>
+              <div className="flex items-center justify-between p-3 rounded bg-[#111111] border border-[#262626]">
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-[#00e599]" />
+                  <span className="text-xs text-[#888888]">Confidence</span>
+                </div>
+                <span className="text-xs font-mono font-semibold text-[#ededed]">{(routeResult.confidence * 100).toFixed(1)}%</span>
               </div>
 
-              <div className="p-3 rounded-lg bg-[#030712] border border-slate-800 space-y-2">
-                <span className="text-slate-500 text-[10px] uppercase font-sans">Activated ReAct Tools</span>
+              <div className="p-3 rounded bg-[#111111] border border-[#262626] space-y-2">
+                <div className="flex items-center gap-2 text-xs text-[#888888]">
+                  <FileCode2 className="w-4 h-4 text-[#888888]" />
+                  <span>Required Industrial Tools</span>
+                </div>
                 <div className="flex flex-wrap gap-1.5">
-                  {routeResult.requiredTools.length > 0 ? (
+                  {routeResult.requiredTools && routeResult.requiredTools.length > 0 ? (
                     routeResult.requiredTools.map((t: string) => (
-                      <span key={t} className="px-2 py-0.5 rounded bg-slate-800 text-slate-300 text-[11px] border border-slate-700">
+                      <span key={t} className="px-2 py-0.5 rounded bg-[#171717] text-[#ededed] border border-[#333333] text-[10px] font-mono">
                         {t}
                       </span>
                     ))
                   ) : (
-                    <span className="text-slate-500 italic">No external tools required (Direct Generation)</span>
+                    <span className="text-[11px] text-[#666666] italic">No external tools required (Pure LLM)</span>
                   )}
                 </div>
               </div>
