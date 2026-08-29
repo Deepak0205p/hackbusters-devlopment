@@ -1,0 +1,38 @@
+﻿# Node dependencies
+node_modules/
+**/node_modules/
+.npm
+.pnpm-store
+
+# Next.js & Frontend builds
+.next/
+**/dist/
+**/build/
+**/out/
+.cache/
+
+# Python
+__pycache__/
+**/__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+ENV/
+*.egg-info/
+.eggs/
+
+# Logs & Temporary files
+*.log
+server.log
+
+# Environment variables
+.env
+.env*.local
+
+# OS files
+.DS_Store
+Thumbs.db

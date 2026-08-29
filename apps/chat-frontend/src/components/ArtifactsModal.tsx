@@ -1,0 +1,342 @@
+'use client';
+
+import React, { useState } from 'react';
+import { useDeliverableStore, DeliverableItem, DeliverableType } from '@/store/useDeliverableStore';
+import { motion, AnimatePresence } from 'framer-motion';
+import {
+  X,
+  Download,
+  FileText,
+  FileSpreadsheet,
+  Presentation,
+  Code,
+  ShieldCheck,
+  Search,
+  ExternalLink,
+  Cpu,
+  Layers,
+  Sparkles,
+  Check
+} from 'lucide-react';
+
+export function getFileIcon(type: DeliverableType, className = "h-5 w-5") {
+  switch (type) {
+    case 'docx':
+      return <FileText className={`${className} text-blue-400`} />;
+    case 'xlsx':
+      return <FileSpreadsheet className={`${className} text-emerald-400`} />;
+    case 'pptx':
+      return <Presentation className={`${className} text-orange-400`} />;
+    case 'py':
+      return <Code className={`${className} text-cyan-400`} />;
+    default:
+      return <FileText className={`${className} text-purple-400`} />;
+  }
+}
+
+export function getBadgeColor(type: DeliverableType) {
+  switch (type) {
+    case 'docx':
+      return 'bg-blue-500/10 text-blue-400 border-blue-500/30';
+    case 'xlsx':
+      return 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30';
+    case 'pptx':
+      return 'bg-orange-500/10 text-orange-400 border-orange-500/30';
+    case 'py':
+      return 'bg-cyan-500/10 text-cyan-400 border-cyan-500/30';
+    default:
+      return 'bg-purple-500/10 text-purple-400 border-purple-500/30';
+  }
+}
+
+interface ArtifactsModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+export function ArtifactsModal({ isOpen, onClose }: ArtifactsModalProps) {
+  const {
+    deliverables,
+    selectedDeliverable,
+    selectDeliverable,
+    downloadDeliverable,
+    filterType,
+    setFilterType,
+    searchQuery,
+    setSearchQuery
+  } = useDeliverableStore();
+
+  const [copiedHash, setCopiedHash] = useState(false);
+
+  if (!isOpen) return null;
+
+  const filteredItems = deliverables.filter((item) => {
+    const matchesType = filterType === 'ALL' || item.type === filterType;
+    const matchesSearch =
+      item.filename.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.summary.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.generating_model.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesType && matchesSearch;
+  });
+
+  const activeItem: DeliverableItem =
+    selectedDeliverable || filteredItems[0] || deliverables[0];
+
+  const handleCopyHash = (hash: string) => {
+    if (typeof navigator !== 'undefined') {
+      navigator.clipboard.writeText(hash);
+      setCopiedHash(true);
+      setTimeout(() => setCopiedHash(false), 2000);
+    }
+  };
+
+  return (
+    <AnimatePresence>
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 select-none">
+        {/* Backdrop */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          onClick={onClose}
+          className="fixed inset-0 bg-black/80 backdrop-blur-md"
+        />
+
+        {/* Modal Window */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95, y: 10 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.95, y: 10 }}
+          transition={{ duration: 0.2, ease: [0.2, 0, 0, 1] }}
+          className="relative w-full max-w-5xl h-[85vh] bg-[#0c0c0e] border border-[#222226] rounded-3xl shadow-2xl overflow-hidden flex flex-col z-10"
+        >
+          {/* Top Bar Header */}
+          <div className="flex items-center justify-between px-6 py-4 border-b border-[#1e1e22] bg-[#08080a]">
+            <div className="flex items-center space-x-3">
+              <div className="h-9 w-9 rounded-xl bg-gradient-to-tr from-blue-500/20 via-purple-500/20 to-pink-500/20 border border-blue-400/30 flex items-center justify-center">
+                <Layers className="h-5 w-5 text-[#a8c7fa]" />
+              </div>
+              <div>
+                <h2 className="text-base font-semibold text-[#f1f3f4] flex items-center gap-2">
+                  MRPL Enterprise Artifacts Vault
+                  <span className="text-[11px] font-normal px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
+                    Air-Gapped Sovereign Storage
+                  </span>
+                </h2>
+                <p className="text-xs text-[#8e918f]">
+                  Automated Word (.docx), Excel (.xlsx), PowerPoint (.pptx), and Python (.py) deliverables
+                </p>
+              </div>
+            </div>
+
+            <button
+              onClick={onClose}
+              className="h-9 w-9 rounded-full hover:bg-[#1e1e22] flex items-center justify-center text-[#8e918f] hover:text-[#e3e3e3] transition-colors"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          </div>
+
+          {/* Main Layout: Left File Explorer + Right Detail Inspector */}
+          <div className="flex-1 flex flex-col md:flex-row min-h-0 overflow-hidden">
+            {/* Left Column: Filter & File List */}
+            <div className="w-full md:w-80 border-r border-[#1e1e22] bg-[#080809] flex flex-col shrink-0">
+              {/* Search Box */}
+              <div className="p-3 border-b border-[#18181c]">
+                <div className="relative">
+                  <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-[#8e918f]" />
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Search deliverables..."
+                    className="w-full pl-8.5 pr-3 py-1.5 text-xs rounded-xl bg-[#121215] border border-[#222228] text-[#e3e3e3] placeholder-[#6e7175] focus:outline-none focus:border-[#4285f4]"
+                  />
+                </div>
+              </div>
+
+              {/* Type Filter Tabs */}
+              <div className="flex items-center gap-1 p-2 border-b border-[#18181c] overflow-x-auto text-[11px]">
+                {(['ALL', 'docx', 'xlsx', 'pptx', 'py'] as const).map((t) => (
+                  <button
+                    key={t}
+                    onClick={() => setFilterType(t)}
+                    className={`px-2.5 py-1 rounded-lg font-medium transition-all ${
+                      filterType === t
+                        ? 'bg-[#1e1f20] text-[#a8c7fa] border border-[#3c4043]'
+                        : 'text-[#8e918f] hover:bg-[#121215] hover:text-[#c4c7c5]'
+                    }`}
+                  >
+                    {t.toUpperCase()}
+                  </button>
+                ))}
+              </div>
+
+              {/* File Cards Scroll Area */}
+              <div className="flex-1 overflow-y-auto p-2 space-y-1.5">
+                {filteredItems.length === 0 ? (
+                  <div className="py-12 text-center text-xs text-[#8e918f]">
+                    No artifacts found matching query.
+                  </div>
+                ) : (
+                  filteredItems.map((item) => {
+                    const isSelected = activeItem?.id === item.id;
+                    return (
+                      <button
+                        key={item.id}
+                        onClick={() => selectDeliverable(item.id)}
+                        className={`w-full text-left p-3 rounded-2xl border transition-all flex items-start gap-3 ${
+                          isSelected
+                            ? 'bg-[#16161a] border-blue-500/40 shadow-lg shadow-blue-500/5'
+                            : 'bg-[#0f0f12] border-[#1c1c20] hover:bg-[#141418] hover:border-[#28282e]'
+                        }`}
+                      >
+                        <div className="p-2 rounded-xl bg-[#18181e] shrink-0 mt-0.5">
+                          {getFileIcon(item.type, "h-5 w-5")}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between gap-1">
+                            <span className="font-medium text-xs text-[#e3e3e3] truncate">
+                              {item.filename}
+                            </span>
+                          </div>
+                          <p className="text-[11px] text-[#8e918f] line-clamp-1 mt-0.5">
+                            {item.summary}
+                          </p>
+                          <div className="flex items-center gap-2 text-[10px] text-[#6e7175] mt-1.5 font-mono">
+                            <span className={`px-1.5 py-0.2 rounded font-sans uppercase ${getBadgeColor(item.type)}`}>
+                              {item.type}
+                            </span>
+                            <span>{item.size_formatted}</span>
+                          </div>
+                        </div>
+                      </button>
+                    );
+                  })
+                )}
+              </div>
+            </div>
+
+            {/* Right Column: Detailed Preview & Actions */}
+            {activeItem ? (
+              <div className="flex-1 bg-[#0c0c0e] flex flex-col min-h-0 overflow-y-auto p-6 space-y-6">
+                {/* Title & Download Header */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-[#1e1e22]">
+                  <div className="flex items-start gap-4">
+                    <div className="p-3.5 rounded-2xl bg-[#141418] border border-[#26262e] shrink-0">
+                      {getFileIcon(activeItem.type, "h-8 w-8")}
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h3 className="text-base sm:text-lg font-semibold text-[#f1f3f4] break-all">
+                          {activeItem.filename}
+                        </h3>
+                        <span className={`text-[11px] font-mono px-2 py-0.5 rounded-md border ${getBadgeColor(activeItem.type)}`}>
+                          .{activeItem.type}
+                        </span>
+                      </div>
+                      <p className="text-xs text-[#8e918f] mt-1">
+                        Generated by <span className="text-[#a8c7fa] font-medium">{activeItem.generating_model}</span> &bull; {activeItem.size_formatted}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex items-center gap-2 shrink-0">
+                    <button
+                      onClick={() => {
+                        const { useCanvasStore } = require('@/store/useCanvasStore');
+                        useCanvasStore.getState().openCanvas(activeItem);
+                        onClose();
+                      }}
+                      className="flex items-center justify-center space-x-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-xs font-semibold shadow-lg shadow-blue-500/20 active:scale-95 transition-all min-h-[44px]"
+                    >
+                      <Sparkles className="h-4 w-4 text-[#a8c7fa]" />
+                      <span>Open & Edit Live</span>
+                    </button>
+
+                    <button
+                      onClick={() => downloadDeliverable(activeItem.id)}
+                      className="flex items-center justify-center space-x-2 px-4 py-2.5 rounded-xl bg-[#1c1c24] hover:bg-[#252530] text-[#e3e3e3] border border-[#2e2e3c] text-xs font-semibold active:scale-95 transition-all min-h-[44px]"
+                    >
+                      <Download className="h-4 w-4" />
+                      <span>Download</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Summary Box */}
+                <div className="p-4 rounded-2xl bg-[#121216] border border-[#1e1e24] space-y-2">
+                  <div className="text-xs font-semibold text-[#a8c7fa] uppercase tracking-wider flex items-center gap-1.5">
+                    <Sparkles className="h-3.5 w-3.5" />
+                    Executive Purpose & Technical Overview
+                  </div>
+                  <p className="text-xs text-[#d1d5db] leading-relaxed">
+                    {activeItem.summary}
+                  </p>
+                </div>
+
+                {/* Key Metrics Grid */}
+                {activeItem.key_metrics && activeItem.key_metrics.length > 0 && (
+                  <div className="space-y-2.5">
+                    <h4 className="text-xs font-semibold text-[#8e918f] uppercase tracking-wider">
+                      Extracted Parameters & Metrics
+                    </h4>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                      {activeItem.key_metrics.map((km, i) => (
+                        <div key={i} className="p-3 rounded-xl bg-[#111114] border border-[#1c1c20]">
+                          <div className="text-[10px] text-[#8e918f] truncate">{km.label}</div>
+                          <div className="text-xs font-semibold text-[#e3e3e3] mt-1 font-mono">{km.value}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* SOP Citations */}
+                {activeItem.sop_citations && activeItem.sop_citations.length > 0 && (
+                  <div className="space-y-2.5">
+                    <h4 className="text-xs font-semibold text-[#8e918f] uppercase tracking-wider">
+                      SOP & Compliance Standards
+                    </h4>
+                    <div className="space-y-1.5">
+                      {activeItem.sop_citations.map((cite, i) => (
+                        <div key={i} className="flex items-center gap-2 p-2.5 rounded-xl bg-[#0f0f12] border border-[#1b1b1f] text-xs text-[#a8c7fa]">
+                          <ShieldCheck className="h-4 w-4 text-emerald-400 shrink-0" />
+                          <span>{cite}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* SHA-256 Tamper-Evident Hash Block */}
+                <div className="p-3.5 rounded-2xl bg-[#0a0a0c] border border-[#1c1c20] space-y-1.5">
+                  <div className="flex items-center justify-between text-[11px] text-[#8e918f]">
+                    <span className="font-mono flex items-center gap-1.5 text-emerald-400">
+                      <ShieldCheck className="h-3.5 w-3.5" />
+                      SHA-256 Cryptographic Signature
+                    </span>
+                    <button
+                      onClick={() => handleCopyHash(activeItem.sha256_hash)}
+                      className="text-[10px] text-[#a8c7fa] hover:underline flex items-center gap-1"
+                    >
+                      {copiedHash ? <Check className="h-3 w-3 text-emerald-400" /> : 'Copy Hash'}
+                    </button>
+                  </div>
+                  <div className="font-mono text-[10px] text-[#6e7175] break-all bg-[#050507] p-2 rounded-lg border border-[#151518]">
+                    {activeItem.sha256_hash}
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="flex-1 flex items-center justify-center text-xs text-[#8e918f]">
+                Select an artifact to inspect details.
+              </div>
+            )}
+          </div>
+        </motion.div>
+      </div>
+    </AnimatePresence>
+  );
+}

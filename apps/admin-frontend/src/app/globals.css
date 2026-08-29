@@ -1,0 +1,49 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --ds-background-100: #000000;
+    --ds-background-200: #0a0a0a;
+    --ds-gray-100: #111111;
+    --ds-gray-200: #171717;
+    --ds-gray-300: #1f1f1f;
+    --ds-gray-400: #262626;
+    --ds-gray-500: #333333;
+    --ds-gray-600: #444444;
+    --ds-gray-700: #888888;
+    --ds-gray-800: #a1a1aa;
+    --ds-gray-900: #ededed;
+    --ds-gray-1000: #ffffff;
+    --ds-blue-700: #0070f3;
+    --ds-green-700: #00e599;
+    --ds-amber-700: #f5a623;
+    --ds-red-700: #e5484d;
+  }
+
+  body {
+    background-color: var(--ds-background-100);
+    color: var(--ds-gray-900);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    min-height: 100dvh;
+    overflow-x: hidden;
+  }
+
+  /* Geist Subtle Scrollbar */
+  ::-webkit-scrollbar {
+    width: 5px;
+    height: 5px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #000000;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #262626;
+    border-radius: 3px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #333333;
+  }
+}
