@@ -34,7 +34,7 @@ graph TB
         OfficeGen["Office File Generators\n(python-docx, openpyxl, python-pptx)"]
     end
 
-    UI <-->|HTTP / WebSocket (127.0.0.1)| API_Gateway
+    UI ---|HTTP / WebSocket 127.0.0.1| API_Gateway
     Router --> ModelMgr
     ModelMgr <--> ComputeRegistry
     ComputeRegistry --> Ollama
@@ -130,7 +130,7 @@ graph TB
     subgraph Option_B ["SECONDARY MODE (Option B): Host-Created Wi-Fi Hotspot"]
         Host3["Host Workstation (0.0.0.0:8000)\nHotspot IP: 192.168.137.1\n[Internet Sharing: OFF]"]
         JudgeB["Judge Device (Direct Wi-Fi Link)\n(Browser at http://192.168.137.1:8000)"]
-        JudgeB <-->|Direct 802.11 Link (WPA2)| Host3
+        JudgeB ---|Direct 802.11 Link WPA2| Host3
     end
 ```
 
