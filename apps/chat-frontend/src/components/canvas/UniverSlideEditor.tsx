@@ -735,12 +735,12 @@ export function UniverSlideEditor({ deliverable }: UniverSlideEditorProps) {
         )}
       </div>
 
-      {/* 3. MAIN WORKSPACE: LEFT THUMBNAILS + CENTER CANVAS */}
-      <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
-        {/* Left / Top on Mobile: Slide Thumbnails Navigator */}
-        <div className="w-full md:w-64 border-b md:border-b-0 md:border-r border-[#e2e8f0] bg-[#f8fafc] flex flex-col shrink-0 select-none shadow-xs">
+      {/* 3. MAIN WORKSPACE: DESKTOP SIDEBAR + CENTRAL SLIDE CANVAS */}
+      <div className="flex-1 flex flex-col md:flex-row overflow-hidden relative">
+        {/* Desktop-Only Left Sidebar: Slide Thumbnails Navigator */}
+        <div className="hidden md:flex w-64 border-r border-[#e2e8f0] bg-[#f8fafc] flex-col shrink-0 select-none shadow-xs">
           {/* Header Bar */}
-          <div className="flex items-center justify-between px-2.5 md:px-4 py-1.5 md:py-3 border-b border-[#e2e8f0] bg-white/80 backdrop-blur-sm shrink-0">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-[#e2e8f0] bg-white/80 backdrop-blur-sm shrink-0">
             <div className="flex items-center space-x-2">
               <span className="text-xs font-extrabold text-[#0f172a] uppercase tracking-wider">Slides</span>
               <span className="px-2 py-0.5 rounded-full bg-[#f1f5f9] text-[#475569] font-mono text-[10px] font-bold border border-[#e2e8f0]">
@@ -757,26 +757,26 @@ export function UniverSlideEditor({ deliverable }: UniverSlideEditorProps) {
             </button>
           </div>
 
-          {/* Thumbnails Scroll Area */}
-          <div className="flex flex-row md:flex-col overflow-x-auto md:overflow-y-auto p-1.5 md:p-3 space-x-1.5 md:space-x-0 md:space-y-3 shrink-0 md:shrink md:flex-1 scrollbar-none">
+          {/* Vertical Thumbnails Scroll Area */}
+          <div className="flex-1 overflow-y-auto p-3 space-y-3">
             {slides.map((s, idx) => {
               const isSelected = activeSlideIndex === idx;
               return (
                 <div
                   key={s.id}
                   onClick={() => setActiveSlideIndex(idx)}
-                  className={`group relative flex flex-col p-1.5 md:p-2.5 rounded-xl md:rounded-2xl transition-all cursor-pointer border shrink-0 w-28 xs:w-32 sm:w-36 md:w-auto ${
+                  className={`group relative flex flex-col p-2.5 rounded-2xl transition-all cursor-pointer border ${
                     isSelected
                       ? 'bg-white border-[#ea580c] shadow-md ring-2 ring-[#ea580c]/20'
                       : 'bg-white border-[#e2e8f0] hover:border-[#cbd5e1] hover:shadow-xs'
                   }`}
                 >
                   {/* Top Bar: Index & Layout Tag */}
-                  <div className="flex items-center justify-between mb-1 sm:mb-2 px-0.5">
-                    <span className={`text-[10px] sm:text-[11px] font-mono font-bold ${isSelected ? 'text-[#ea580c]' : 'text-[#64748b]'}`}>
+                  <div className="flex items-center justify-between mb-2 px-0.5">
+                    <span className={`text-[11px] font-mono font-bold ${isSelected ? 'text-[#ea580c]' : 'text-[#64748b]'}`}>
                       #{idx + 1}
                     </span>
-                    <span className="text-[8px] sm:text-[9px] font-mono font-semibold uppercase px-1 sm:px-1.5 py-0.5 rounded bg-[#f1f5f9] text-[#475569] border border-[#e2e8f0]/80">
+                    <span className="text-[9px] font-mono font-semibold uppercase px-1.5 py-0.5 rounded bg-[#f1f5f9] text-[#475569] border border-[#e2e8f0]/80">
                       {s.layout}
                     </span>
                   </div>
@@ -784,13 +784,13 @@ export function UniverSlideEditor({ deliverable }: UniverSlideEditorProps) {
                   {/* 16:9 Realistic Miniature Slide Wireframe Box */}
                   <div
                     style={{ backgroundColor: s.bgColor || '#ffffff' }}
-                    className={`relative w-full aspect-[16/9] rounded-lg sm:rounded-xl border overflow-hidden flex flex-col transition-all shadow-inner ${
+                    className={`relative w-full aspect-[16/9] rounded-xl border overflow-hidden flex flex-col transition-all shadow-inner ${
                       isSelected ? 'border-[#ea580c]/40 ring-1 ring-[#ea580c]/30' : 'border-[#e2e8f0]'
                     }`}
                   >
                     {/* Top Accent Strip */}
                     <div
-                      className="h-1 sm:h-1.5 w-full shrink-0"
+                      className="h-1.5 w-full shrink-0"
                       style={{ backgroundColor: s.accentColor || '#ea580c' }}
                     />
 
@@ -798,7 +798,7 @@ export function UniverSlideEditor({ deliverable }: UniverSlideEditorProps) {
                     <SlideMiniatureSkeleton slide={s} />
 
                     {/* Hover Quick Action Buttons */}
-                    <div className="absolute top-1 right-1 hidden sm:flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity bg-white/95 backdrop-blur-sm p-0.5 rounded-md shadow-md border border-[#e2e8f0]">
+                    <div className="absolute top-1.5 right-1.5 flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity bg-white/95 backdrop-blur-sm p-0.5 rounded-md shadow-md border border-[#e2e8f0]">
                       <button
                         type="button"
                         onClick={(e) => handleDuplicateSlideAt(idx, e)}
@@ -826,7 +826,7 @@ export function UniverSlideEditor({ deliverable }: UniverSlideEditorProps) {
             {/* Bottom Add Slide Button */}
             <button
               onClick={() => handleAddSlide('content')}
-              className="hidden md:flex w-full items-center justify-center space-x-2 py-3 rounded-2xl border-2 border-dashed border-[#cbd5e1] hover:border-[#ea580c] hover:bg-[#ea580c]/5 text-xs font-bold text-[#64748b] hover:text-[#ea580c] transition-all cursor-pointer"
+              className="w-full flex items-center justify-center space-x-2 py-3 rounded-2xl border-2 border-dashed border-[#cbd5e1] hover:border-[#ea580c] hover:bg-[#ea580c]/5 text-xs font-bold text-[#64748b] hover:text-[#ea580c] transition-all cursor-pointer"
             >
               <Plus className="h-4 w-4" />
               <span>New Slide</span>
@@ -834,222 +834,290 @@ export function UniverSlideEditor({ deliverable }: UniverSlideEditorProps) {
           </div>
         </div>
 
-        {/* Center: Slide Presentation Canvas Workspace */}
-        <div className="flex-1 overflow-auto p-2 sm:p-8 md:p-12 flex flex-col items-center justify-center bg-[#f1f5f9] relative" style={{ backgroundImage: 'radial-gradient(#cbd5e1 1px, transparent 1px)', backgroundSize: '20px 20px' }}>
-          <motion.div
-            key={currentSlide.id}
-            initial={{ opacity: 0, scale: 0.98 }}
-            animate={{ opacity: 1, scale: zoomLevel / 100 }}
-            transition={{ duration: 0.2 }}
-            style={{
-              backgroundColor: currentSlide.bgColor || '#ffffff',
-              transformOrigin: 'center center',
-            }}
-            className={`w-full max-w-4xl ${
-              aspectRatio === '16:9' ? 'aspect-[16/9]' : 'aspect-[4/3]'
-            } text-[#0f172a] rounded-xl sm:rounded-3xl border border-slate-200/80 shadow-md sm:shadow-[0_20px_50px_rgba(0,0,0,0.08)] p-4 xs:p-6 sm:p-10 md:p-14 flex flex-col justify-between relative transition-all overflow-hidden`}
+        {/* Center Canvas & Mobile Workspace (Full Priority on Mobile) */}
+        <div className="flex-1 flex flex-col overflow-hidden bg-[#f1f5f9]">
+          {/* Main Slide Presentation Stage Area */}
+          <div
+            className="flex-1 overflow-y-auto p-2.5 xs:p-4 sm:p-8 md:p-12 flex flex-col items-center justify-start sm:justify-center relative"
+            style={{ backgroundImage: 'radial-gradient(#cbd5e1 1px, transparent 1px)', backgroundSize: '20px 20px' }}
           >
-            {/* Top Accent Strip */}
-            <div
-              className="absolute top-0 inset-x-0 h-1.5 sm:h-2.5"
-              style={{ backgroundColor: currentSlide.accentColor || '#ea580c' }}
-            />
-
-            {/* Slide Header Section */}
-            <div className="space-y-0.5 sm:space-y-1">
-              <input
-                type="text"
-                value={currentSlide.title}
-                onChange={(e) => handleUpdateSlide({ title: e.target.value })}
-                className="w-full text-base xs:text-lg sm:text-2xl md:text-3xl font-extrabold tracking-tight bg-transparent border-none focus:outline-none focus:ring-1 sm:focus:ring-2 focus:ring-[#ea580c]/30 rounded-lg sm:rounded-xl px-1 sm:px-2 py-0.5 text-[#0f172a]"
-                placeholder="Slide Title"
+            {/* The Responsive Slide Card */}
+            <motion.div
+              key={currentSlide.id}
+              initial={{ opacity: 0, scale: 0.98 }}
+              animate={{ opacity: 1, scale: zoomLevel / 100 }}
+              transition={{ duration: 0.2 }}
+              style={{
+                backgroundColor: currentSlide.bgColor || '#ffffff',
+                transformOrigin: 'center center',
+              }}
+              className="w-full max-w-4xl min-h-[340px] sm:min-h-0 sm:aspect-[16/9] text-[#0f172a] rounded-2xl sm:rounded-3xl border border-slate-200/90 shadow-lg sm:shadow-[0_20px_50px_rgba(0,0,0,0.08)] p-4 xs:p-6 sm:p-10 md:p-14 flex flex-col justify-between relative transition-all overflow-hidden bg-white"
+            >
+              {/* Top Accent Strip */}
+              <div
+                className="absolute top-0 inset-x-0 h-1.5 sm:h-2.5"
+                style={{ backgroundColor: currentSlide.accentColor || '#ea580c' }}
               />
 
-              <input
-                type="text"
-                value={currentSlide.subtitle}
-                onChange={(e) => handleUpdateSlide({ subtitle: e.target.value })}
-                className="w-full text-[10px] xs:text-xs sm:text-sm text-[#64748b] font-medium bg-transparent border-none focus:outline-none focus:ring-1 sm:focus:ring-2 focus:ring-[#ea580c]/30 rounded-lg sm:rounded-xl px-1 sm:px-2 py-0.5"
-                placeholder="Subtitle & Context"
-              />
-            </div>
+              {/* Slide Header Section */}
+              <div className="space-y-1 mb-3 sm:mb-4">
+                <input
+                  type="text"
+                  value={currentSlide.title}
+                  onChange={(e) => handleUpdateSlide({ title: e.target.value })}
+                  className="w-full text-base xs:text-lg sm:text-2xl md:text-3xl font-extrabold tracking-tight bg-transparent border-none focus:outline-none focus:ring-1 sm:focus:ring-2 focus:ring-[#ea580c]/30 rounded-lg sm:rounded-xl px-1 sm:px-2 py-0.5 text-[#0f172a]"
+                  placeholder="Slide Title"
+                />
 
-            {/* Slide Dynamic Content based on Layout */}
-            <div className="my-auto flex-1 flex flex-col justify-center py-6">
-              {/* 1. Content & Bullets Layout */}
-              {currentSlide.layout === 'content' && (
-                <div className="space-y-3.5">
-                  {currentSlide.bullets.map((bullet, bIdx) => (
-                    <div key={bIdx} className="group flex items-start space-x-3 p-1.5 rounded-xl hover:bg-slate-50 transition-colors">
-                      <div
-                        className="h-2.5 w-2.5 rounded-full mt-2 shrink-0 shadow-xs"
-                        style={{ backgroundColor: currentSlide.accentColor || '#ea580c' }}
-                      />
-                      <input
-                        type="text"
-                        value={bullet}
-                        onChange={(e) => {
-                          const updatedBullets = [...currentSlide.bullets];
-                          updatedBullets[bIdx] = e.target.value;
-                          handleUpdateSlide({ bullets: updatedBullets });
-                        }}
-                        className="flex-1 text-sm sm:text-base font-medium text-[#1e293b] bg-transparent border-none focus:outline-none focus:ring-1 focus:ring-[#ea580c]/30 rounded px-1"
-                      />
-                      <button
-                        onClick={() => {
-                          const updatedBullets = currentSlide.bullets.filter((_, idx) => idx !== bIdx);
-                          handleUpdateSlide({ bullets: updatedBullets });
-                        }}
-                        className="opacity-0 group-hover:opacity-100 text-xs text-[#94a3b8] hover:text-rose-600 p-1 transition-opacity"
-                        title="Remove Bullet"
-                      >
-                        ✕
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
+                <input
+                  type="text"
+                  value={currentSlide.subtitle}
+                  onChange={(e) => handleUpdateSlide({ subtitle: e.target.value })}
+                  className="w-full text-[11px] xs:text-xs sm:text-sm text-[#64748b] font-medium bg-transparent border-none focus:outline-none focus:ring-1 sm:focus:ring-2 focus:ring-[#ea580c]/30 rounded-lg sm:rounded-xl px-1 sm:px-2 py-0.5"
+                  placeholder="Subtitle & Context"
+                />
+              </div>
 
-              {/* 2. Two-Column Layout */}
-              {currentSlide.layout === 'two-column' && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                  <div className="p-5 rounded-2xl bg-[#f8fafc] border border-[#e2e8f0] space-y-3 shadow-xs">
-                    <h4 className="font-bold text-xs text-[#0f172a] uppercase tracking-wider flex items-center gap-1.5">
-                      <span className="h-2 w-2 rounded-full bg-[#ea580c]" />
-                      <span>Operational Focus</span>
-                    </h4>
-                    {currentSlide.bullets.slice(0, 2).map((b, idx) => (
-                      <p key={idx} className="text-xs sm:text-sm text-[#334155] leading-relaxed font-medium">&bull; {b}</p>
-                    ))}
-                  </div>
-                  <div className="p-5 rounded-2xl bg-[#f8fafc] border border-[#e2e8f0] space-y-3 shadow-xs">
-                    <h4 className="font-bold text-xs text-[#0f172a] uppercase tracking-wider flex items-center gap-1.5">
-                      <span className="h-2 w-2 rounded-full bg-blue-600" />
-                      <span>Engineering Takeaways</span>
-                    </h4>
-                    {currentSlide.bullets.slice(2).map((b, idx) => (
-                      <p key={idx} className="text-xs sm:text-sm text-[#334155] leading-relaxed font-medium">&bull; {b}</p>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* 3. Milestone Timeline Layout */}
-              {currentSlide.layout === 'timeline' && (
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
-                  {currentSlide.timeline.map((t, idx) => (
-                    <div key={idx} className="p-4 rounded-2xl bg-[#f8fafc] border border-[#e2e8f0] flex flex-col justify-between shadow-xs hover:border-[#cbd5e1] transition-all">
-                      <div>
-                        <span
-                          className="text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full bg-white border border-[#e2e8f0] inline-block shadow-xs"
-                          style={{ color: currentSlide.accentColor || '#ea580c' }}
-                        >
-                          {t.step}
-                        </span>
+              {/* Slide Dynamic Content based on Layout */}
+              <div className="my-auto flex-1 flex flex-col justify-center py-2 sm:py-4">
+                {/* 1. Content & Bullets Layout */}
+                {currentSlide.layout === 'content' && (
+                  <div className="space-y-2 sm:space-y-3.5">
+                    {currentSlide.bullets.map((bullet, bIdx) => (
+                      <div key={bIdx} className="group flex items-start space-x-2.5 p-1 rounded-xl hover:bg-slate-50 transition-colors">
+                        <div
+                          className="h-2 w-2 sm:h-2.5 sm:w-2.5 rounded-full mt-1.5 sm:mt-2 shrink-0 shadow-xs"
+                          style={{ backgroundColor: currentSlide.accentColor || '#ea580c' }}
+                        />
                         <input
                           type="text"
-                          value={t.title}
+                          value={bullet}
+                          onChange={(e) => {
+                            const updatedBullets = [...currentSlide.bullets];
+                            updatedBullets[bIdx] = e.target.value;
+                            handleUpdateSlide({ bullets: updatedBullets });
+                          }}
+                          className="flex-1 text-xs xs:text-sm sm:text-base font-medium text-[#1e293b] bg-transparent border-none focus:outline-none focus:ring-1 focus:ring-[#ea580c]/30 rounded px-1"
+                        />
+                        <button
+                          onClick={() => {
+                            const updatedBullets = currentSlide.bullets.filter((_, idx) => idx !== bIdx);
+                            handleUpdateSlide({ bullets: updatedBullets });
+                          }}
+                          className="opacity-0 group-hover:opacity-100 text-xs text-[#94a3b8] hover:text-rose-600 p-1 transition-opacity"
+                          title="Remove Bullet"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* 2. Two-Column Layout */}
+                {currentSlide.layout === 'two-column' && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-6">
+                    <div className="p-3.5 sm:p-5 rounded-2xl bg-[#f8fafc] border border-[#e2e8f0] space-y-2 sm:space-y-3 shadow-xs">
+                      <h4 className="font-bold text-xs text-[#0f172a] uppercase tracking-wider flex items-center gap-1.5">
+                        <span className="h-2 w-2 rounded-full bg-[#ea580c]" />
+                        <span>Operational Focus</span>
+                      </h4>
+                      {currentSlide.bullets.slice(0, 2).map((b, idx) => (
+                        <p key={idx} className="text-xs sm:text-sm text-[#334155] leading-relaxed font-medium">&bull; {b}</p>
+                      ))}
+                    </div>
+                    <div className="p-3.5 sm:p-5 rounded-2xl bg-[#f8fafc] border border-[#e2e8f0] space-y-2 sm:space-y-3 shadow-xs">
+                      <h4 className="font-bold text-xs text-[#0f172a] uppercase tracking-wider flex items-center gap-1.5">
+                        <span className="h-2 w-2 rounded-full bg-blue-600" />
+                        <span>Engineering Takeaways</span>
+                      </h4>
+                      {currentSlide.bullets.slice(2).map((b, idx) => (
+                        <p key={idx} className="text-xs sm:text-sm text-[#334155] leading-relaxed font-medium">&bull; {b}</p>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* 3. Milestone Timeline Layout */}
+                {currentSlide.layout === 'timeline' && (
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3.5">
+                    {currentSlide.timeline.map((t, idx) => (
+                      <div key={idx} className="p-2.5 sm:p-4 rounded-xl sm:rounded-2xl bg-[#f8fafc] border border-[#e2e8f0] flex flex-col justify-between shadow-xs hover:border-[#cbd5e1] transition-all">
+                        <div>
+                          <span
+                            className="text-[9px] sm:text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full bg-white border border-[#e2e8f0] inline-block shadow-xs"
+                            style={{ color: currentSlide.accentColor || '#ea580c' }}
+                          >
+                            {t.step}
+                          </span>
+                          <input
+                            type="text"
+                            value={t.title}
+                            onChange={(e) => {
+                              const newTl = [...currentSlide.timeline];
+                              newTl[idx].title = e.target.value;
+                              handleUpdateSlide({ timeline: newTl });
+                            }}
+                            className="font-bold text-[11px] sm:text-sm text-[#0f172a] mt-2 sm:mt-2.5 w-full bg-transparent border-none focus:outline-none"
+                          />
+                        </div>
+                        <input
+                          type="text"
+                          value={t.desc}
                           onChange={(e) => {
                             const newTl = [...currentSlide.timeline];
-                            newTl[idx].title = e.target.value;
+                            newTl[idx].desc = e.target.value;
                             handleUpdateSlide({ timeline: newTl });
                           }}
-                          className="font-bold text-xs sm:text-sm text-[#0f172a] mt-2.5 w-full bg-transparent border-none focus:outline-none"
+                          className="text-[10px] sm:text-[11px] text-[#64748b] mt-1 sm:mt-2 w-full bg-transparent border-none focus:outline-none leading-relaxed"
                         />
                       </div>
-                      <input
-                        type="text"
-                        value={t.desc}
-                        onChange={(e) => {
-                          const newTl = [...currentSlide.timeline];
-                          newTl[idx].desc = e.target.value;
-                          handleUpdateSlide({ timeline: newTl });
-                        }}
-                        className="text-[11px] text-[#64748b] mt-2 w-full bg-transparent border-none focus:outline-none leading-relaxed"
-                      />
-                    </div>
-                  ))}
-                </div>
-              )}
+                    ))}
+                  </div>
+                )}
 
-              {/* 4. Table Layout */}
-              {currentSlide.layout === 'table' && currentSlide.tableData && (
-                <div className="overflow-x-auto rounded-2xl border border-[#cbd5e1] shadow-xs">
-                  <table className="w-full text-xs text-left border-collapse">
-                    <thead className="bg-[#f1f5f9] text-[#0f172a] font-bold border-b border-[#cbd5e1]">
-                      <tr>
-                        {currentSlide.tableData.headers.map((h, hIdx) => (
-                          <th key={hIdx} className="p-3 border-r border-[#cbd5e1]">{h}</th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {currentSlide.tableData.rows.map((row, rIdx) => (
-                        <tr key={rIdx} className="border-b border-[#e2e8f0] hover:bg-[#f8fafc] transition-colors">
-                          {row.map((cell, cIdx) => (
-                            <td key={cIdx} className="p-3 border-r border-[#e2e8f0] text-[#334155] font-medium">{cell}</td>
+                {/* 4. Table Layout */}
+                {currentSlide.layout === 'table' && currentSlide.tableData && (
+                  <div className="overflow-x-auto rounded-xl sm:rounded-2xl border border-[#cbd5e1] shadow-xs">
+                    <table className="w-full text-[11px] sm:text-xs text-left border-collapse">
+                      <thead className="bg-[#f1f5f9] text-[#0f172a] font-bold border-b border-[#cbd5e1]">
+                        <tr>
+                          {currentSlide.tableData.headers.map((h, hIdx) => (
+                            <th key={hIdx} className="p-2 sm:p-3 border-r border-[#cbd5e1]">{h}</th>
                           ))}
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
+                      </thead>
+                      <tbody>
+                        {currentSlide.tableData.rows.map((row, rIdx) => (
+                          <tr key={rIdx} className="border-b border-[#e2e8f0] hover:bg-[#f8fafc] transition-colors">
+                            {row.map((cell, cIdx) => (
+                              <td key={cIdx} className="p-2 sm:p-3 border-r border-[#e2e8f0] text-[#334155] font-medium">{cell}</td>
+                            ))}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
 
-              {/* 5. KPI Grid Layout / Generic */}
-              {(currentSlide.layout === 'kpi-grid' || currentSlide.layout === 'title') && currentSlide.kpis && (
-                <div className="grid grid-cols-3 gap-4">
-                  {currentSlide.kpis.map((kpi, kIdx) => (
-                    <div key={kIdx} className="p-5 rounded-2xl bg-[#f8fafc] border border-[#e2e8f0] flex flex-col justify-between shadow-xs hover:shadow-sm transition-shadow">
-                      <div className="flex items-center justify-between">
+                {/* 5. KPI Grid Layout / Generic */}
+                {(currentSlide.layout === 'kpi-grid' || currentSlide.layout === 'title') && currentSlide.kpis && (
+                  <div className="grid grid-cols-1 xs:grid-cols-3 gap-2.5 sm:gap-4">
+                    {currentSlide.kpis.map((kpi, kIdx) => (
+                      <div key={kIdx} className="p-3 sm:p-5 rounded-xl sm:rounded-2xl bg-[#f8fafc] border border-[#e2e8f0] flex flex-col justify-between shadow-xs hover:shadow-sm transition-shadow">
+                        <div className="flex items-center justify-between">
+                          <input
+                            type="text"
+                            value={kpi.label}
+                            onChange={(e) => {
+                              const newKpis = [...currentSlide.kpis];
+                              newKpis[kIdx].label = e.target.value;
+                              handleUpdateSlide({ kpis: newKpis });
+                            }}
+                            className="text-[10px] sm:text-[11px] text-[#64748b] uppercase font-bold tracking-wider bg-transparent border-none focus:outline-none"
+                          />
+                          {kpi.change && (
+                            <span className="text-[9px] sm:text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700">
+                              {kpi.change}
+                            </span>
+                          )}
+                        </div>
                         <input
                           type="text"
-                          value={kpi.label}
+                          value={kpi.value}
                           onChange={(e) => {
                             const newKpis = [...currentSlide.kpis];
-                            newKpis[kIdx].label = e.target.value;
+                            newKpis[kIdx].value = e.target.value;
                             handleUpdateSlide({ kpis: newKpis });
                           }}
-                          className="text-[11px] text-[#64748b] uppercase font-bold tracking-wider bg-transparent border-none focus:outline-none"
+                          className="text-xl sm:text-3xl font-extrabold font-mono text-[#0f172a] mt-1 sm:mt-2 bg-transparent border-none focus:outline-none tracking-tight"
                         />
-                        {kpi.change && (
-                          <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700">
-                            {kpi.change}
-                          </span>
-                        )}
                       </div>
-                      <input
-                        type="text"
-                        value={kpi.value}
-                        onChange={(e) => {
-                          const newKpis = [...currentSlide.kpis];
-                          newKpis[kIdx].value = e.target.value;
-                          handleUpdateSlide({ kpis: newKpis });
-                        }}
-                        className="text-2xl sm:text-3xl font-extrabold font-mono text-[#0f172a] mt-2 bg-transparent border-none focus:outline-none tracking-tight"
-                      />
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {/* 6. Quote Layout */}
-              {currentSlide.layout === 'quote' && (
-                <div className="flex flex-col items-center justify-center text-center px-8 py-4 space-y-3">
-                  <div className="text-4xl text-[#ea580c] font-serif leading-none">“</div>
-                  <textarea
-                    value={currentSlide.quoteText || currentSlide.title}
-                    onChange={(e) => handleUpdateSlide({ quoteText: e.target.value })}
-                    className="w-full text-lg sm:text-xl font-medium text-center text-[#1e293b] italic bg-transparent border-none focus:outline-none resize-none"
-                    rows={3}
-                  />
-                  <div className="text-xs font-bold uppercase tracking-wider text-[#64748b]">
-                    — {currentSlide.quoteAuthor || 'Executive Engineering Board'}
+                    ))}
                   </div>
-                </div>
-              )}
+                )}
+
+                {/* 6. Quote Layout */}
+                {currentSlide.layout === 'quote' && (
+                  <div className="flex flex-col items-center justify-center text-center px-4 sm:px-8 py-2 sm:py-4 space-y-2 sm:space-y-3">
+                    <div className="text-3xl sm:text-4xl text-[#ea580c] font-serif leading-none">“</div>
+                    <textarea
+                      value={currentSlide.quoteText || currentSlide.title}
+                      onChange={(e) => handleUpdateSlide({ quoteText: e.target.value })}
+                      className="w-full text-base sm:text-xl font-medium text-center text-[#1e293b] italic bg-transparent border-none focus:outline-none resize-none"
+                      rows={3}
+                    />
+                    <div className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-[#64748b]">
+                      — {currentSlide.quoteAuthor || 'Executive Engineering Board'}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          </div>
+
+          {/* Mobile-Only Bottom Thumbnails & Navigation Tray */}
+          <div className="md:hidden flex flex-col bg-white border-t border-[#e2e8f0] shrink-0 shadow-sm">
+            {/* Slide Navigation Bar */}
+            <div className="flex items-center justify-between px-3 py-2 border-b border-[#f1f5f9]">
+              <div className="flex items-center space-x-1.5">
+                <button
+                  onClick={() => setActiveSlideIndex((curr) => Math.max(0, curr - 1))}
+                  disabled={activeSlideIndex === 0}
+                  className="p-1.5 rounded-lg bg-[#f8fafc] border border-[#cbd5e1] disabled:opacity-30 text-[#0f172a]"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </button>
+                <span className="text-xs font-mono font-bold text-[#0f172a] px-1">
+                  #{activeSlideIndex + 1} / {slides.length}
+                </span>
+                <button
+                  onClick={() => setActiveSlideIndex((curr) => Math.min(slides.length - 1, curr + 1))}
+                  disabled={activeSlideIndex === slides.length - 1}
+                  className="p-1.5 rounded-lg bg-[#f8fafc] border border-[#cbd5e1] disabled:opacity-30 text-[#0f172a]"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </button>
+              </div>
+
+              <div className="flex items-center space-x-2">
+                <button
+                  onClick={() => handleAddSlide('content')}
+                  className="flex items-center space-x-1 px-3 py-1.5 rounded-xl bg-[#ea580c] text-white text-xs font-bold shadow-xs active:scale-95 cursor-pointer"
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  <span>New Slide</span>
+                </button>
+              </div>
             </div>
-          </motion.div>
+
+            {/* Bottom Horizontal Miniature Thumbnails Strip */}
+            <div className="flex items-center space-x-2 p-2 overflow-x-auto scrollbar-none">
+              {slides.map((s, idx) => {
+                const isSelected = activeSlideIndex === idx;
+                return (
+                  <button
+                    key={s.id}
+                    onClick={() => setActiveSlideIndex(idx)}
+                    className={`relative flex flex-col p-1 rounded-lg transition-all shrink-0 w-20 aspect-[16/9] border ${
+                      isSelected
+                        ? 'border-[#ea580c] ring-2 ring-[#ea580c]/30 shadow-xs'
+                        : 'border-[#cbd5e1] bg-white opacity-70'
+                    }`}
+                    style={{ backgroundColor: s.bgColor || '#ffffff' }}
+                  >
+                    <div
+                      className="h-1 w-full shrink-0 rounded-t"
+                      style={{ backgroundColor: s.accentColor || '#ea580c' }}
+                    />
+                    <div className="flex-1 flex items-center justify-center text-[9px] font-mono font-bold text-[#0f172a]">
+                      #{idx + 1}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
         </div>
       </div>
 
