@@ -268,7 +268,7 @@ function FluidAuroraGlow() {
           rotate: [0, 45, 90, 0],
         }}
         transition={{ duration: 16, repeat: Infinity, ease: "easeInOut" }}
-        className="absolute top-[20%] left-[30%] w-[600px] h-[450px] bg-gradient-to-tr from-[#4285f4]/15 via-[#9b72cf]/12 to-[#d96570]/10 rounded-full blur-[110px] opacity-75"
+        className="absolute top-[20%] left-[30%] w-[300px] sm:w-[600px] h-[225px] sm:h-[450px] bg-gradient-to-tr from-blue-400/10 via-purple-400/8 to-pink-400/6 dark:from-[#4285f4]/15 dark:via-[#9b72cf]/12 dark:to-[#d96570]/10 rounded-full blur-[80px] sm:blur-[110px] opacity-60 sm:opacity-75"
       />
       <motion.div
         animate={{
@@ -277,7 +277,7 @@ function FluidAuroraGlow() {
           y: [0, 25, -20, 0],
         }}
         transition={{ duration: 20, repeat: Infinity, ease: "easeInOut" }}
-        className="absolute bottom-[25%] right-[25%] w-[500px] h-[380px] bg-gradient-to-bl from-[#1a2333]/40 via-[#9b72cf]/10 to-[#4285f4]/10 rounded-full blur-[120px] opacity-60"
+        className="absolute bottom-[25%] right-[25%] w-[250px] sm:w-[500px] h-[190px] sm:h-[380px] bg-gradient-to-bl from-slate-200/30 via-purple-400/8 to-blue-400/8 dark:from-[#1a2333]/40 dark:via-[#9b72cf]/10 dark:to-[#4285f4]/10 rounded-full blur-[90px] sm:blur-[120px] opacity-40 sm:opacity-60"
       />
     </div>
   );
@@ -879,7 +879,7 @@ export default function GeminiReplicaChatApp() {
             </header>
 
             {/* Conversational Scroll Area */}
-            <div className={`flex-1 min-h-0 px-3 sm:px-6 pt-2 pb-2 flex flex-col z-10 ${hasMessages ? 'overflow-y-auto' : 'overflow-hidden justify-center'}`}>
+            <div className={`flex-1 min-h-0 px-3 sm:px-6 pt-2 pb-2 flex flex-col z-10 ${hasMessages ? 'overflow-y-auto' : 'overflow-hidden'}`}>
               {hasMessages ? (
                 <div className="max-w-3xl w-full mx-auto space-y-5 sm:space-y-6 py-3 sm:py-4">
                   {messages.map((msg) => {
@@ -1006,10 +1006,10 @@ export default function GeminiReplicaChatApp() {
               <div ref={bottomRef} className="h-4" />
             </div>
           ) : (
-            <div className="flex-1 flex flex-col items-center justify-center max-w-3xl mx-auto px-4 text-center space-y-3 sm:space-y-6 w-full">
+            <div className="flex-1 flex flex-col items-center justify-center max-w-3xl mx-auto px-4 text-center space-y-3 sm:space-y-6 w-full my-auto">
               <div className="space-y-2.5 sm:space-y-4 flex flex-col items-center">
                 {/* REVEAL 2.0 Radiant Logo Icon */}
-                <RevealLogoIcon className="h-14 w-14 sm:h-20 sm:w-20 mb-1" animated={true} />
+                <RevealLogoIcon className="h-12 w-12 sm:h-20 sm:w-20 mb-0.5 sm:mb-1" animated={true} />
 
                 {/* Multicolored Gradient Heading */}
                 <h1 className="text-2xl sm:text-5xl font-extrabold tracking-tight bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 dark:from-[#4285f4] dark:via-[#9b72cf] dark:to-[#d96570] bg-clip-text text-transparent">
@@ -1024,7 +1024,7 @@ export default function GeminiReplicaChatApp() {
         </div>
 
         {/* 3. Authentic Single-Line Gemini Pill Input Dock with Integrated Model Board */}
-        <div className="max-w-4xl mx-auto w-full px-3 sm:px-4 pt-1 z-20 shrink-0 pb-6 sm:pb-5 relative">
+        <div className="max-w-4xl mx-auto w-full px-3 sm:px-4 pt-1 z-20 shrink-0 pb-36 sm:pb-5 relative">
           <input
             type="file"
             ref={fileInputRef}
