@@ -4,7 +4,7 @@ import { GeistSans } from 'geist/font/sans';
 import { GeistMono } from 'geist/font/mono';
 
 export const metadata = {
-  title: 'REVEAL 2.0',
+  title: 'MRPL Sovereign AI Workbench (SIH26117)',
   description: 'On-premise air-gapped agentic AI workbench for MRPL refinery operations.',
 };
 
