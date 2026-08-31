@@ -35,7 +35,6 @@ export interface ConversationSession {
 interface ChatState {
   sessions: ConversationSession[];
   activeSessionId: string;
-  isSidebarOpen: boolean;
   messages: ChatMessage[];
   isStreaming: boolean;
   activeScenario: 'furnace' | 'pump' | 'pid' | 'general';
@@ -49,9 +48,9 @@ interface ChatState {
   } | null;
   
   // Actions
-  toggleSidebar: () => void;
   createNewChat: () => void;
   selectSession: (id: string) => void;
+  deleteSession: (id: string) => void;
   setMessages: (messages: ChatMessage[]) => void;
   addMessage: (message: ChatMessage) => void;
   setCurrentInput: (input: string) => void;
@@ -64,7 +63,6 @@ interface ChatState {
 export const useChatStore = create<ChatState>((set, get) => ({
   sessions: [],
   activeSessionId: 'session-default',
-  isSidebarOpen: false,
   messages: [],
   isStreaming: false,
   activeScenario: 'pump',
@@ -72,7 +70,6 @@ export const useChatStore = create<ChatState>((set, get) => ({
   activeTraceSteps: [],
   currentRouting: null,
 
-  toggleSidebar: () => set((state) => ({ isSidebarOpen: !state.isSidebarOpen })),
   createNewChat: () => {
     const newId = `session-${Date.now()}`;
     const newSess: ConversationSession = {
@@ -97,6 +94,17 @@ export const useChatStore = create<ChatState>((set, get) => ({
       messages: sess ? sess.messages : [],
       activeTraceSteps: [],
       isStreaming: false
+    });
+  },
+  deleteSession: (id) => {
+    set((state) => {
+      const newSessions = state.sessions.filter((s) => s.id !== id);
+      const isActive = state.activeSessionId === id;
+      return {
+        sessions: newSessions,
+        activeSessionId: isActive ? (newSessions[0]?.id || 'session-default') : state.activeSessionId,
+        messages: isActive ? (newSessions[0]?.messages || []) : state.messages,
+      };
     });
   },
 

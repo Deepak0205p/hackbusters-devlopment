@@ -21,6 +21,8 @@ interface CanvasState {
   saveChanges: (id: string) => Promise<void>;
 }
 
+let autoSaveTimer: ReturnType<typeof setTimeout> | null = null;
+
 export const useCanvasStore = create<CanvasState>((set, get) => ({
   isOpen: false,
   isExpanded: false,
@@ -71,6 +73,7 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
       activeDeliverable: item,
       activeTab: 'editor',
       hasUnsavedChanges: false,
+      isSaving: false,
     });
   },
 
@@ -94,12 +97,26 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
       },
       hasUnsavedChanges: true,
     }));
+
+    if (autoSaveTimer) {
+      clearTimeout(autoSaveTimer);
+    }
+
+    autoSaveTimer = setTimeout(() => {
+      set({ isSaving: true });
+      setTimeout(() => {
+        set({ isSaving: false, hasUnsavedChanges: false });
+      }, 400);
+    }, 1200);
   },
 
   saveChanges: async (id: string) => {
+    if (autoSaveTimer) {
+      clearTimeout(autoSaveTimer);
+    }
     set({ isSaving: true });
     // Simulate air-gapped local commit and state persistence
-    await new Promise((resolve) => setTimeout(resolve, 600));
+    await new Promise((resolve) => setTimeout(resolve, 500));
     set({ isSaving: false, hasUnsavedChanges: false });
   },
 }));

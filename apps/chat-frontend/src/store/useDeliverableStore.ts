@@ -30,6 +30,7 @@ interface DeliverableState {
   selectDeliverable: (id: string | null) => void;
   downloadDeliverable: (id: string) => Promise<void>;
   addDeliverableFromAgent: (filename: string, scenarioId: string, modelId: string) => void;
+  fetchDiskDeliverables: () => Promise<void>;
 }
 
 function getApiHost(): string {
@@ -1609,6 +1610,26 @@ export const useDeliverableStore = create<DeliverableState>((set, get) => ({
     };
 
     set(state => ({ deliverables: [newItem, ...state.deliverables] }));
+  },
+
+  fetchDiskDeliverables: async () => {
+    const host = getApiHost();
+    try {
+      const res = await fetch(`http://${host}:8000/api/files/list`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.deliverables && Array.isArray(data.deliverables) && data.deliverables.length > 0) {
+          const diskItems: DeliverableItem[] = data.deliverables;
+          const currentList = get().deliverables;
+          // Merge: Keep disk items first, then any custom local items not on disk
+          const diskFilenames = new Set(diskItems.map(d => d.filename));
+          const nonDisk = currentList.filter(c => !diskFilenames.has(c.filename));
+          set({ deliverables: [...diskItems, ...nonDisk] });
+        }
+      }
+    } catch (e) {
+      console.warn('[useDeliverableStore] Auto-sync disk deliverables fallback:', e);
+    }
   },
 
   downloadDeliverable: async (id: string) => {

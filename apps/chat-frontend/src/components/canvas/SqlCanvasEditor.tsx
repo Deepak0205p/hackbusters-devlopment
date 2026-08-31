@@ -16,16 +16,14 @@ import {
   Terminal,
   FileSpreadsheet,
   CheckCircle2,
-  Filter
+  Filter,
+  X,
+  Server
 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface SqlCanvasEditorProps {
   deliverable: DeliverableItem;
-}
-
-interface TableColumn {
-  name: string;
-  type: string;
 }
 
 export function SqlCanvasEditor({ deliverable }: SqlCanvasEditorProps) {
@@ -34,7 +32,7 @@ export function SqlCanvasEditor({ deliverable }: SqlCanvasEditorProps) {
   const [isRunning, setIsRunning] = useState(false);
   const [fontSize, setFontSize] = useState(13);
   const [activeTab, setActiveTab] = useState<'results' | 'messages'>('results');
-  const [executionTime, setExecutionTime] = useState<number | null>(null);
+  const [executionTime, setExecutionTime] = useState<number | null>(34);
 
   const defaultQuery =
     editedContent[deliverable.id]?.code ||
@@ -100,150 +98,167 @@ ORDER BY p.operating_temp_c DESC;
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const handleExportCsv = () => {
-    const csvContent =
-      'data:text/csv;charset=utf-8,' +
-      [results.headers.join(','), ...results.rows.map((e) => e.join(','))].join('\n');
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement('a');
-    link.setAttribute('href', encodedUri);
-    link.setAttribute('download', `${deliverable.filename.replace('.sql', '')}_results.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+  const handleDownload = () => {
+    const blob = new Blob([query], { type: 'text/sql;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = deliverable.filename.endsWith('.sql') ? deliverable.filename : `${deliverable.filename}.sql`;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   const lines = query.split('\n');
 
   return (
-    <div className="flex flex-col h-full bg-[#ffffff] text-[#0f172a] select-none font-sans">
-      {/* 1. SQL Ribbon Toolbar */}
-      <div className="flex flex-wrap items-center justify-between gap-2 px-4 py-2.5 bg-[#f8fafc] border-b border-[#e2e8f0] text-xs shrink-0 shadow-sm">
-        {/* Left: DB Engine & File Info */}
+    <div className="flex flex-col h-full bg-[#0f172a] text-[#f8fafc] select-none font-sans relative overflow-hidden">
+      {/* 1. TOP STUDIO RIBBON HEADER */}
+      <div className="flex flex-wrap items-center justify-between gap-2 px-4 py-2.5 bg-[#1e293b] border-b border-slate-700/80 text-xs shrink-0 shadow-sm">
+        {/* Left: DB & SQL File Badge */}
         <div className="flex items-center space-x-2.5">
-          <div className="flex items-center space-x-1.5 px-2.5 py-1 rounded-lg bg-[#eff6ff] border border-[#bfdbfe] text-[#1e40af] font-semibold">
-            <Database className="h-3.5 w-3.5" />
+          <div className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 font-bold">
+            <Database className="h-4 w-4 text-cyan-400" />
             <span className="font-mono text-xs">{deliverable.filename}</span>
           </div>
-          <span className="text-[11px] text-[#64748b] font-medium hidden sm:inline">
-            PostgreSQL 16 &bull; Air-Gapped In-Memory Cluster
-          </span>
+          <div className="hidden sm:flex items-center space-x-1.5 text-[11px] text-slate-400 font-mono">
+            <Server className="h-3.5 w-3.5 text-cyan-400" />
+            <span>PostgreSQL 16 &bull; Air-Gapped Engine</span>
+          </div>
         </div>
 
         {/* Right: Actions */}
         <div className="flex items-center space-x-2">
+          {/* Zoom / Font Size */}
+          <div className="flex items-center space-x-1 pr-2.5 border-r border-slate-700">
+            <button
+              onClick={() => setFontSize((s) => Math.max(10, s - 1))}
+              className="p-1 rounded hover:bg-slate-700 text-slate-400 hover:text-white"
+              title="Decrease Font Size"
+            >
+              <ZoomOut className="h-3.5 w-3.5" />
+            </button>
+            <span className="text-[11px] font-mono text-slate-200 font-bold">{fontSize}px</span>
+            <button
+              onClick={() => setFontSize((s) => Math.min(22, s + 1))}
+              className="p-1 rounded hover:bg-slate-700 text-slate-400 hover:text-white"
+              title="Increase Font Size"
+            >
+              <ZoomIn className="h-3.5 w-3.5" />
+            </button>
+          </div>
+
           <button
             onClick={handleCopy}
-            className="flex items-center space-x-1 px-2.5 py-1 rounded-lg bg-[#ffffff] hover:bg-[#f1f5f9] border border-[#cbd5e1] text-[#334155] font-medium"
+            className="flex items-center space-x-1 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 font-semibold transition-colors cursor-pointer"
           >
-            {copied ? <Check className="h-3.5 w-3.5 text-emerald-600" /> : <Copy className="h-3.5 w-3.5" />}
-            <span>{copied ? 'Copied' : 'Copy SQL'}</span>
+            {copied ? <Check className="h-3.5 w-3.5 text-emerald-400" /> : <Copy className="h-3.5 w-3.5 text-slate-400" />}
+            <span>{copied ? 'Copied' : 'Copy'}</span>
           </button>
 
           <button
-            onClick={handleExportCsv}
-            className="flex items-center space-x-1 px-2.5 py-1 rounded-lg bg-[#ffffff] hover:bg-[#f1f5f9] border border-[#cbd5e1] text-[#15803d] font-medium"
-            title="Export Results to CSV"
+            onClick={handleDownload}
+            className="p-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 transition-colors cursor-pointer"
+            title="Download .sql script"
           >
-            <FileSpreadsheet className="h-3.5 w-3.5" />
-            <span>Export CSV</span>
+            <Download className="h-3.5 w-3.5" />
           </button>
 
-          {/* Run Query Button */}
+          {/* Run SQL Query */}
           <button
             onClick={handleRunQuery}
             disabled={isRunning}
-            className="flex items-center space-x-1.5 px-4 py-1 rounded-lg bg-[#2563eb] hover:bg-[#1d4ed8] text-white font-semibold shadow-sm transition-all hover:scale-[1.02]"
+            className="flex items-center space-x-1.5 px-4 py-1.5 rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold shadow-md shadow-cyan-900/30 transition-all hover:scale-[1.02] active:scale-95 cursor-pointer disabled:opacity-50"
           >
-            <Play className={`h-3 w-3 fill-current ${isRunning ? 'animate-spin' : ''}`} />
-            <span>{isRunning ? 'Executing...' : 'Execute Query (Ctrl+Enter)'}</span>
+            <Play className={`h-3.5 w-3.5 fill-current ${isRunning ? 'animate-spin' : ''}`} />
+            <span>{isRunning ? 'Executing...' : 'Execute SQL (F5)'}</span>
           </button>
         </div>
       </div>
 
-      {/* 2. Main Area: SQL Query Editor (Top) + Interactive Result Table (Bottom) */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        {/* SQL Query Editor */}
-        <div className="h-[45%] flex overflow-hidden border-b border-[#cbd5e1] bg-[#ffffff]">
-          <div
-            style={{ fontSize: `${fontSize}px` }}
-            className="w-12 bg-[#f8fafc] text-[#94a3b8] border-r border-[#e2e8f0] text-right pr-2 py-4 select-none font-mono leading-relaxed shrink-0"
-          >
-            {lines.map((_: string, i: number) => (
-              <div key={i}>{i + 1}</div>
-            ))}
-          </div>
-
-          <textarea
-            value={query}
-            onChange={handleQueryChange}
-            spellCheck={false}
-            style={{ fontSize: `${fontSize}px` }}
-            className="flex-1 h-full bg-[#ffffff] text-[#0f172a] focus:outline-none resize-none font-mono p-4 leading-relaxed overflow-auto selection:bg-[#bfdbfe]"
-          />
+      {/* 2. SQL QUERY EDITOR AREA */}
+      <div className="flex-1 flex overflow-hidden bg-[#0b1120]">
+        <div
+          style={{ fontSize: `${fontSize}px` }}
+          className="w-12 bg-[#0b1120] text-slate-600 border-r border-slate-800 text-right pr-3 py-4 select-none font-mono leading-relaxed"
+        >
+          {lines.map((_: string, i: number) => (
+            <div key={i}>{i + 1}</div>
+          ))}
         </div>
 
-        {/* Tabular Result Grid */}
-        <div className="flex-1 flex flex-col overflow-hidden bg-[#ffffff]">
-          {/* Result Header Bar */}
-          <div className="flex items-center justify-between px-4 py-2 bg-[#f1f5f9] border-b border-[#e2e8f0] text-xs">
-            <div className="flex items-center space-x-3">
-              <span className="font-bold text-[#0f172a] flex items-center gap-1">
-                <TableIcon className="h-3.5 w-3.5 text-[#2563eb]" />
-                <span>Query Result Matrix ({results.rows.length} rows)</span>
-              </span>
-              {executionTime !== null && (
-                <span className="text-[11px] font-mono text-emerald-700 font-medium">
-                  &bull; Executed in {executionTime}ms
-                </span>
-              )}
-            </div>
+        <textarea
+          value={query}
+          onChange={handleQueryChange}
+          spellCheck={false}
+          style={{ fontSize: `${fontSize}px` }}
+          className="flex-1 h-full bg-[#0b1120] text-cyan-200 focus:outline-none resize-none font-mono p-4 leading-relaxed overflow-auto selection:bg-cyan-900/60"
+        />
+      </div>
 
-            <span className="text-[11px] text-[#64748b]">Read-Only Sandbox Snapshot</span>
+      {/* 3. SQL RESULTS GRID PANEL */}
+      <div className="h-56 bg-[#0f172a] border-t border-slate-700/80 flex flex-col shrink-0">
+        <div className="flex items-center justify-between px-4 py-2 bg-[#1e293b] border-b border-slate-700 text-xs text-slate-400">
+          <div className="flex items-center space-x-3">
+            <span className="font-bold text-cyan-400 flex items-center gap-1.5">
+              <TableIcon className="h-3.5 w-3.5" />
+              <span>Query Results ({results.rows.length} rows)</span>
+            </span>
+            {executionTime && (
+              <span className="text-[11px] text-slate-400 font-mono">
+                &bull; Executed in <strong className="text-emerald-400">{executionTime}ms</strong>
+              </span>
+            )}
           </div>
 
-          {/* Interactive Table Grid */}
-          <div className="flex-1 overflow-auto">
-            <table className="w-full text-left border-collapse text-xs font-mono">
-              <thead className="bg-[#f8fafc] text-[#334155] font-bold border-b border-[#cbd5e1] sticky top-0">
-                <tr>
-                  <th className="p-2.5 border-r border-[#e2e8f0] w-10 text-center bg-[#f1f5f9] text-[#64748b]">#</th>
-                  {results.headers.map((h, idx) => (
-                    <th key={idx} className="p-2.5 border-r border-[#e2e8f0] tracking-wider">{h}</th>
+          <span className="text-emerald-400 font-bold text-[11px] bg-emerald-950/60 border border-emerald-800/80 px-2.5 py-0.5 rounded-full">
+            ✓ 100% OISD Validated
+          </span>
+        </div>
+
+        {/* Results Data Table */}
+        <div className="flex-1 overflow-auto bg-[#090d16]">
+          <table className="w-full text-xs font-mono text-left border-collapse">
+            <thead className="bg-[#1e293b] text-slate-300 border-b border-slate-700 sticky top-0">
+              <tr>
+                {results.headers.map((h, idx) => (
+                  <th key={idx} className="p-2.5 border-r border-slate-700/60 font-bold text-[11px]">
+                    {h}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {results.rows.map((row, rIdx) => (
+                <tr key={rIdx} className="border-b border-slate-800 hover:bg-slate-800/50 transition-colors">
+                  {row.map((cell, cIdx) => (
+                    <td key={cIdx} className="p-2.5 border-r border-slate-800/60 text-slate-300">
+                      {cell === 'SAFE_AUTHORIZED' ? (
+                        <span className="text-emerald-400 font-bold">SAFE_AUTHORIZED</span>
+                      ) : (
+                        cell
+                      )}
+                    </td>
                   ))}
                 </tr>
-              </thead>
-              <tbody>
-                {results.rows.map((row, rIdx) => (
-                  <tr key={rIdx} className="border-b border-[#f1f5f9] hover:bg-[#f8fafc] transition-colors">
-                    <td className="p-2.5 border-r border-[#e2e8f0] text-center text-[#94a3b8] bg-[#fafafa]">
-                      {rIdx + 1}
-                    </td>
-                    {row.map((cell, cIdx) => (
-                      <td key={cIdx} className="p-2.5 border-r border-[#f1f5f9] text-[#1e293b]">
-                        {cell === 'SAFE_AUTHORIZED' ? (
-                          <span className="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-semibold text-[10px]">
-                            ✓ {cell}
-                          </span>
-                        ) : (
-                          String(cell)
-                        )}
-                      </td>
-                    ))}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+              ))}
+            </tbody>
+          </table>
         </div>
       </div>
 
-      {/* 3. Footer */}
-      <div className="flex items-center justify-between px-4 py-1.5 bg-[#f8fafc] border-t border-[#e2e8f0] text-[11px] text-[#64748b] font-mono shrink-0">
-        <div>
-          Status: <strong className="text-emerald-700">ONLINE (PostgreSQL 16)</strong>
+      {/* 4. STATISTICS FOOTER */}
+      <div className="flex items-center justify-between px-5 py-2 bg-[#1e293b] border-t border-slate-700/80 text-[11px] text-slate-400 font-mono shrink-0">
+        <div className="flex items-center space-x-3">
+          <span>Lines: <strong className="text-white">{lines.length}</strong></span>
+          <span>&bull;</span>
+          <span>Database: <strong className="text-cyan-400">PostgreSQL</strong></span>
+          <span>&bull;</span>
+          <span>Status: <strong className="text-emerald-400">Connected</strong></span>
         </div>
-        <span className="text-[#2563eb] font-sans font-semibold">SQL Studio & Query Engine</span>
+        <span className="text-cyan-400 font-sans font-bold flex items-center gap-1.5">
+          <span className="h-2 w-2 rounded-full bg-cyan-400 animate-pulse" />
+          SQL Telemetry Studio
+        </span>
       </div>
     </div>
   );

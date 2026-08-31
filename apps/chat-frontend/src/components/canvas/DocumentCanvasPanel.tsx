@@ -162,51 +162,66 @@ export function DocumentCanvasPanel() {
         animate={{ x: 0, opacity: 1 }}
         exit={{ x: '100%', opacity: 0 }}
         transition={{ type: 'spring', damping: 26, stiffness: 220 }}
-        className={`fixed inset-y-0 right-0 z-40 bg-[#ffffff] border-l border-[#cbd5e1] flex flex-col shadow-2xl transition-all duration-300 ${
-          isExpanded ? 'w-full md:w-full' : 'w-full md:w-[60vw] lg:w-[54vw] xl:w-[50vw]'
+        className={`fixed md:absolute inset-0 md:inset-y-0 md:right-0 md:left-auto bg-[#ffffff] border-l border-[#cbd5e1] flex flex-col shadow-2xl transition-all duration-300 z-50 md:z-30 ${
+          isExpanded
+            ? 'inset-0 w-full h-full border-l-0'
+            : 'w-full md:w-[60vw] lg:w-[54vw] xl:w-[50vw]'
         }`}
       >
         {/* 1. Canvas Top Header (Clean Light Theme) */}
-        <div className="flex items-center justify-between px-4 py-3 bg-[#ffffff] border-b border-[#e2e8f0] shrink-0 shadow-sm">
-          {/* Left: Document Info & Badges */}
-          <div className="flex items-center space-x-3 min-w-0">
-            <div className="p-2 rounded-xl bg-[#f8fafc] border border-[#e2e8f0] shrink-0">
+        <div className="flex items-center justify-between px-3 sm:px-4 py-2.5 sm:py-3 bg-[#ffffff] border-b border-[#e2e8f0] shrink-0 shadow-sm">
+          {/* Left: Document Info, Type Badge & Live Auto-Save Status */}
+          <div className="flex items-center space-x-2.5 sm:space-x-3 min-w-0 flex-1">
+            <div className="p-1.5 sm:p-2 rounded-xl bg-[#f8fafc] border border-[#e2e8f0] shrink-0">
               {renderFileIcon()}
             </div>
-            <div className="min-w-0">
-              <div className="flex items-center space-x-2">
-                <h2 className="text-sm font-semibold text-[#0f172a] truncate">
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center space-x-1.5 sm:space-x-2">
+                <h2 className="text-xs sm:text-sm font-bold text-[#0f172a] truncate max-w-[130px] xs:max-w-[200px] sm:max-w-none">
                   {activeDeliverable.filename}
                 </h2>
-                <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-[#f1f5f9] border border-[#cbd5e1] text-[#334155]">
+                <span className="px-1.5 sm:px-2 py-0.5 rounded text-[9px] sm:text-[10px] font-bold uppercase tracking-wider bg-[#f1f5f9] border border-[#cbd5e1] text-[#334155] shrink-0">
                   {ext.replace('.', '') || activeDeliverable.type}
                 </span>
-                {hasUnsavedChanges && (
-                  <span className="px-1.5 py-0.5 rounded text-[9px] font-semibold bg-amber-100 text-amber-800 border border-amber-300">
-                    Unsaved
+
+                {/* Live Auto-Save Indicator in Title Bar */}
+                {isSaving ? (
+                  <span className="hidden xs:flex items-center space-x-1 px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200 shrink-0">
+                    <span className="h-1.5 w-1.5 rounded-full bg-blue-600 animate-pulse" />
+                    <span>Saving...</span>
+                  </span>
+                ) : hasUnsavedChanges ? (
+                  <span className="hidden xs:flex items-center space-x-1 px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200 shrink-0">
+                    <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+                    <span>Editing</span>
+                  </span>
+                ) : (
+                  <span className="hidden xs:flex items-center space-x-1 px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 shrink-0">
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-600" />
+                    <span>Saved</span>
                   </span>
                 )}
               </div>
-              <p className="text-[11px] text-[#64748b] truncate">
+              <p className="text-[10px] sm:text-[11px] text-[#64748b] truncate hidden sm:block">
                 {activeDeliverable.source_scenario} &bull; {activeDeliverable.generating_model}
               </p>
             </div>
           </div>
 
           {/* Right: Actions */}
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-1 sm:space-x-2 shrink-0">
             <button
               onClick={() => saveChanges(activeDeliverable.id)}
               disabled={isSaving}
-              className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-300 transition-colors shadow-sm"
+              className="flex items-center space-x-1 sm:space-x-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-300 transition-colors shadow-sm cursor-pointer"
             >
               <Save className="h-3.5 w-3.5" />
-              <span>{isSaving ? 'Saving...' : 'Save'}</span>
+              <span className="hidden xs:inline">{isSaving ? 'Saving...' : 'Save'}</span>
             </button>
 
             <button
               onClick={() => downloadDeliverable(activeDeliverable.id)}
-              className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-[#f8fafc] hover:bg-[#f1f5f9] text-[#1e293b] border border-[#cbd5e1] transition-colors"
+              className="p-1.5 sm:px-3 sm:py-1.5 rounded-lg text-xs font-medium bg-[#f8fafc] hover:bg-[#f1f5f9] text-[#1e293b] border border-[#cbd5e1] transition-colors cursor-pointer flex items-center space-x-1"
               title="Download Original Deliverable"
             >
               <Download className="h-3.5 w-3.5" />
@@ -215,7 +230,7 @@ export function DocumentCanvasPanel() {
 
             <button
               onClick={toggleExpand}
-              className="p-1.5 rounded-lg hover:bg-[#f1f5f9] text-[#64748b] hover:text-[#0f172a] transition-colors"
+              className="p-1.5 rounded-lg hover:bg-[#f1f5f9] text-[#64748b] hover:text-[#0f172a] transition-colors hidden md:block cursor-pointer"
               title={isExpanded ? 'Split Screen' : 'Expand Fullscreen'}
             >
               {isExpanded ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
@@ -223,10 +238,10 @@ export function DocumentCanvasPanel() {
 
             <button
               onClick={closeCanvas}
-              className="p-1.5 rounded-lg hover:bg-[#f1f5f9] text-[#64748b] hover:text-[#0f172a] transition-colors"
+              className="p-1.5 rounded-lg hover:bg-rose-50 text-[#64748b] hover:text-rose-600 transition-colors cursor-pointer"
               title="Close Canvas"
             >
-              <X className="h-4 w-4" />
+              <X className="h-4 w-4 sm:h-4.5 sm:w-4.5" />
             </button>
           </div>
         </div>

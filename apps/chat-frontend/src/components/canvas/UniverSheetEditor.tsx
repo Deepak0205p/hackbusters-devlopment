@@ -24,8 +24,13 @@ import {
   ZoomIn,
   ZoomOut,
   FolderPlus,
-  ArrowUpDown
+  ArrowUpDown,
+  Table,
+  Check,
+  Printer,
+  ChevronDown
 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface UniverSheetEditorProps {
   deliverable: DeliverableItem;
@@ -42,7 +47,6 @@ export interface CellStyle {
   fontSize?: number;
   fontFamily?: string;
   format?: 'general' | 'currency' | 'percent' | 'number';
-  border?: string;
 }
 
 export interface SheetCell {
@@ -57,8 +61,16 @@ export interface SheetTab {
   name: string;
   rows: SheetCell[][];
   colWidths?: number[];
-  rowHeights?: number[];
 }
+
+const CELL_BG_PALETTE = [
+  { label: 'White', value: '#ffffff' },
+  { label: 'Soft Green', value: '#f0fdf4' },
+  { label: 'Ice Blue', value: '#f0f9ff' },
+  { label: 'Amber Light', value: '#fffbeb' },
+  { label: 'Slate Gray', value: '#f1f5f9' },
+  { label: 'Rose Light', value: '#fff1f2' }
+];
 
 export function UniverSheetEditor({ deliverable }: UniverSheetEditorProps) {
   const { updateEditedContent, editedContent } = useCanvasStore();
@@ -71,8 +83,9 @@ export function UniverSheetEditor({ deliverable }: UniverSheetEditorProps) {
   const [showFormulaBar, setShowFormulaBar] = useState(true);
   const [selectedFont, setSelectedFont] = useState('Inter');
   const [selectedFontSize, setSelectedFontSize] = useState(12);
+  const [copied, setCopied] = useState(false);
 
-  // Pre-configured refinery spreadsheet templates based on deliverable ID/filename (Light Theme)
+  // Pre-configured refinery spreadsheet templates based on deliverable ID/filename
   const getInitialSheets = (): SheetTab[] => {
     if (editedContent[deliverable.id]?.sheets) {
       return editedContent[deliverable.id].sheets;
@@ -177,7 +190,6 @@ export function UniverSheetEditor({ deliverable }: UniverSheetEditorProps) {
       ];
     }
 
-    // Default general technical spreadsheet (Light Theme)
     return [
       {
         id: 'sheet-1',
@@ -200,20 +212,20 @@ export function UniverSheetEditor({ deliverable }: UniverSheetEditorProps) {
             { value: 'NORMAL', style: { align: 'center', color: '#15803d', bold: true } },
           ],
           [
-            { value: 'Atmospheric Column C-101', style: { align: 'left' } },
+            { value: 'Atmospheric Furnace F-101', style: { align: 'left' } },
             { value: '365.0', style: { align: 'right' } },
-            { value: '1.8', style: { align: 'right' } },
-            { value: '445.0', style: { align: 'right' } },
-            { value: '99.1%', style: { align: 'right', color: '#15803d' } },
-            { value: 'NORMAL', style: { align: 'center', color: '#15803d', bold: true } },
+            { value: '3.2', style: { align: 'right' } },
+            { value: '450.0', style: { align: 'right' } },
+            { value: '92.4%', style: { align: 'right', color: '#15803d' } },
+            { value: 'OPTIMAL', style: { align: 'center', color: '#15803d', bold: true } },
           ],
           [
-            { value: 'Vacuum Flasher V-102', style: { align: 'left' } },
-            { value: '410.0', style: { align: 'right' } },
-            { value: '0.08', style: { align: 'right' } },
-            { value: '220.0', style: { align: 'right' } },
-            { value: '97.8%', style: { align: 'right', color: '#15803d' } },
-            { value: 'NORMAL', style: { align: 'center', color: '#15803d', bold: true } },
+            { value: 'Vacuum Column C-102 Overhead', style: { align: 'left' } },
+            { value: '110.0', style: { align: 'right' } },
+            { value: '0.05', style: { align: 'right' } },
+            { value: '120.0', style: { align: 'right' } },
+            { value: '95.0%', style: { align: 'right', color: '#15803d' } },
+            { value: 'STABLE', style: { align: 'center', color: '#15803d', bold: true } },
           ],
         ],
       },
@@ -235,383 +247,287 @@ export function UniverSheetEditor({ deliverable }: UniverSheetEditorProps) {
     setFormulaInput(cell?.formula || cell?.value || '');
   };
 
-  const handleCellValueChange = (row: number, col: number, value: string) => {
+  const handleCellValueChange = (row: number, col: number, newValue: string) => {
     const newSheets = [...sheets];
     const newRows = [...newSheets[activeSheetIndex].rows];
-    if (!newRows[row]) newRows[row] = [];
-    const currentCell = newRows[row][col] || { value: '' };
+    const targetCell = { ...newRows[row][col] };
 
-    if (value.startsWith('=')) {
-      newRows[row][col] = {
-        ...currentCell,
-        formula: value,
-        value: calculateFormulaValue(value, newRows),
-      };
+    if (newValue.startsWith('=')) {
+      targetCell.formula = newValue;
+      targetCell.value = 'CALC';
     } else {
-      newRows[row][col] = {
-        ...currentCell,
-        value,
-        formula: undefined,
-      };
+      targetCell.value = newValue;
+      targetCell.formula = undefined;
     }
 
+    newRows[row][col] = targetCell;
     newSheets[activeSheetIndex].rows = newRows;
     setSheets(newSheets);
     updateEditedContent(deliverable.id, { sheets: newSheets });
   };
 
-  const calculateFormulaValue = (formula: string, rows: SheetCell[][]): string => {
-    const upper = formula.toUpperCase();
-    if (upper.includes('SUM')) {
-      return '4.82';
-    }
-    if (upper.includes('AVERAGE')) {
-      return '0.00';
-    }
-    if (upper.includes('MAX')) {
-      return '1.22';
-    }
-    if (upper.includes('MIN')) {
-      return '1.18';
-    }
-    return '0.00';
-  };
-
-  const applyCellStyle = (styleUpdate: Partial<CellStyle>) => {
+  const handleApplyStyle = (stylePatch: Partial<CellStyle>) => {
+    const { row, col } = selectedCell;
     const newSheets = [...sheets];
     const newRows = [...newSheets[activeSheetIndex].rows];
-    const cell = newRows[selectedCell.row]?.[selectedCell.col];
-    if (cell) {
-      newRows[selectedCell.row][selectedCell.col] = {
-        ...cell,
-        style: {
-          ...(cell.style || {}),
-          ...styleUpdate,
-        },
-      };
-      newSheets[activeSheetIndex].rows = newRows;
-      setSheets(newSheets);
-      updateEditedContent(deliverable.id, { sheets: newSheets });
-    }
-  };
-
-  const handleAddRow = () => {
-    const newSheets = [...sheets];
-    const rows = [...newSheets[activeSheetIndex].rows];
-    const colCount = rows[0]?.length || 6;
-    const newRow: SheetCell[] = Array(colCount).fill({ value: '' });
-    rows.push(newRow);
-    newSheets[activeSheetIndex].rows = rows;
+    const targetCell = { ...newRows[row][col] };
+    targetCell.style = { ...targetCell.style, ...stylePatch };
+    newRows[row][col] = targetCell;
+    newSheets[activeSheetIndex].rows = newRows;
     setSheets(newSheets);
-    updateEditedContent(deliverable.id, { sheets: newSheets });
-  };
-
-  const handleAddCol = () => {
-    const newSheets = [...sheets];
-    const rows = newSheets[activeSheetIndex].rows.map((r, rIdx) => [
-      ...r,
-      rIdx === 0
-        ? { value: `Col ${String.fromCharCode(65 + r.length)}`, isHeader: true, style: { bold: true, bgColor: '#f1f5f9', color: '#0f172a' } }
-        : { value: '' },
-    ]);
-    newSheets[activeSheetIndex].rows = rows;
-    setSheets(newSheets);
-    updateEditedContent(deliverable.id, { sheets: newSheets });
-  };
-
-  const handleDeleteRow = () => {
-    if (currentSheet.rows.length <= 1) return;
-    const newSheets = [...sheets];
-    const rows = newSheets[activeSheetIndex].rows.filter((_, idx) => idx !== selectedCell.row);
-    newSheets[activeSheetIndex].rows = rows;
-    setSheets(newSheets);
-    setSelectedCell({ row: Math.max(0, selectedCell.row - 1), col: selectedCell.col });
     updateEditedContent(deliverable.id, { sheets: newSheets });
   };
 
   const handleAddSheet = () => {
     const newSheet: SheetTab = {
-      id: `sheet-${sheets.length + 1}`,
+      id: `sheet-${Date.now()}`,
       name: `Sheet ${sheets.length + 1}`,
       rows: [
         [
-          { value: 'Item Description', isHeader: true, style: { bold: true, bgColor: '#f1f5f9', color: '#0f172a' } },
-          { value: 'Qty', isHeader: true, style: { bold: true, align: 'right', bgColor: '#f1f5f9', color: '#0f172a' } },
-          { value: 'Rate (₹)', isHeader: true, style: { bold: true, align: 'right', bgColor: '#f1f5f9', color: '#0f172a' } },
-          { value: 'Total (₹)', isHeader: true, style: { bold: true, align: 'right', bgColor: '#f1f5f9', color: '#0f172a' } },
+          { value: 'Parameter', isHeader: true, style: { bold: true, align: 'left', bgColor: '#f1f5f9', color: '#0f172a' } },
+          { value: 'Value', isHeader: true, style: { bold: true, align: 'right', bgColor: '#f1f5f9', color: '#0f172a' } },
+          { value: 'Status', isHeader: true, style: { bold: true, align: 'center', bgColor: '#f1f5f9', color: '#0f172a' } },
         ],
         [
-          { value: 'Sample Component A' },
-          { value: '10', style: { align: 'right' } },
-          { value: '1,500', style: { align: 'right' } },
-          { value: '15,000', style: { align: 'right', bold: true } },
+          { value: 'Item 1', style: { align: 'left' } },
+          { value: '100.0', style: { align: 'right' } },
+          { value: 'PASS', style: { align: 'center', color: '#15803d', bold: true } },
         ],
       ],
     };
-    const updated = [...sheets, newSheet];
-    setSheets(updated);
-    setActiveSheetIndex(updated.length - 1);
-    updateEditedContent(deliverable.id, { sheets: updated });
+    const newSheets = [...sheets, newSheet];
+    setSheets(newSheets);
+    setActiveSheetIndex(newSheets.length - 1);
+    updateEditedContent(deliverable.id, { sheets: newSheets });
+  };
+
+  const handleAddRow = () => {
+    const newSheets = [...sheets];
+    const colCount = newSheets[activeSheetIndex].rows[0]?.length || 5;
+    const blankRow: SheetCell[] = Array.from({ length: colCount }).map(() => ({
+      value: '',
+      style: { align: 'left' },
+    }));
+    newSheets[activeSheetIndex].rows.push(blankRow);
+    setSheets(newSheets);
+    updateEditedContent(deliverable.id, { sheets: newSheets });
   };
 
   const exportCSV = () => {
     const csvContent = currentSheet.rows
-      .map((row) => row.map((cell) => `"${cell.value.replace(/"/g, '""')}"`).join(','))
+      .map((r) => r.map((c) => `"${c.value.replace(/"/g, '""')}"`).join(','))
       .join('\n');
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.setAttribute('href', url);
     link.setAttribute('download', `${deliverable.filename.replace(/\.[^/.]+$/, '')}_${currentSheet.name}.csv`);
-    document.body.appendChild(link);
     link.click();
-    document.body.removeChild(link);
   };
 
-  const computeSelectionStats = () => {
-    const numbers: number[] = [];
-    currentSheet.rows.forEach((row) => {
-      row.forEach((cell) => {
-        const parsed = parseFloat(cell.value.replace(/[^0-9.-]/g, ''));
-        if (!isNaN(parsed)) numbers.push(parsed);
+  // Calculate live statistics for numerical values in sheet
+  const calculateStats = () => {
+    let sum = 0;
+    let count = 0;
+    currentSheet.rows.slice(1).forEach((row) => {
+      row.forEach((c) => {
+        const num = parseFloat(c.value);
+        if (!isNaN(num)) {
+          sum += num;
+          count++;
+        }
       });
     });
-    const sum = numbers.reduce((a, b) => a + b, 0);
-    const avg = numbers.length ? sum / numbers.length : 0;
     return {
-      count: numbers.length,
       sum: sum.toFixed(2),
-      avg: avg.toFixed(2),
+      avg: count > 0 ? (sum / count).toFixed(2) : '0.00',
+      count,
     };
   };
 
-  const stats = computeSelectionStats();
+  const stats = calculateStats();
 
   return (
-    <div className="flex flex-col h-full bg-[#f8fafc] text-[#1e293b] select-none font-sans">
-      {/* 1. Ribbon Tabs (Light Theme) */}
-      <div className="flex items-center space-x-1 px-3 pt-2 bg-[#f8fafc] border-b border-[#e2e8f0] text-xs">
-        <button
-          onClick={() => setActiveRibbonTab('home')}
-          className={`px-3 py-1.5 rounded-t-md font-medium transition-all ${
-            activeRibbonTab === 'home'
-              ? 'bg-[#ffffff] text-[#15803d] border-t-2 border-t-[#16a34a] border-x border-[#e2e8f0] shadow-sm'
-              : 'text-[#64748b] hover:text-[#0f172a]'
-          }`}
-        >
-          Home
-        </button>
-        <button
-          onClick={() => setActiveRibbonTab('insert')}
-          className={`px-3 py-1.5 rounded-t-md font-medium transition-all ${
-            activeRibbonTab === 'insert'
-              ? 'bg-[#ffffff] text-[#15803d] border-t-2 border-t-[#16a34a] border-x border-[#e2e8f0] shadow-sm'
-              : 'text-[#64748b] hover:text-[#0f172a]'
-          }`}
-        >
-          Insert
-        </button>
-        <button
-          onClick={() => setActiveRibbonTab('formulas')}
-          className={`px-3 py-1.5 rounded-t-md font-medium transition-all ${
-            activeRibbonTab === 'formulas'
-              ? 'bg-[#ffffff] text-[#15803d] border-t-2 border-t-[#16a34a] border-x border-[#e2e8f0] shadow-sm'
-              : 'text-[#64748b] hover:text-[#0f172a]'
-          }`}
-        >
-          Formulas
-        </button>
-        <button
-          onClick={() => setActiveRibbonTab('data')}
-          className={`px-3 py-1.5 rounded-t-md font-medium transition-all ${
-            activeRibbonTab === 'data'
-              ? 'bg-[#ffffff] text-[#15803d] border-t-2 border-t-[#16a34a] border-x border-[#e2e8f0] shadow-sm'
-              : 'text-[#64748b] hover:text-[#0f172a]'
-          }`}
-        >
-          Data & Export
-        </button>
-        <button
-          onClick={() => setActiveRibbonTab('view')}
-          className={`px-3 py-1.5 rounded-t-md font-medium transition-all ${
-            activeRibbonTab === 'view'
-              ? 'bg-[#ffffff] text-[#15803d] border-t-2 border-t-[#16a34a] border-x border-[#e2e8f0] shadow-sm'
-              : 'text-[#64748b] hover:text-[#0f172a]'
-          }`}
-        >
-          View
-        </button>
+    <div className="flex flex-col h-full bg-[#f8fafc] text-[#1e293b] select-none font-sans relative overflow-hidden">
+      {/* 1. TOP STUDIO RIBBON HEADER */}
+      <div className="flex items-center justify-between px-4 pt-2.5 pb-1 bg-white border-b border-[#e2e8f0] text-xs shrink-0 shadow-xs">
+        {/* Left: Tab Switcher */}
+        <div className="flex items-center space-x-1.5">
+          <div className="flex items-center space-x-1 p-1 bg-[#f1f5f9] rounded-xl border border-[#e2e8f0]">
+            {(['home', 'insert', 'formulas', 'data', 'view'] as const).map((tab) => (
+              <button
+                key={tab}
+                onClick={() => setActiveRibbonTab(tab)}
+                className={`px-3 py-1.5 rounded-lg font-semibold text-xs transition-all capitalize ${
+                  activeRibbonTab === tab
+                    ? 'bg-white text-[#15803d] shadow-sm font-bold'
+                    : 'text-[#64748b] hover:text-[#0f172a] hover:bg-white/50'
+                }`}
+              >
+                {tab === 'data' ? 'Data & Sort' : tab}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Right Header Actions */}
+        <div className="flex items-center space-x-2">
+          <button
+            onClick={exportCSV}
+            className="flex items-center space-x-1.5 px-3.5 py-1.5 rounded-xl bg-[#15803d] hover:bg-[#166534] text-white text-xs font-bold shadow-md shadow-emerald-600/20 transition-all hover:scale-[1.02] active:scale-95 cursor-pointer"
+            title="Download CSV / Excel"
+          >
+            <Download className="h-3.5 w-3.5" />
+            <span>Export CSV</span>
+          </button>
+        </div>
       </div>
 
-      {/* 2. Ribbon Action Toolbar (Light Theme) */}
-      <div className="flex flex-wrap items-center gap-1.5 px-3 py-2 bg-[#ffffff] border-b border-[#e2e8f0] text-xs shadow-sm">
+      {/* 2. RIBBON ACTION TOOLBAR */}
+      <div className="flex flex-wrap items-center gap-2.5 px-4 py-2.5 bg-white border-b border-[#e2e8f0] text-xs shadow-xs relative z-20 shrink-0">
         {activeRibbonTab === 'home' && (
           <>
-            {/* Font formatting */}
-            <div className="flex items-center space-x-1 pr-2 border-r border-[#e2e8f0]">
+            {/* Font Family & Size */}
+            <div className="flex items-center space-x-1.5 pr-2.5 border-r border-[#e2e8f0]">
               <select
                 value={selectedFont}
-                onChange={(e) => setSelectedFont(e.target.value)}
-                className="bg-[#f8fafc] text-[#1e293b] px-2 py-1 rounded border border-[#cbd5e1] text-xs focus:outline-none"
+                onChange={(e) => {
+                  setSelectedFont(e.target.value);
+                  handleApplyStyle({ fontFamily: e.target.value });
+                }}
+                className="bg-[#f8fafc] text-[#0f172a] px-2.5 py-1 rounded-lg border border-[#cbd5e1] text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-[#15803d] cursor-pointer"
               >
-                <option value="Inter">Inter</option>
+                <option value="Inter">Inter (Clean)</option>
                 <option value="Arial">Arial</option>
-                <option value="Calibri">Calibri</option>
-                <option value="Segoe UI">Segoe UI</option>
+                <option value="Georgia">Georgia</option>
+                <option value="JetBrains Mono">JetBrains Mono</option>
               </select>
 
               <select
                 value={selectedFontSize}
-                onChange={(e) => setSelectedFontSize(Number(e.target.value))}
-                className="bg-[#f8fafc] text-[#1e293b] px-2 py-1 rounded border border-[#cbd5e1] text-xs focus:outline-none w-14"
+                onChange={(e) => {
+                  setSelectedFontSize(Number(e.target.value));
+                  handleApplyStyle({ fontSize: Number(e.target.value) });
+                }}
+                className="bg-[#f8fafc] text-[#0f172a] px-2 py-1 rounded-lg border border-[#cbd5e1] text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-[#15803d] cursor-pointer w-14"
               >
-                <option value={10}>10</option>
-                <option value={11}>11</option>
-                <option value={12}>12</option>
-                <option value={14}>14</option>
-                <option value={16}>16</option>
+                <option value={10}>10pt</option>
+                <option value={11}>11pt</option>
+                <option value={12}>12pt</option>
+                <option value={14}>14pt</option>
+                <option value={16}>16pt</option>
               </select>
             </div>
 
             {/* Typography Styles */}
-            <div className="flex items-center space-x-0.5 pr-2 border-r border-[#e2e8f0]">
+            <div className="flex items-center space-x-0.5 pr-2.5 border-r border-[#e2e8f0]">
               <button
-                onClick={() => {
-                  const curr = currentSheet.rows[selectedCell.row]?.[selectedCell.col]?.style?.bold;
-                  applyCellStyle({ bold: !curr });
-                }}
-                className="p-1.5 rounded hover:bg-[#f1f5f9] text-[#334155]"
-                title="Bold"
+                onClick={() => handleApplyStyle({ bold: !currentSheet.rows[selectedCell.row]?.[selectedCell.col]?.style?.bold })}
+                className="p-1.5 rounded-lg hover:bg-[#f1f5f9] text-[#334155] hover:text-[#0f172a] transition-colors"
+                title="Bold (Ctrl+B)"
               >
                 <Bold className="h-3.5 w-3.5" />
               </button>
               <button
-                onClick={() => {
-                  const curr = currentSheet.rows[selectedCell.row]?.[selectedCell.col]?.style?.italic;
-                  applyCellStyle({ italic: !curr });
-                }}
-                className="p-1.5 rounded hover:bg-[#f1f5f9] text-[#334155]"
-                title="Italic"
+                onClick={() => handleApplyStyle({ italic: !currentSheet.rows[selectedCell.row]?.[selectedCell.col]?.style?.italic })}
+                className="p-1.5 rounded-lg hover:bg-[#f1f5f9] text-[#334155] hover:text-[#0f172a] transition-colors"
+                title="Italic (Ctrl+I)"
               >
                 <Italic className="h-3.5 w-3.5" />
               </button>
               <button
-                onClick={() => {
-                  const curr = currentSheet.rows[selectedCell.row]?.[selectedCell.col]?.style?.underline;
-                  applyCellStyle({ underline: !curr });
-                }}
-                className="p-1.5 rounded hover:bg-[#f1f5f9] text-[#334155]"
-                title="Underline"
+                onClick={() => handleApplyStyle({ underline: !currentSheet.rows[selectedCell.row]?.[selectedCell.col]?.style?.underline })}
+                className="p-1.5 rounded-lg hover:bg-[#f1f5f9] text-[#334155] hover:text-[#0f172a] transition-colors"
+                title="Underline (Ctrl+U)"
               >
                 <Underline className="h-3.5 w-3.5" />
               </button>
             </div>
 
-            {/* Font Color & Fill Background Color Pickers */}
-            <div className="flex items-center space-x-1 pr-2 border-r border-[#e2e8f0] relative">
-              {/* Text Color Picker */}
-              <div className="flex items-center rounded border border-[#cbd5e1] hover:bg-[#f1f5f9] px-1.5 py-1">
-                <span className="font-bold text-xs leading-none mr-1 font-serif">A</span>
-                <input
-                  type="color"
-                  defaultValue="#0f172a"
-                  onChange={(e) => applyCellStyle({ color: e.target.value })}
-                  className="h-5 w-6 cursor-pointer border-none p-0 bg-transparent"
-                  title="Change Cell Font Color"
-                />
-              </div>
-
-              {/* Fill Background Color Picker */}
-              <div className="flex items-center rounded border border-[#cbd5e1] hover:bg-[#f1f5f9] px-1.5 py-1">
-                <span className="text-[11px] mr-1">🎨</span>
-                <input
-                  type="color"
-                  defaultValue="#ffffff"
-                  onChange={(e) => applyCellStyle({ bgColor: e.target.value })}
-                  className="h-5 w-6 cursor-pointer border-none p-0 bg-transparent"
-                  title="Change Cell Fill Background"
-                />
+            {/* Cell Background Color Picker */}
+            <div className="flex items-center space-x-1.5 pr-2.5 border-r border-[#e2e8f0]">
+              <span className="text-[#64748b] font-bold text-[10px] uppercase">Fill:</span>
+              <div className="flex items-center space-x-1">
+                {CELL_BG_PALETTE.map((c) => (
+                  <button
+                    key={c.value}
+                    onClick={() => handleApplyStyle({ bgColor: c.value })}
+                    style={{ backgroundColor: c.value }}
+                    className="h-5 w-5 rounded-md border border-[#cbd5e1] hover:scale-110 transition-transform shadow-2xs cursor-pointer"
+                    title={c.label}
+                  />
+                ))}
               </div>
             </div>
 
-            {/* Alignment Section */}
-            <div className="flex items-center space-x-1 pr-2 border-r border-[#e2e8f0]">
-              <button onClick={() => applyCellStyle({ align: 'left' })} className="p-1.5 rounded hover:bg-[#f1f5f9] text-[#334155]" title="Align Left">
+            {/* Alignments */}
+            <div className="flex items-center space-x-0.5 pr-2.5 border-r border-[#e2e8f0]">
+              <button
+                onClick={() => handleApplyStyle({ align: 'left' })}
+                className="p-1.5 rounded-lg hover:bg-[#f1f5f9] text-[#334155]"
+                title="Align Left"
+              >
                 <AlignLeft className="h-3.5 w-3.5" />
               </button>
-              <button onClick={() => applyCellStyle({ align: 'center' })} className="p-1.5 rounded hover:bg-[#f1f5f9] text-[#334155]" title="Align Center">
+              <button
+                onClick={() => handleApplyStyle({ align: 'center' })}
+                className="p-1.5 rounded-lg hover:bg-[#f1f5f9] text-[#334155]"
+                title="Align Center"
+              >
                 <AlignCenter className="h-3.5 w-3.5" />
               </button>
-              <button onClick={() => applyCellStyle({ align: 'right' })} className="p-1.5 rounded hover:bg-[#f1f5f9] text-[#334155]" title="Align Right">
+              <button
+                onClick={() => handleApplyStyle({ align: 'right' })}
+                className="p-1.5 rounded-lg hover:bg-[#f1f5f9] text-[#334155]"
+                title="Align Right"
+              >
                 <AlignRight className="h-3.5 w-3.5" />
               </button>
             </div>
 
-            {/* Numbers & Format */}
-            <div className="flex items-center space-x-1 pr-2 border-r border-[#e2e8f0]">
+            {/* Number Formats */}
+            <div className="flex items-center space-x-1 pr-2.5 border-r border-[#e2e8f0]">
               <button
-                onClick={() => {
-                  const val = currentSheet.rows[selectedCell.row]?.[selectedCell.col]?.value || '0';
-                  handleCellValueChange(selectedCell.row, selectedCell.col, `₹${val.replace(/[^0-9.]/g, '')}`);
-                }}
-                title="Currency Format (₹)"
-                className="p-1.5 rounded hover:bg-[#f1f5f9] text-emerald-600 font-bold"
+                onClick={() => handleApplyStyle({ format: 'currency' })}
+                className="p-1.5 rounded-lg hover:bg-[#f1f5f9] text-[#15803d] font-bold text-xs"
+                title="Currency Format"
               >
-                <DollarSign className="h-3.5 w-3.5" />
+                $
               </button>
               <button
-                onClick={() => {
-                  const val = currentSheet.rows[selectedCell.row]?.[selectedCell.col]?.value || '0';
-                  handleCellValueChange(selectedCell.row, selectedCell.col, `${val.replace(/[^0-9.]/g, '')}%`);
-                }}
-                title="Percentage Format (%)"
-                className="p-1.5 rounded hover:bg-[#f1f5f9] text-blue-600 font-bold"
+                onClick={() => handleApplyStyle({ format: 'percent' })}
+                className="p-1.5 rounded-lg hover:bg-[#f1f5f9] text-blue-700 font-bold text-xs"
+                title="Percentage Format"
               >
-                <Percent className="h-3.5 w-3.5" />
+                %
               </button>
             </div>
 
-            {/* Row & Col Operations */}
-            <div className="flex items-center space-x-1">
-              <button
-                onClick={handleAddRow}
-                className="flex items-center space-x-1 px-2.5 py-1 rounded bg-[#f8fafc] hover:bg-[#f1f5f9] border border-[#cbd5e1] text-[#0f172a] font-medium"
-              >
-                <Plus className="h-3 w-3 text-emerald-600" />
-                <span>+ Row</span>
-              </button>
-              <button
-                onClick={handleAddCol}
-                className="flex items-center space-x-1 px-2.5 py-1 rounded bg-[#f8fafc] hover:bg-[#f1f5f9] border border-[#cbd5e1] text-[#0f172a] font-medium"
-              >
-                <Plus className="h-3 w-3 text-blue-600" />
-                <span>+ Col</span>
-              </button>
-              <button
-                onClick={handleDeleteRow}
-                title="Delete Current Row"
-                className="p-1.5 rounded hover:bg-rose-50 text-[#64748b] hover:text-rose-600"
-              >
-                <Trash2 className="h-3.5 w-3.5" />
-              </button>
-            </div>
+            {/* Clear Formatting */}
+            <button
+              onClick={() => handleApplyStyle({ bold: false, italic: false, underline: false, bgColor: '#ffffff', color: '#0f172a' })}
+              className="p-1.5 rounded-lg hover:bg-[#f1f5f9] text-[#64748b] hover:text-[#0f172a]"
+              title="Clear Cell Formatting"
+            >
+              <Eraser className="h-3.5 w-3.5" />
+            </button>
           </>
         )}
 
         {activeRibbonTab === 'insert' && (
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-2.5">
             <button
               onClick={handleAddSheet}
-              className="flex items-center space-x-1 px-3 py-1 rounded bg-[#f8fafc] hover:bg-[#f1f5f9] border border-[#cbd5e1] text-[#0f172a]"
+              className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-[#f8fafc] hover:bg-[#f1f5f9] border border-[#cbd5e1] text-[#0f172a] font-semibold transition-colors"
             >
               <FolderPlus className="h-3.5 w-3.5 text-emerald-600" />
               <span>New Worksheet</span>
             </button>
             <button
               onClick={handleAddRow}
-              className="flex items-center space-x-1 px-3 py-1 rounded bg-[#f8fafc] hover:bg-[#f1f5f9] border border-[#cbd5e1] text-[#0f172a]"
+              className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-[#f8fafc] hover:bg-[#f1f5f9] border border-[#cbd5e1] text-[#0f172a] font-semibold transition-colors"
             >
-              <Plus className="h-3 w-3 text-emerald-600" />
+              <Plus className="h-3.5 w-3.5 text-emerald-600" />
               <span>Insert Blank Row</span>
             </button>
           </div>
@@ -621,26 +537,26 @@ export function UniverSheetEditor({ deliverable }: UniverSheetEditorProps) {
           <div className="flex items-center space-x-2">
             <button
               onClick={() => handleCellValueChange(selectedCell.row, selectedCell.col, '=SUM(B2:E2)')}
-              className="flex items-center space-x-1 px-3 py-1 rounded bg-[#f8fafc] hover:bg-[#f1f5f9] border border-[#cbd5e1] text-emerald-700 font-mono font-medium"
+              className="flex items-center space-x-1 px-3 py-1.5 rounded-lg bg-[#f8fafc] hover:bg-[#f1f5f9] border border-[#cbd5e1] text-emerald-700 font-mono font-bold text-xs"
             >
               <Sigma className="h-3.5 w-3.5" />
               <span>=SUM(...)</span>
             </button>
             <button
               onClick={() => handleCellValueChange(selectedCell.row, selectedCell.col, '=AVERAGE(B2:E2)')}
-              className="flex items-center space-x-1 px-3 py-1 rounded bg-[#f8fafc] hover:bg-[#f1f5f9] border border-[#cbd5e1] text-blue-700 font-mono font-medium"
+              className="flex items-center space-x-1 px-3 py-1.5 rounded-lg bg-[#f8fafc] hover:bg-[#f1f5f9] border border-[#cbd5e1] text-blue-700 font-mono font-bold text-xs"
             >
               <span>=AVERAGE(...)</span>
             </button>
             <button
               onClick={() => handleCellValueChange(selectedCell.row, selectedCell.col, '=MAX(B2:E2)')}
-              className="flex items-center space-x-1 px-3 py-1 rounded bg-[#f8fafc] hover:bg-[#f1f5f9] border border-[#cbd5e1] text-[#0f172a] font-mono font-medium"
+              className="flex items-center space-x-1 px-3 py-1.5 rounded-lg bg-[#f8fafc] hover:bg-[#f1f5f9] border border-[#cbd5e1] text-[#0f172a] font-mono font-bold text-xs"
             >
               <span>=MAX(...)</span>
             </button>
             <button
               onClick={() => handleCellValueChange(selectedCell.row, selectedCell.col, '=MIN(B2:E2)')}
-              className="flex items-center space-x-1 px-3 py-1 rounded bg-[#f8fafc] hover:bg-[#f1f5f9] border border-[#cbd5e1] text-[#0f172a] font-mono font-medium"
+              className="flex items-center space-x-1 px-3 py-1.5 rounded-lg bg-[#f8fafc] hover:bg-[#f1f5f9] border border-[#cbd5e1] text-[#0f172a] font-mono font-bold text-xs"
             >
               <span>=MIN(...)</span>
             </button>
@@ -648,7 +564,7 @@ export function UniverSheetEditor({ deliverable }: UniverSheetEditorProps) {
         )}
 
         {activeRibbonTab === 'data' && (
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-2.5">
             <button
               onClick={() => {
                 const newSheets = [...sheets];
@@ -659,62 +575,61 @@ export function UniverSheetEditor({ deliverable }: UniverSheetEditorProps) {
                 newSheets[activeSheetIndex].rows = [header, ...dataRows];
                 setSheets(newSheets);
               }}
-              className="flex items-center space-x-1 px-3 py-1 rounded bg-[#f8fafc] hover:bg-[#f1f5f9] border border-[#cbd5e1] text-[#0f172a]"
+              className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-[#f8fafc] hover:bg-[#f1f5f9] border border-[#cbd5e1] text-[#0f172a] font-semibold"
             >
-              <ArrowUpDown className="h-3 w-3 text-blue-600" />
+              <ArrowUpDown className="h-3.5 w-3.5 text-blue-600" />
               <span>Sort Column (A → Z)</span>
-            </button>
-            <button
-              onClick={exportCSV}
-              className="flex items-center space-x-1 px-3 py-1 rounded bg-[#f8fafc] hover:bg-[#f1f5f9] border border-[#cbd5e1] text-emerald-700 font-semibold"
-            >
-              <Download className="h-3.5 w-3.5" />
-              <span>Export CSV / Excel</span>
             </button>
           </div>
         )}
 
         {activeRibbonTab === 'view' && (
-          <div className="flex items-center space-x-3">
-            <label className="flex items-center space-x-1.5 text-xs text-[#475569] cursor-pointer">
+          <div className="flex items-center space-x-4">
+            <label className="flex items-center space-x-1.5 text-xs text-[#475569] font-medium cursor-pointer">
               <input
                 type="checkbox"
                 checked={showGridlines}
                 onChange={(e) => setShowGridlines(e.target.checked)}
-                className="rounded border-[#cbd5e1]"
+                className="rounded border-[#cbd5e1] text-emerald-600 focus:ring-emerald-500"
               />
               <span>Gridlines</span>
             </label>
-            <label className="flex items-center space-x-1.5 text-xs text-[#475569] cursor-pointer">
+            <label className="flex items-center space-x-1.5 text-xs text-[#475569] font-medium cursor-pointer">
               <input
                 type="checkbox"
                 checked={showFormulaBar}
                 onChange={(e) => setShowFormulaBar(e.target.checked)}
-                className="rounded border-[#cbd5e1]"
+                className="rounded border-[#cbd5e1] text-emerald-600 focus:ring-emerald-500"
               />
               <span>Formula Bar</span>
             </label>
-            <div className="flex items-center space-x-1 bg-[#f8fafc] border border-[#cbd5e1] rounded px-2 py-0.5">
-              <button onClick={() => setZoomLevel((z) => Math.max(50, z - 15))} className="p-1 hover:bg-[#e2e8f0] rounded">
-                <ZoomOut className="h-3.5 w-3.5 text-[#475569]" />
+            <div className="flex items-center space-x-1.5 bg-[#f8fafc] border border-[#cbd5e1] rounded-lg px-2.5 py-1">
+              <button onClick={() => setZoomLevel((z) => Math.max(50, z - 15))} className="p-1 hover:bg-[#e2e8f0] rounded text-[#475569]">
+                <ZoomOut className="h-3.5 w-3.5" />
               </button>
-              <span className="text-[11px] font-mono text-[#0f172a] font-semibold">{zoomLevel}%</span>
-              <button onClick={() => setZoomLevel((z) => Math.min(200, z + 15))} className="p-1 hover:bg-[#e2e8f0] rounded">
-                <ZoomIn className="h-3.5 w-3.5 text-[#475569]" />
+              <span className="text-[11px] font-mono text-[#0f172a] font-bold">{zoomLevel}%</span>
+              <button onClick={() => setZoomLevel((z) => Math.min(200, z + 15))} className="p-1 hover:bg-[#e2e8f0] rounded text-[#475569]">
+                <ZoomIn className="h-3.5 w-3.5" />
+              </button>
+              <button
+                onClick={() => setZoomLevel(100)}
+                className="text-[10px] font-semibold text-[#64748b] hover:text-[#0f172a] px-1.5 py-0.5 rounded"
+              >
+                Reset
               </button>
             </div>
           </div>
         )}
       </div>
 
-      {/* 3. Formula Bar (Light Theme) */}
+      {/* 3. FORMULA BAR */}
       {showFormulaBar && (
-        <div className="flex items-center space-x-2 px-3 py-1.5 bg-[#ffffff] border-b border-[#cbd5e1]">
-          <div className="flex items-center space-x-1 px-2.5 py-0.5 rounded bg-[#f1f5f9] border border-[#cbd5e1] text-[11px] font-mono text-[#0f172a] font-bold min-w-[50px] justify-center">
+        <div className="flex items-center space-x-2.5 px-4 py-2 bg-white border-b border-[#e2e8f0] shadow-2xs">
+          <div className="flex items-center space-x-1 px-3 py-1 rounded-lg bg-[#f1f5f9] border border-[#cbd5e1] text-[11px] font-mono text-[#0f172a] font-bold min-w-[54px] justify-center shadow-xs">
             {String.fromCharCode(65 + selectedCell.col)}
             {selectedCell.row + 1}
           </div>
-          <div className="text-[12px] font-mono font-bold text-emerald-700 select-none">fx</div>
+          <div className="text-[13px] font-mono font-black text-emerald-700 select-none">fx</div>
           <input
             type="text"
             value={formulaInput}
@@ -722,27 +637,27 @@ export function UniverSheetEditor({ deliverable }: UniverSheetEditorProps) {
               setFormulaInput(e.target.value);
               handleCellValueChange(selectedCell.row, selectedCell.col, e.target.value);
             }}
-            placeholder="Type value or formula (=SUM(A1:B1), =AVERAGE...)"
-            className="flex-1 bg-[#ffffff] text-[#0f172a] text-xs font-mono px-2.5 py-1 rounded border border-[#cbd5e1] focus:border-emerald-600 focus:outline-none placeholder-[#94a3b8]"
+            placeholder="Type cell value or formula (=SUM(B2:E2), =AVERAGE...)"
+            className="flex-1 bg-[#f8fafc] text-[#0f172a] text-xs font-mono px-3 py-1.5 rounded-lg border border-[#cbd5e1] focus:border-emerald-600 focus:bg-white focus:outline-none placeholder-[#94a3b8] transition-colors"
           />
         </div>
       )}
 
-      {/* 4. Interactive Spreadsheet Grid (Pure White Light Theme) */}
+      {/* 4. SPREADSHEET GRID */}
       <div
-        className="flex-1 overflow-auto bg-[#ffffff]"
+        className="flex-1 overflow-auto bg-white"
         style={{ transform: `scale(${zoomLevel / 100})`, transformOrigin: 'top left' }}
       >
         <table className={`w-full border-collapse font-sans text-xs ${showGridlines ? '' : 'border-transparent'}`}>
           <thead>
-            <tr className="bg-[#f1f5f9] border-b border-[#cbd5e1] sticky top-0 z-10">
-              <th className="w-10 px-2 py-1.5 text-center text-[10px] font-mono text-[#64748b] border-r border-[#cbd5e1] bg-[#f1f5f9]">
+            <tr className="bg-[#f8fafc] border-b border-[#cbd5e1] sticky top-0 z-10 select-none">
+              <th className="w-12 px-2.5 py-2 text-center text-[10px] font-mono font-bold text-[#64748b] border-r border-[#cbd5e1] bg-[#f1f5f9]">
                 #
               </th>
               {currentSheet.rows[0]?.map((_, colIdx) => (
                 <th
                   key={colIdx}
-                  className="px-3 py-1.5 text-center font-mono text-[11px] font-semibold text-[#475569] border-r border-[#cbd5e1] min-w-[120px]"
+                  className="px-3.5 py-2 text-center font-mono text-[11px] font-bold text-[#475569] border-r border-[#cbd5e1] min-w-[130px]"
                 >
                   {String.fromCharCode(65 + colIdx)}
                 </th>
@@ -753,16 +668,16 @@ export function UniverSheetEditor({ deliverable }: UniverSheetEditorProps) {
             {currentSheet.rows.map((row, rowIdx) => (
               <tr
                 key={rowIdx}
-                className={`border-b border-[#e2e8f0] hover:bg-[#f8fafc] transition-colors ${
+                className={`border-b border-[#e2e8f0] hover:bg-slate-50/80 transition-colors ${
                   rowIdx === 0 ? 'bg-[#f8fafc] font-bold text-[#0f172a]' : ''
                 }`}
               >
-                {/* Row Header */}
-                <td className="px-2 py-1.5 text-center text-[10px] font-mono text-[#64748b] bg-[#f1f5f9] border-r border-[#cbd5e1] select-none">
+                {/* Row Header Number */}
+                <td className="px-2.5 py-2 text-center text-[10px] font-mono font-bold text-[#64748b] bg-[#f1f5f9] border-r border-[#cbd5e1] select-none">
                   {rowIdx + 1}
                 </td>
 
-                {/* Cells */}
+                {/* Grid Cells */}
                 {row.map((cell, colIdx) => {
                   const isSelected = selectedCell.row === rowIdx && selectedCell.col === colIdx;
                   return (
@@ -770,7 +685,7 @@ export function UniverSheetEditor({ deliverable }: UniverSheetEditorProps) {
                       key={colIdx}
                       onClick={() => handleCellClick(rowIdx, colIdx)}
                       style={{
-                        backgroundColor: cell.style?.bgColor || (rowIdx === 0 ? '#f1f5f9' : '#ffffff'),
+                        backgroundColor: cell.style?.bgColor || (rowIdx === 0 ? '#f8fafc' : '#ffffff'),
                         color: cell.style?.color || '#0f172a',
                         fontWeight: cell.style?.bold ? 'bold' : 'normal',
                         fontStyle: cell.style?.italic ? 'italic' : 'normal',
@@ -779,7 +694,7 @@ export function UniverSheetEditor({ deliverable }: UniverSheetEditorProps) {
                       }}
                       className={`px-3 py-1.5 border-r border-[#e2e8f0] transition-all relative ${
                         isSelected
-                          ? 'outline outline-2 outline-[#107c41] bg-[#dcfce7]/30 z-10'
+                          ? 'ring-2 ring-[#15803d] bg-emerald-50/40 z-10'
                           : ''
                       }`}
                     >
@@ -803,10 +718,10 @@ export function UniverSheetEditor({ deliverable }: UniverSheetEditorProps) {
         </table>
       </div>
 
-      {/* 5. Bottom Sheet Navigator (Light Theme) */}
-      <div className="flex items-center justify-between px-3 py-2 bg-[#f1f5f9] border-t border-[#cbd5e1] text-xs">
+      {/* 5. BOTTOM SHEET NAVIGATOR & STATISTICS FOOTER */}
+      <div className="flex items-center justify-between px-4 py-2.5 bg-[#f1f5f9] border-t border-[#cbd5e1] text-xs shrink-0 shadow-xs">
         {/* Left: Sheet Tabs */}
-        <div className="flex items-center space-x-1">
+        <div className="flex items-center space-x-1.5">
           {sheets.map((sheet, idx) => (
             <button
               key={sheet.id}
@@ -814,10 +729,10 @@ export function UniverSheetEditor({ deliverable }: UniverSheetEditorProps) {
                 setActiveSheetIndex(idx);
                 setSelectedCell({ row: 1, col: 1 });
               }}
-              className={`flex items-center space-x-1.5 px-3 py-1 rounded-t-md font-medium text-xs transition-colors ${
+              className={`flex items-center space-x-1.5 px-3.5 py-1.5 rounded-xl font-bold text-xs transition-all cursor-pointer ${
                 activeSheetIndex === idx
-                  ? 'bg-[#ffffff] text-[#15803d] border-t-2 border-t-[#16a34a] border-x border-[#cbd5e1] shadow-sm'
-                  : 'text-[#64748b] hover:text-[#0f172a] hover:bg-[#e2e8f0]'
+                  ? 'bg-white text-[#15803d] border border-[#cbd5e1] shadow-xs ring-1 ring-emerald-500/20'
+                  : 'text-[#64748b] hover:text-[#0f172a] hover:bg-white/60'
               }`}
             >
               <FileSpreadsheet className="h-3.5 w-3.5 text-emerald-600" />
@@ -826,22 +741,25 @@ export function UniverSheetEditor({ deliverable }: UniverSheetEditorProps) {
           ))}
           <button
             onClick={handleAddSheet}
-            className="p-1 rounded hover:bg-[#e2e8f0] text-emerald-700"
-            title="Add New Sheet"
+            className="p-1.5 rounded-xl hover:bg-white text-emerald-700 border border-transparent hover:border-[#cbd5e1] transition-all cursor-pointer"
+            title="Add New Worksheet"
           >
             <Plus className="h-4 w-4" />
           </button>
         </div>
 
-        {/* Right: Real-Time Cell Statistics */}
+        {/* Right: Live Cell Statistics */}
         <div className="flex items-center space-x-3 text-[11px] text-[#64748b] font-mono">
-          <span>SUM: <strong className="text-emerald-700">{stats.sum}</strong></span>
+          <span>SUM: <strong className="text-[#15803d]">{stats.sum}</strong></span>
           <span>&bull;</span>
           <span>AVERAGE: <strong className="text-blue-700">{stats.avg}</strong></span>
           <span>&bull;</span>
           <span>COUNT: <strong className="text-[#0f172a]">{stats.count}</strong></span>
           <span>&bull;</span>
-          <span className="text-emerald-700 font-sans font-semibold">Excel Spreadsheet Mode</span>
+          <span className="text-[#15803d] font-sans font-bold flex items-center gap-1.5">
+            <span className="h-2 w-2 rounded-full bg-[#15803d] animate-pulse" />
+            Excel Spreadsheet Studio
+          </span>
         </div>
       </div>
     </div>

@@ -67,13 +67,14 @@ async def chat_stream_websocket(websocket: WebSocket):
             # Enforce hard length boundary to protect compute backend
             prompt = raw_prompt[:IntelligentRouter.MAX_PROMPT_LENGTH]
             attachments = data.get("attachments", [])
+            role = data.get("role")
 
             if not prompt and not attachments:
                 continue
 
             try:
                 # Stream Agent Execution Steps
-                async for event_frame in agent_engine.execute_task(prompt, attachments):
+                async for event_frame in agent_engine.execute_task(prompt, attachments, role=role):
                     await websocket.send_json(event_frame)
             except Exception as e:
                 # Sanitized user-facing error disclosure (Zero internal path / system leak)

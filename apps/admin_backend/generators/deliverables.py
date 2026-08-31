@@ -19,6 +19,29 @@ from pptx import Presentation
 from pptx.util import Inches as PptxInches, Pt as PptxPt
 from pptx.dml.color import RGBColor as PptxRGBColor
 
+try:
+    from apps.admin_backend.generators.deliverables_ep_project import ExtendedGenerators_EpProject
+    from apps.admin_backend.generators.deliverables_quality_infosec import ExtendedGenerators_QualityInfoSec
+    from apps.admin_backend.generators.deliverables_legal import ExtendedGenerators_Legal
+    from apps.admin_backend.generators.deliverables_hse_ops import ExtendedGenerators_HseOps
+    from apps.admin_backend.generators.deliverables_mech_materials import ExtendedGenerators_MechMaterials
+    from apps.admin_backend.generators.deliverables_finance_esg import ExtendedGenerators_FinanceEsg
+except ImportError:
+    try:
+        from .deliverables_ep_project import ExtendedGenerators_EpProject
+        from .deliverables_quality_infosec import ExtendedGenerators_QualityInfoSec
+        from .deliverables_legal import ExtendedGenerators_Legal
+        from .deliverables_hse_ops import ExtendedGenerators_HseOps
+        from .deliverables_mech_materials import ExtendedGenerators_MechMaterials
+        from .deliverables_finance_esg import ExtendedGenerators_FinanceEsg
+    except ImportError:
+        from generators.deliverables_ep_project import ExtendedGenerators_EpProject
+        from generators.deliverables_quality_infosec import ExtendedGenerators_QualityInfoSec
+        from generators.deliverables_legal import ExtendedGenerators_Legal
+        from generators.deliverables_hse_ops import ExtendedGenerators_HseOps
+        from generators.deliverables_mech_materials import ExtendedGenerators_MechMaterials
+        from generators.deliverables_finance_esg import ExtendedGenerators_FinanceEsg
+
 OUTPUT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "data", "outputs"))
 
 def ensure_output_directories():
@@ -27,7 +50,14 @@ def ensure_output_directories():
     os.makedirs(os.path.join(OUTPUT_DIR, "pptx"), exist_ok=True)
     os.makedirs(os.path.join(OUTPUT_DIR, "scripts"), exist_ok=True)
 
-class DeliverableGenerator:
+class DeliverableGenerator(
+    ExtendedGenerators_EpProject,
+    ExtendedGenerators_QualityInfoSec,
+    ExtendedGenerators_Legal,
+    ExtendedGenerators_HseOps,
+    ExtendedGenerators_MechMaterials,
+    ExtendedGenerators_FinanceEsg,
+):
     """
     Complete 47-Deliverable Enterprise Generator Engine for MRPL & ONGC.
     """
@@ -1381,8 +1411,9 @@ class DeliverableGenerator:
     # =========================================================================
 
     def generate_all_enterprise_deliverables(self) -> List[str]:
-        """Generates all authentic enterprise artifacts into data/outputs/."""
+        """Generates ALL authentic enterprise artifacts (47 core + ~203 extended) into data/outputs/."""
         generated = []
+        # === CORE 47 GENERATORS ===
         # HSE
         generated.append(self.generate_hot_work_permit_docx())
         generated.append(self.generate_confined_space_permit_docx())
@@ -1437,6 +1468,179 @@ class DeliverableGenerator:
         generated.append(self.generate_wb_complaint_reg_docx())
         generated.append(self.generate_vigilance_case_register_xlsx())
         generated.append(self.generate_vigilance_awareness_pptx())
+
+        # === EXTENDED ~203 GENERATORS ===
+        # E&P (ONGC)
+        generated.append(self.generate_well_control_docx())
+        generated.append(self.generate_cementing_report_docx())
+        generated.append(self.generate_drilling_daily_report_docx())
+        generated.append(self.generate_wireline_log_report_docx())
+        generated.append(self.generate_workover_report_docx())
+        generated.append(self.generate_geophysical_ops_docx())
+        generated.append(self.generate_simops_report_docx())
+        generated.append(self.generate_offshore_pipeline_inspection_docx())
+        generated.append(self.generate_oilfield_explosive_safety_docx())
+        generated.append(self.generate_pipeline_corrosion_monitoring_docx())
+        generated.append(self.generate_production_safety_report_docx())
+        generated.append(self.generate_ep_safety_pptx())
+        # Project & Construction
+        generated.append(self.generate_detailed_engineering_pkg_docx())
+        generated.append(self.generate_as_built_drawings_docx())
+        generated.append(self.generate_mechanical_completion_cert_docx())
+        generated.append(self.generate_pre_commissioning_checklist_docx())
+        generated.append(self.generate_performance_test_run_docx())
+        generated.append(self.generate_punch_list_xlsx())
+        generated.append(self.generate_construction_safety_audit_docx())
+        generated.append(self.generate_project_completion_report_docx())
+        generated.append(self.generate_tef_report_docx())
+        generated.append(self.generate_sow_docx())
+        generated.append(self.generate_rfp_docx())
+        generated.append(self.generate_rfq_docx())
+        generated.append(self.generate_bom_docx())
+        generated.append(self.generate_material_submittal_docx())
+        generated.append(self.generate_qaqc_plan_docx())
+        generated.append(self.generate_project_review_pptx())
+        # Quality (ISO)
+        generated.append(self.generate_iso9001_qms_manual_docx())
+        generated.append(self.generate_iso14001_ems_manual_docx())
+        generated.append(self.generate_iso45001_ohs_manual_docx())
+        generated.append(self.generate_iso50001_enms_docx())
+        generated.append(self.generate_ims_policy_docx())
+        generated.append(self.generate_internal_iso_audit_report_docx())
+        generated.append(self.generate_capa_report_docx())
+        generated.append(self.generate_ncr_report_docx())
+        generated.append(self.generate_mgmt_review_minutes_docx())
+        generated.append(self.generate_quality_review_pptx())
+        # Info Security
+        generated.append(self.generate_infosec_policy_docx())
+        generated.append(self.generate_data_classification_docx())
+        generated.append(self.generate_privacy_policy_docx())
+        generated.append(self.generate_it_asset_register_docx())
+        generated.append(self.generate_access_control_log_docx())
+        generated.append(self.generate_incident_response_plan_docx())
+        generated.append(self.generate_infosec_review_pptx())
+        # Land & Legal
+        generated.append(self.generate_land_lease_agreement_docx())
+        generated.append(self.generate_dealership_agreement_docx())
+        generated.append(self.generate_technology_license_docx())
+        generated.append(self.generate_shareholders_agreement_docx())
+        generated.append(self.generate_mou_jv_agreement_docx())
+        generated.append(self.generate_crude_purchase_agreement_docx())
+        generated.append(self.generate_ppa_agreement_docx())
+        generated.append(self.generate_pipeline_row_agreement_docx())
+        generated.append(self.generate_indemnity_bond_docx())
+        generated.append(self.generate_arbitration_record_docx())
+        generated.append(self.generate_legal_review_pptx())
+        # Extended HSE
+        generated.append(self.generate_cold_work_permit_docx())
+        generated.append(self.generate_electrical_isolation_permit_docx())
+        generated.append(self.generate_excavation_permit_docx())
+        generated.append(self.generate_radiation_safety_permit_docx())
+        generated.append(self.generate_lifting_permit_docx())
+        generated.append(self.generate_work_at_height_permit_docx())
+        generated.append(self.generate_vehicle_entry_permit_docx())
+        generated.append(self.generate_loto_certificate_docx())
+        generated.append(self.generate_safety_induction_cert_docx())
+        generated.append(self.generate_gas_testing_certificate_docx())
+        generated.append(self.generate_safety_manual_docx())
+        generated.append(self.generate_mock_drill_report_docx())
+        generated.append(self.generate_jsa_document_docx())
+        generated.append(self.generate_sds_sheet_docx())
+        generated.append(self.generate_incident_investigation_docx())
+        generated.append(self.generate_near_miss_report_docx())
+        generated.append(self.generate_ppe_compliance_register_xlsx())
+        generated.append(self.generate_contractor_worker_safety_docx())
+        generated.append(self.generate_ptw_register_xlsx())
+        generated.append(self.generate_hse_composite_permit_pptx())
+        # Extended Refinery Ops
+        generated.append(self.generate_operating_manual_docx())
+        generated.append(self.generate_pid_document_docx())
+        generated.append(self.generate_cause_effect_diagram_docx())
+        generated.append(self.generate_hmb_sheet_docx())
+        generated.append(self.generate_moc_document_docx())
+        generated.append(self.generate_pssr_checklist_docx())
+        generated.append(self.generate_psmdocument_docx())
+        generated.append(self.generate_sop_document_docx())
+        generated.append(self.generate_turnaround_plan_docx())
+        generated.append(self.generate_design_basis_docx())
+        generated.append(self.generate_operations_review_pptx())
+        # Extended Mechanical
+        generated.append(self.generate_corrosion_control_docx())
+        generated.append(self.generate_vibration_report_docx())
+        generated.append(self.generate_pm_schedule_docx())
+        generated.append(self.generate_equipment_history_docx())
+        generated.append(self.generate_hx_inspection_report_docx())
+        generated.append(self.generate_tank_inspection_report_docx())
+        generated.append(self.generate_boiler_inspection_report_docx())
+        generated.append(self.generate_fired_heater_inspection_docx())
+        generated.append(self.generate_psv_test_certificate_docx())
+        generated.append(self.generate_electrical_equipment_inspection_docx())
+        generated.append(self.generate_insulation_inspection_docx())
+        generated.append(self.generate_painting_inspection_docx())
+        generated.append(self.generate_ndt_report_docx())
+        generated.append(self.generate_idle_equipment_preservation_docx())
+        generated.append(self.generate_maintenance_review_pptx())
+        # Extended Materials
+        generated.append(self.generate_tender_evaluation_docx())
+        generated.append(self.generate_purchase_order_docx())
+        generated.append(self.generate_contract_agreement_docx())
+        generated.append(self.generate_bank_guarantee_docx())
+        generated.append(self.generate_delivery_challan_docx())
+        generated.append(self.generate_gem_procurement_review_docx())
+        generated.append(self.generate_pqc_document_docx())
+        generated.append(self.generate_materials_review_pptx())
+        # Extended Finance
+        generated.append(self.generate_annual_financial_stmt_docx())
+        generated.append(self.generate_statutory_audit_report_docx())
+        generated.append(self.generate_internal_audit_report_docx())
+        generated.append(self.generate_tax_audit_report_docx())
+        generated.append(self.generate_cost_audit_report_docx())
+        generated.append(self.generate_income_tax_return_docx())
+        generated.append(self.generate_board_report_docx())
+        generated.append(self.generate_annual_return_mgt7_docx())
+        generated.append(self.generate_register_contracts_docx())
+        generated.append(self.generate_register_charges_docx())
+        generated.append(self.generate_dividend_distribution_docx())
+        generated.append(self.generate_finance_review_pptx())
+        # Extended ESG
+        generated.append(self.generate_crz_clearance_docx())
+        generated.append(self.generate_hazwaste_authorization_docx())
+        generated.append(self.generate_biomedical_waste_auth_docx())
+        generated.append(self.generate_ewaste_return_docx())
+        generated.append(self.generate_energy_audit_report_docx())
+        generated.append(self.generate_biodiversity_register_docx())
+        generated.append(self.generate_eia_report_docx())
+        generated.append(self.generate_esg_review_pptx())
+        # Extended Audit
+        generated.append(self.generate_governance_report_docx())
+        generated.append(self.generate_rpt_policy_docx())
+        generated.append(self.generate_vigil_mechanism_docx())
+        generated.append(self.generate_insider_trading_code_docx())
+        generated.append(self.generate_csr_policy_docx())
+        generated.append(self.generate_secretarial_compliance_docx())
+        generated.append(self.generate_material_subsidiary_policy_docx())
+        generated.append(self.generate_risk_management_docx())
+        generated.append(self.generate_ifc_report_docx())
+        generated.append(self.generate_statutory_returns_docx())
+        generated.append(self.generate_audit_review_pptx())
+        # Extended HR
+        generated.append(self.generate_hr_policy_docx())
+        generated.append(self.generate_transfer_policy_docx())
+        generated.append(self.generate_promotion_policy_docx())
+        generated.append(self.generate_medical_benefit_policy_docx())
+        generated.append(self.generate_standing_orders_docx())
+        generated.append(self.generate_human_rights_policy_docx())
+        generated.append(self.generate_diversity_report_docx())
+        generated.append(self.generate_training_register_docx())
+        generated.append(self.generate_hr_review_pptx())
+        # Extended Vigilance
+        generated.append(self.generate_anti_bribery_policy_docx())
+        generated.append(self.generate_gift_policy_docx())
+        generated.append(self.generate_vigilance_clearance_docx())
+        generated.append(self.generate_cvc_returns_docx())
+        generated.append(self.generate_apr_return_docx())
+        generated.append(self.generate_independent_directors_code_docx())
+        generated.append(self.generate_vigilance_review_pptx())
         return generated
 
 # Global Singleton

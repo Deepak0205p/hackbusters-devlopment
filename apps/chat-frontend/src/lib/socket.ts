@@ -100,9 +100,9 @@ class WebSocketClientManager {
   }
 
   /**
-   * Submits a prompt and optional attachments over ws://<host>:8000/api/chat/stream
+   * Submits a prompt, optional attachments, and role over ws://<host>:8000/api/chat/stream
    */
-  public sendChatTask(prompt: string, attachments: any[] = []) {
+  public sendChatTask(prompt: string, attachments: any[] = [], role?: string) {
     const wsUrl = `${this.getWsBaseUrl()}/api/chat/stream`;
 
     const chatStore = useChatStore.getState();
@@ -119,7 +119,7 @@ class WebSocketClientManager {
 
       this.chatWs.onopen = () => {
         wsConnected = true;
-        this.chatWs?.send(JSON.stringify({ prompt, attachments }));
+        this.chatWs?.send(JSON.stringify({ prompt, attachments, role }));
       };
 
       this.chatWs.onmessage = (event) => {

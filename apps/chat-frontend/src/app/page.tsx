@@ -34,14 +34,20 @@ import {
   Presentation,
   ScanText,
   ArrowLeft,
-  Search
+  Search,
+  Sun,
+  Moon
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useDeliverableStore } from '@/store/useDeliverableStore';
+import { useThemeStore } from '@/store/useThemeStore';
 import { ArtifactsModal, getFileIcon, getBadgeColor } from '@/components/ArtifactsModal';
+import { SearchChatsModal } from '@/components/SearchChatsModal';
+import { RevealBrand, RevealLogoIcon } from '@/components/RevealLogo';
 import { useCanvasStore } from '@/store/useCanvasStore';
 import { DocumentCanvasPanel } from '@/components/canvas/DocumentCanvasPanel';
 import { AppSidebar } from '@/components/sidebar/AppSidebar';
+import { useSidebarStore } from '@/store/useSidebarStore';
 
 // Ultra-Modern Fluent / Glowing Brand 3D-Style Icon Components
 function ExcelIcon({ className = "h-7 w-7" }: { className?: string }) {
@@ -313,18 +319,18 @@ function ChatThinkingAccordion({ steps }: { steps: any[] }) {
   if (!steps || steps.length === 0) return null;
 
   return (
-    <div className="w-full my-2.5 rounded-2xl border border-[#222225] bg-[#0c0c0e] overflow-hidden text-xs shadow-md transition-all">
+    <div className="w-full my-2.5 rounded-2xl border border-slate-200 dark:border-[#222225] bg-slate-50 dark:bg-[#0c0c0e] overflow-hidden text-xs shadow-xs transition-all">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full px-3.5 py-3 min-h-[44px] flex items-center justify-between hover:bg-[#161618] active:bg-[#1a1a1c] text-[#9aa0a6] text-left transition-colors select-none"
+        className="w-full px-3.5 py-3 min-h-[44px] flex items-center justify-between hover:bg-slate-100 dark:hover:bg-[#161618] active:bg-slate-200 dark:active:bg-[#1a1a1c] text-slate-600 dark:text-[#9aa0a6] text-left transition-colors select-none cursor-pointer"
       >
         <div className="flex items-center space-x-2.5">
-          <div className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse shrink-0" />
-          <span className="font-medium text-[#e3e3e3] text-[13px] sm:text-xs">
+          <div className="h-2 w-2 rounded-full bg-emerald-500 dark:bg-emerald-400 animate-pulse shrink-0" />
+          <span className="font-bold text-slate-800 dark:text-[#e3e3e3] text-[13px] sm:text-xs">
             Reasoning Chain ({steps.length} {steps.length === 1 ? 'step' : 'steps'})
           </span>
         </div>
-        <div className="h-6 w-6 rounded-full bg-[#161618] flex items-center justify-center text-[#8e918f]">
+        <div className="h-6 w-6 rounded-full bg-slate-200/70 dark:bg-[#161618] flex items-center justify-center text-slate-500 dark:text-[#8e918f]">
           {isOpen ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
         </div>
       </button>
@@ -336,17 +342,17 @@ function ChatThinkingAccordion({ steps }: { steps: any[] }) {
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.2, ease: [0.2, 0, 0, 1] }}
-            className="px-3 sm:px-4 py-3 border-t border-[#1e1e22] space-y-2.5 font-mono text-[11px] text-[#9aa0a6] leading-relaxed bg-[#080808]"
+            className="px-3 sm:px-4 py-3 border-t border-slate-200 dark:border-[#1e1e22] space-y-2.5 font-mono text-[11px] text-slate-600 dark:text-[#9aa0a6] leading-relaxed bg-white dark:bg-[#080808]"
           >
             {steps.map((step, idx) => (
-              <div key={step.id || idx} className="p-2.5 rounded-xl bg-[#0e0e11] border border-[#1e1e22] overflow-hidden">
-                <div className="flex items-center justify-between text-[#a8c7fa] pb-1.5 text-[10px] sm:text-[11px] gap-2">
-                  <span className="font-semibold uppercase tracking-wider truncate">
+              <div key={step.id || idx} className="p-2.5 rounded-xl bg-slate-50 dark:bg-[#0e0e11] border border-slate-200 dark:border-[#1e1e22] overflow-hidden">
+                <div className="flex items-center justify-between text-blue-600 dark:text-[#a8c7fa] pb-1.5 text-[10px] sm:text-[11px] gap-2">
+                  <span className="font-bold uppercase tracking-wider truncate">
                     {step.type} {step.tool_name ? `(${step.tool_name})` : ''}
                   </span>
-                  {step.duration_ms && <span className="text-[#8e918f] shrink-0">{step.duration_ms}ms</span>}
+                  {step.duration_ms && <span className="text-slate-400 dark:text-[#8e918f] shrink-0">{step.duration_ms}ms</span>}
                 </div>
-                <div className="text-[#e3e3e3] whitespace-pre-wrap break-words overflow-x-auto max-w-full font-sans text-xs">
+                <div className="text-slate-800 dark:text-[#e3e3e3] whitespace-pre-wrap break-words overflow-x-auto max-w-full font-sans text-xs">
                   {step.content}
                 </div>
               </div>
@@ -423,10 +429,8 @@ export default function GeminiReplicaChatApp() {
   const {
     sessions,
     activeSessionId,
-    isSidebarOpen,
     isStreaming,
     currentInput,
-    toggleSidebar,
     createNewChat,
     selectSession,
     setCurrentInput,
@@ -434,6 +438,7 @@ export default function GeminiReplicaChatApp() {
     setStreaming,
     activeTraceSteps
   } = useChatStore();
+  const { toggle: toggleSidebar } = useSidebarStore();
 
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -534,6 +539,7 @@ export default function GeminiReplicaChatApp() {
   const [activeView, setActiveView] = useState<'chat' | 'artifacts'>('chat');
   const [artifactSearchQuery, setArtifactSearchQuery] = useState('');
   const [copiedHash, setCopiedHash] = useState(false);
+  const { theme } = useThemeStore();
 
   const {
     deliverables,
@@ -560,46 +566,44 @@ export default function GeminiReplicaChatApp() {
     : sessions;
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-[#000000] text-[#e3e3e3] font-sans antialiased selection:bg-[#4285f4]/30 selection:text-white">
+    <div className="flex h-screen h-[100dvh] w-screen overflow-hidden bg-white text-slate-900 dark:bg-[#000000] dark:text-[#e3e3e3] font-sans antialiased selection:bg-blue-500/20 dark:selection:bg-[#4285f4]/30">
       {/* 1. Shared Modular Responsive Sidebar */}
       <AppSidebar
-        isSidebarOpen={isSidebarOpen}
-        toggleSidebar={toggleSidebar}
         onOpenSearchModal={() => setShowSearchModal(true)}
         activePage={activeView}
       />
 
       {/* 2. Main Window (Chat Window or In-Place Artifacts Vault) */}
-      <main className="flex-1 flex flex-col h-full overflow-hidden relative">
+      <main className="flex-1 flex flex-col h-full min-h-0 overflow-hidden relative bg-white dark:bg-black">
         {/* Dynamic Fluid Animated Aurora Glow (Gemini Atmosphere) */}
         <FluidAuroraGlow />
 
         {activeView === 'artifacts' ? (
           /* Dedicated In-Place Artifacts View */
-          <div className="flex-1 flex flex-col h-full overflow-hidden bg-[#070709] relative z-10">
+          <div className="flex-1 flex flex-col h-full overflow-hidden bg-slate-50 dark:bg-[#070709] relative z-10">
             {/* Top Bar Header */}
-            <header className="flex items-center justify-between px-6 py-4 bg-[#0c0c0e] border-b border-[#1f1f26] shrink-0">
+            <header className="flex items-center justify-between px-6 py-4 bg-white dark:bg-[#0c0c0e] border-b border-slate-200 dark:border-[#1f1f26] shrink-0">
               <div className="flex items-center space-x-4">
                 <button
                   onClick={() => setActiveView('chat')}
-                  className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-[#181820] hover:bg-[#22222c] text-xs font-medium text-[#c4c7c5] hover:text-white border border-[#282834] transition-colors"
+                  className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-[#181820] dark:hover:bg-[#22222c] text-xs font-semibold text-slate-700 dark:text-[#c4c7c5] hover:text-slate-900 dark:hover:text-white border border-slate-200 dark:border-[#282834] transition-colors cursor-pointer"
                 >
-                  <ArrowLeft className="h-3.5 w-3.5 text-[#a8c7fa]" />
+                  <ArrowLeft className="h-3.5 w-3.5 text-blue-600 dark:text-[#a8c7fa]" />
                   <span>Back to Chat</span>
                 </button>
 
                 <div className="flex items-center space-x-3">
                   <div className="h-8 w-8 rounded-xl bg-blue-500/10 border border-blue-500/30 flex items-center justify-center">
-                    <FileText className="h-4 w-4 text-[#a8c7fa]" />
+                    <FileText className="h-4 w-4 text-blue-600 dark:text-[#a8c7fa]" />
                   </div>
                   <div>
-                    <h1 className="text-sm font-semibold text-[#f1f3f4] flex items-center gap-2">
+                    <h1 className="text-sm font-bold text-slate-900 dark:text-[#f1f3f4] flex items-center gap-2">
                       Artifacts & Sovereign Documents
-                      <span className="text-[10px] font-normal px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
+                      <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/30">
                         Air-Gapped Sovereign Storage
                       </span>
                     </h1>
-                    <p className="text-[11px] text-[#8e918f]">
+                    <p className="text-[11px] text-slate-500 dark:text-[#8e918f]">
                       Automated Word (.docx), Excel (.xlsx), PowerPoint (.pptx), and Python (.py) deliverables
                     </p>
                   </div>
@@ -612,7 +616,7 @@ export default function GeminiReplicaChatApp() {
                     const target = selectedDeliverable || deliverables[0];
                     if (target) openCanvas(target);
                   }}
-                  className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-[#0070f3] hover:bg-[#0060df] text-white text-xs font-medium transition-all shadow-lg shadow-blue-500/10"
+                  className="flex items-center space-x-1.5 px-3.5 py-1.5 rounded-xl bg-[#0070f3] hover:bg-[#0060df] text-white text-xs font-bold transition-all shadow-md shadow-blue-500/20 cursor-pointer"
                 >
                   <Sparkles className="h-3.5 w-3.5" />
                   <span>Open in Live Canvas</span>
@@ -623,31 +627,31 @@ export default function GeminiReplicaChatApp() {
             {/* Workspace Body: Left Deliverables List + Right Detailed Document Inspector */}
             <div className="flex-1 flex flex-col md:flex-row min-h-0 overflow-hidden">
               {/* Left Column: Search & Filterable Deliverables Grid */}
-              <div className="w-full md:w-96 border-r border-[#1e1e24] bg-[#09090c] flex flex-col shrink-0">
+              <div className="w-full md:w-96 border-r border-slate-200 dark:border-[#1e1e24] bg-white dark:bg-[#09090c] flex flex-col shrink-0">
                 {/* Search Input */}
-                <div className="p-3 border-b border-[#18181e]">
+                <div className="p-3 border-b border-slate-200 dark:border-[#18181e]">
                   <div className="relative">
-                    <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-[#8e918f]" />
+                    <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-slate-400 dark:text-[#8e918f]" />
                     <input
                       type="text"
                       value={artifactSearchQuery}
                       onChange={(e) => setArtifactSearchQuery(e.target.value)}
                       placeholder="Search artifacts..."
-                      className="w-full pl-9 pr-3 py-2 text-xs rounded-xl bg-[#121216] border border-[#22222a] text-[#e3e3e3] placeholder-[#6e7175] focus:outline-none focus:border-[#a8c7fa]"
+                      className="w-full pl-9 pr-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-[#121216] border border-slate-200 dark:border-[#22222a] text-slate-900 dark:text-[#e3e3e3] placeholder-slate-400 dark:placeholder-[#6e7175] focus:outline-none focus:border-blue-500 dark:focus:border-[#a8c7fa]"
                     />
                   </div>
                 </div>
 
                 {/* Category Filter Tabs */}
-                <div className="flex items-center gap-1 p-2.5 border-b border-[#18181e] overflow-x-auto text-[11px]">
+                <div className="flex items-center gap-1 p-2.5 border-b border-slate-200 dark:border-[#18181e] overflow-x-auto text-[11px]">
                   {(['ALL', 'docx', 'xlsx', 'pptx', 'py'] as const).map((t) => (
                     <button
                       key={t}
                       onClick={() => setFilterType(t)}
-                      className={`px-3 py-1 rounded-lg font-medium transition-all ${
+                      className={`px-3 py-1 rounded-lg font-bold transition-all cursor-pointer ${
                         filterType === t
-                          ? 'bg-[#1e1f24] text-[#a8c7fa] border border-[#3c4048]'
-                          : 'text-[#8e918f] hover:bg-[#141418] hover:text-[#c4c7c5]'
+                          ? 'bg-blue-50 text-blue-700 border border-blue-200 dark:bg-[#1e1f24] dark:text-[#a8c7fa] dark:border-[#3c4048]'
+                          : 'text-slate-500 hover:bg-slate-100 hover:text-slate-900 dark:text-[#8e918f] dark:hover:bg-[#141418] dark:hover:text-[#c4c7c5]'
                       }`}
                     >
                       {t.toUpperCase()}
@@ -673,24 +677,24 @@ export default function GeminiReplicaChatApp() {
                         <button
                           key={item.id}
                           onClick={() => selectDeliverable(item.id)}
-                          className={`w-full text-left p-3.5 rounded-2xl border transition-all flex items-start gap-3.5 ${
+                          className={`w-full text-left p-3.5 rounded-2xl border transition-all flex items-start gap-3.5 cursor-pointer ${
                             isSelected
-                              ? 'bg-[#15151c] border-blue-500/50 shadow-lg shadow-blue-500/10'
-                              : 'bg-[#0e0e12] border-[#1c1c24] hover:bg-[#131318] hover:border-[#282834]'
+                              ? 'bg-blue-50/60 border-blue-500 shadow-md shadow-blue-500/10 dark:bg-[#15151c] dark:border-blue-500/50'
+                              : 'bg-white border-slate-200 hover:bg-slate-50 hover:border-slate-300 dark:bg-[#0e0e12] dark:border-[#1c1c24] dark:hover:bg-[#131318]'
                           }`}
                         >
-                          <div className="p-2.5 rounded-xl bg-[#181820] shrink-0 mt-0.5">
+                          <div className="p-2.5 rounded-xl bg-slate-100 dark:bg-[#181820] shrink-0 mt-0.5">
                             {getFileIcon(item.type, 'h-5 w-5')}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <div className="font-semibold text-xs text-[#e3e3e3] truncate">
+                            <div className="font-bold text-xs text-slate-900 dark:text-[#e3e3e3] truncate">
                               {item.filename}
                             </div>
-                            <p className="text-[11px] text-[#8e918f] line-clamp-2 mt-0.5 leading-relaxed">
+                            <p className="text-[11px] text-slate-500 dark:text-[#8e918f] line-clamp-2 mt-0.5 leading-relaxed">
                               {item.summary}
                             </p>
-                            <div className="flex items-center gap-2 text-[10px] text-[#6e7175] mt-2 font-mono">
-                              <span className={`px-1.5 py-0.5 rounded font-sans uppercase font-medium ${getBadgeColor(item.type)}`}>
+                            <div className="flex items-center gap-2 text-[10px] text-slate-400 dark:text-[#6e7175] mt-2 font-mono">
+                              <span className={`px-1.5 py-0.5 rounded font-sans uppercase font-bold ${getBadgeColor(item.type)}`}>
                                 {item.type}
                               </span>
                               <span>{item.size_formatted}</span>
@@ -707,24 +711,24 @@ export default function GeminiReplicaChatApp() {
                 const activeItem = selectedDeliverable || deliverables[0];
                 if (!activeItem) return null;
                 return (
-                  <div className="flex-1 bg-[#0b0b0e] flex flex-col min-h-0 overflow-y-auto p-6 sm:p-8 space-y-6">
+                  <div className="flex-1 bg-slate-50/50 dark:bg-[#0b0b0e] flex flex-col min-h-0 overflow-y-auto p-6 sm:p-8 space-y-6">
                     {/* Document Header & Main Action Bar */}
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-[#1e1e26]">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-200 dark:border-[#1e1e26]">
                       <div className="flex items-start gap-4">
-                        <div className="p-4 rounded-2xl bg-[#14141a] border border-[#262634] shrink-0">
+                        <div className="p-4 rounded-2xl bg-white dark:bg-[#14141a] border border-slate-200 dark:border-[#262634] shrink-0 shadow-xs">
                           {getFileIcon(activeItem.type, 'h-8 w-8')}
                         </div>
                         <div>
                           <div className="flex items-center gap-2">
-                            <h2 className="text-lg font-bold text-[#f1f3f4] break-all">
+                            <h2 className="text-lg font-extrabold text-slate-900 dark:text-[#f1f3f4] break-all">
                               {activeItem.filename}
                             </h2>
-                            <span className={`text-[11px] font-mono px-2 py-0.5 rounded-md border ${getBadgeColor(activeItem.type)}`}>
+                            <span className={`text-[11px] font-mono font-bold px-2 py-0.5 rounded-md border ${getBadgeColor(activeItem.type)}`}>
                               .{activeItem.type}
                             </span>
                           </div>
-                          <p className="text-xs text-[#8e918f] mt-1">
-                            Generated by <span className="text-[#a8c7fa] font-medium">{activeItem.generating_model}</span> &bull; {activeItem.size_formatted}
+                          <p className="text-xs text-slate-500 dark:text-[#8e918f] mt-1">
+                            Generated by <span className="text-blue-600 dark:text-[#a8c7fa] font-bold">{activeItem.generating_model}</span> &bull; {activeItem.size_formatted}
                           </p>
                         </div>
                       </div>
@@ -732,7 +736,7 @@ export default function GeminiReplicaChatApp() {
                       <div className="flex items-center gap-2.5 shrink-0">
                         <button
                           onClick={() => openCanvas(activeItem)}
-                          className="flex items-center space-x-2 px-4 py-2 rounded-xl bg-[#0070f3] hover:bg-[#0060df] text-white text-xs font-semibold shadow-lg shadow-blue-500/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
+                          className="flex items-center space-x-2 px-4 py-2 rounded-xl bg-[#0070f3] hover:bg-[#0060df] text-white text-xs font-bold shadow-md shadow-blue-500/20 transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
                         >
                           <Sparkles className="h-4 w-4" />
                           <span>Open & Edit Live</span>
@@ -740,9 +744,9 @@ export default function GeminiReplicaChatApp() {
 
                         <button
                           onClick={() => downloadDeliverable(activeItem.id)}
-                          className="flex items-center space-x-2 px-4 py-2 rounded-xl bg-[#1c1c24] hover:bg-[#252530] border border-[#2e2e3e] text-[#e3e3e3] text-xs font-medium transition-all"
+                          className="flex items-center space-x-2 px-4 py-2 rounded-xl bg-white hover:bg-slate-100 dark:bg-[#1c1c24] dark:hover:bg-[#252530] border border-slate-200 dark:border-[#2e2e3e] text-slate-800 dark:text-[#e3e3e3] text-xs font-semibold transition-all cursor-pointer"
                         >
-                          <Download className="h-4 w-4 text-[#a8c7fa]" />
+                          <Download className="h-4 w-4 text-blue-600 dark:text-[#a8c7fa]" />
                           <span>Download</span>
                         </button>
                       </div>
@@ -840,12 +844,12 @@ export default function GeminiReplicaChatApp() {
           /* Conversational Chat View */
           <>
             {/* Mobile Top Navigation Header (Visible only on < md screens) */}
-            <header className="md:hidden flex items-center justify-between px-4 py-3 bg-[#080808]/90 border-b border-[#1a1a1a] backdrop-blur-xl z-30 shrink-0">
-              <div className="flex items-center space-x-3">
+            <header className="md:hidden flex items-center justify-between px-3 py-2.5 bg-white/95 border-b border-slate-200 text-slate-900 dark:bg-[#080808]/95 dark:border-[#1a1a1a] dark:text-[#e3e3e3] backdrop-blur-xl z-30 shrink-0 shadow-xs">
+              <div className="flex items-center space-x-2">
                 <button
                   onClick={toggleSidebar}
                   aria-label="Open sidebar"
-                  className="h-11 w-11 -ml-2 rounded-full hover:bg-[#1e1f20] active:bg-[#282a2c] flex items-center justify-center text-[#c4c7c5] hover:text-white transition-colors"
+                  className="h-10 w-10 rounded-full hover:bg-slate-100 dark:hover:bg-[#1e1f20] active:bg-slate-200 dark:active:bg-[#282a2c] flex items-center justify-center text-slate-700 dark:text-[#c4c7c5] hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer"
                 >
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
                     <line x1="4" x2="20" y1="12" y2="12" />
@@ -853,28 +857,12 @@ export default function GeminiReplicaChatApp() {
                     <line x1="4" x2="20" y1="18" y2="18" />
                   </svg>
                 </button>
-                <div className="flex items-center space-x-2">
-                  <GeminiSparkleIcon className="h-5 w-5" animated={true} />
-                  <span className="text-sm font-semibold tracking-tight text-[#e3e3e3]">
-                    MRPL Sovereign AI
-                  </span>
-                </div>
+                <RevealBrand size="sm" />
               </div>
-
-              <button
-                onClick={createNewChat}
-                aria-label="New chat"
-                className="h-11 w-11 rounded-full bg-[#1e1f20] hover:bg-[#282a2c] active:scale-95 border border-[#3c4043]/40 flex items-center justify-center text-[#e3e3e3] hover:text-[#a8c7fa] transition-all shadow-sm"
-              >
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
-                  <path d="M12 20h9" />
-                  <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
-                </svg>
-              </button>
             </header>
 
             {/* Conversational Scroll Area */}
-            <div className="flex-1 overflow-y-auto px-3 sm:px-6 pt-2 pb-6 flex flex-col z-10">
+            <div className={`flex-1 min-h-0 px-3 sm:px-6 pt-2 pb-2 flex flex-col z-10 ${hasMessages ? 'overflow-y-auto' : 'overflow-hidden justify-center'}`}>
               {hasMessages ? (
                 <div className="max-w-3xl w-full mx-auto space-y-5 sm:space-y-6 py-3 sm:py-4">
                   {messages.map((msg) => {
@@ -890,16 +878,16 @@ export default function GeminiReplicaChatApp() {
                         }`}
                       >
                         {!isUser && (
-                          <div className="h-7 w-7 sm:h-8 sm:w-8 rounded-full bg-[#1e1f20] border border-[#a8c7fa]/30 flex items-center justify-center shrink-0 shadow-sm mt-0.5">
-                            <GeminiSparkleIcon className="h-3.5 w-3.5 sm:h-4 sm:w-4" animated={false} />
+                          <div className="h-7 w-7 sm:h-8 sm:w-8 rounded-full bg-blue-50 border border-blue-200 dark:bg-[#1e1f20] dark:border-[#a8c7fa]/30 flex items-center justify-center shrink-0 shadow-xs mt-0.5">
+                            <RevealLogoIcon className="h-4 w-4 sm:h-4.5 sm:w-4.5" animated={false} />
                           </div>
                         )}
 
                         <div className={`flex flex-col space-y-1.5 max-w-[88%] sm:max-w-3xl ${
                           isUser ? 'items-end' : 'items-start flex-1 min-w-0'
                         }`}>
-                          <div className="flex items-center space-x-2 text-[10px] sm:text-[11px] text-[#8e918f]">
-                            <span className="font-medium text-[#c4c7c5]">{isUser ? 'You' : (msg.model_id ? `${msg.model_id}` : 'MRPL Sovereign AI')}</span>
+                          <div className="flex items-center space-x-2 text-[10px] sm:text-[11px] text-slate-500 dark:text-[#8e918f]">
+                            <span className="font-semibold text-slate-700 dark:text-[#c4c7c5]">{isUser ? 'You' : (msg.model_id ? `${msg.model_id}` : 'REVEAL 2.0')}</span>
                             <span>&bull;</span>
                             <span>{msg.timestamp}</span>
                           </div>
@@ -913,8 +901,8 @@ export default function GeminiReplicaChatApp() {
                           <div
                             className={`text-[14px] sm:text-[15px] leading-relaxed whitespace-pre-wrap select-text break-words overflow-hidden ${
                               isUser
-                                ? 'px-3.5 sm:px-4 py-2.5 sm:py-3 rounded-2xl bg-[#1e1f20] text-[#e3e3e3] border border-[#2e2f33] shadow-sm'
-                                : 'text-[#e3e3e3] w-full font-sans'
+                                ? 'px-3.5 sm:px-4 py-2.5 sm:py-3 rounded-2xl bg-slate-100 text-slate-900 border border-slate-200 shadow-xs dark:bg-[#1e1f20] dark:text-[#e3e3e3] dark:border-[#2e2f33]'
+                                : 'text-slate-800 dark:text-[#e3e3e3] w-full font-sans'
                             }`}
                           >
                             {msg.content}
@@ -926,16 +914,16 @@ export default function GeminiReplicaChatApp() {
                               {msg.deliverable_ids.map((deliv) => (
                                 <div
                                   key={deliv}
-                                  className="flex items-center space-x-2 px-3 py-2 rounded-xl bg-[#121215] hover:bg-[#19191e] border border-[#2a2a32] text-xs text-[#e3e3e3] font-medium transition-all group shadow-sm w-full sm:w-auto"
+                                  className="flex items-center space-x-2 px-3 py-2 rounded-xl bg-white hover:bg-slate-50 border border-slate-200 text-xs text-slate-900 font-medium transition-all group shadow-xs dark:bg-[#121215] dark:hover:bg-[#19191e] dark:border-[#2a2a32] dark:text-[#e3e3e3] w-full sm:w-auto"
                                 >
                                   <button
                                     onClick={() => openCanvas(deliv)}
-                                    className="flex items-center space-x-2 text-left truncate flex-1 hover:text-[#a8c7fa] transition-colors"
+                                    className="flex items-center space-x-2 text-left truncate flex-1 hover:text-blue-600 dark:hover:text-[#a8c7fa] transition-colors cursor-pointer"
                                     title="Open & Edit Live in Interactive Workspace"
                                   >
-                                    <Sparkles className="h-4 w-4 text-[#a8c7fa] shrink-0" />
-                                    <span className="truncate max-w-[200px]">{deliv}</span>
-                                    <span className="px-1.5 py-0.5 rounded text-[9px] font-mono bg-[#1c2230] text-[#a8c7fa] border border-[#2f3d5a]">
+                                    <Sparkles className="h-4 w-4 text-blue-600 dark:text-[#a8c7fa] shrink-0" />
+                                    <span className="truncate max-w-[200px] font-bold">{deliv}</span>
+                                    <span className="px-1.5 py-0.5 rounded text-[9px] font-mono bg-blue-50 text-blue-700 border border-blue-200 dark:bg-[#1c2230] dark:text-[#a8c7fa] dark:border-[#2f3d5a]">
                                       Edit Live
                                     </span>
                                   </button>
@@ -943,7 +931,7 @@ export default function GeminiReplicaChatApp() {
                                     href={`/api/files/download/${deliv}`}
                                     download
                                     title="Download original file"
-                                    className="p-1 rounded hover:bg-[#282834] text-[#8e918f] hover:text-[#e3e3e3] transition-colors ml-1"
+                                    className="p-1 rounded hover:bg-slate-100 dark:hover:bg-[#282834] text-slate-400 dark:text-[#8e918f] hover:text-slate-800 dark:hover:text-[#e3e3e3] transition-colors ml-1"
                                   >
                                     <Download className="h-3.5 w-3.5" />
                                   </a>
@@ -954,20 +942,20 @@ export default function GeminiReplicaChatApp() {
 
                       {/* Action Bar (Copy Button - 44px touch container) */}
                       {!isUser && msg.content && (
-                        <div className="flex items-center space-x-1 pt-1 text-[#8e918f]">
+                        <div className="flex items-center space-x-1 pt-1 text-slate-400 dark:text-[#8e918f]">
                           <button
                             onClick={() => handleCopy(msg.id, msg.content)}
                             aria-label="Copy response"
-                            className="h-9 w-9 -ml-1.5 rounded-full hover:bg-[#1e1f20] active:bg-[#282a2c] flex items-center justify-center hover:text-white transition-colors"
+                            className="h-9 w-9 -ml-1.5 rounded-full hover:bg-slate-100 dark:hover:bg-[#1e1f20] active:bg-slate-200 dark:active:bg-[#282a2c] flex items-center justify-center hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer"
                           >
-                            {copiedId === msg.id ? <Check className="h-4 w-4 text-emerald-400" /> : <Copy className="h-4 w-4" />}
+                            {copiedId === msg.id ? <Check className="h-4 w-4 text-emerald-500" /> : <Copy className="h-4 w-4" />}
                           </button>
                         </div>
                       )}
                     </div>
 
                     {isUser && (
-                      <div className="h-7 w-7 sm:h-8 sm:w-8 rounded-full bg-[#282a2c] border border-[#3c4043] flex items-center justify-center shrink-0 text-[#e3e3e3] shadow-sm mt-0.5">
+                      <div className="h-7 w-7 sm:h-8 sm:w-8 rounded-full bg-slate-100 border border-slate-300 dark:bg-[#282a2c] dark:border-[#3c4043] flex items-center justify-center shrink-0 text-slate-700 dark:text-[#e3e3e3] shadow-xs mt-0.5">
                         <User className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                       </div>
                     )}
@@ -983,10 +971,10 @@ export default function GeminiReplicaChatApp() {
                   className="w-full flex gap-3 sm:gap-4 justify-start"
                 >
                   <div className="h-8 w-8 rounded-full bg-[#1e1f20] border border-[#a8c7fa]/30 flex items-center justify-center shrink-0">
-                    <GeminiSparkleIcon className="h-5 w-5" animated={true} />
+                    <RevealLogoIcon className="h-5 w-5" animated={true} />
                   </div>
                   <div className="flex-1 space-y-2">
-                    <div className="text-[11px] text-[#8e918f]">MRPL Sovereign AI &bull; Processing query...</div>
+                    <div className="text-[11px] text-[#8e918f]">REVEAL 2.0 &bull; Synthesizing response...</div>
                     {activeTraceSteps.length > 0 && (
                       <ChatThinkingAccordion steps={activeTraceSteps} />
                     )}
@@ -1001,28 +989,25 @@ export default function GeminiReplicaChatApp() {
               <div ref={bottomRef} className="h-4" />
             </div>
           ) : (
-            /* Empty State: Authentic Gemini Multicolored Greeting & Centered Atmosphere */
-            <div className="flex flex-col items-center justify-center flex-1 max-w-3xl mx-auto px-4 text-center space-y-4 sm:space-y-6 my-auto w-full">
-              <motion.div
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, ease: [0.2, 0, 0, 1] }}
-                className="space-y-2 sm:space-y-3"
-              >
-                {/* Authentic Gemini Multicolored Gradient Heading */}
-                <h1 className="text-3xl sm:text-5xl font-medium tracking-tight bg-gradient-to-r from-[#4285f4] via-[#9b72cf] to-[#d96570] bg-clip-text text-transparent">
+            <div className="flex-1 flex flex-col items-center justify-center max-w-3xl mx-auto px-4 text-center space-y-3 sm:space-y-6 w-full">
+              <div className="space-y-2.5 sm:space-y-4 flex flex-col items-center">
+                {/* REVEAL 2.0 Radiant Logo Icon */}
+                <RevealLogoIcon className="h-14 w-14 sm:h-20 sm:w-20 mb-1" animated={true} />
+
+                {/* Multicolored Gradient Heading */}
+                <h1 className="text-2xl sm:text-5xl font-extrabold tracking-tight bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 dark:from-[#4285f4] dark:via-[#9b72cf] dark:to-[#d96570] bg-clip-text text-transparent">
                   Hello, Operations Engineer
                 </h1>
-                <p className="text-xl sm:text-3xl font-light text-[#8e918f] tracking-tight">
-                  How can I assist with MRPL refinery operations today?
+                <p className="text-xs sm:text-lg font-medium text-slate-500 dark:text-[#8e918f] tracking-tight max-w-md">
+                  REVEAL 2.0 Sovereign Intelligence Platform is ready to assist.
                 </p>
-              </motion.div>
+              </div>
             </div>
           )}
         </div>
 
         {/* 3. Authentic Single-Line Gemini Pill Input Dock with Integrated Model Board */}
-        <div className="max-w-4xl mx-auto w-full px-3 sm:px-4 pb-2 sm:pb-4 pt-1 z-20 shrink-0">
+        <div className="max-w-4xl mx-auto w-full px-3 sm:px-4 pt-1 z-20 shrink-0 pb-20 sm:pb-5 relative">
           <input
             type="file"
             ref={fileInputRef}
@@ -1045,7 +1030,7 @@ export default function GeminiReplicaChatApp() {
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: 6, scale: 0.96 }}
                   transition={{ duration: 0.18, ease: [0.2, 0, 0, 1] }}
-                  className="relative mb-2.5 max-w-2xl mx-auto px-2 sm:px-3 py-2 bg-[#0c0c0e]/95 border border-[#1e1e22] rounded-[22px] shadow-[0_12px_40px_rgba(0,0,0,0.95)] z-50 backdrop-blur-xl"
+                  className="absolute bottom-full left-0 right-0 mb-2 max-w-2xl mx-auto px-2 sm:px-3 py-2 bg-white/95 dark:bg-[#0c0c0e]/95 border border-slate-200 dark:border-[#1e1e22] rounded-[22px] shadow-2xl z-50 backdrop-blur-xl"
                 >
                   {/* 7-Engine Role Grid (Horizontally Scrollable on Mobile, Distributed on Desktop) */}
                   <div className="flex items-center justify-start sm:justify-between gap-1 sm:gap-1.5 px-1 overflow-x-auto scrollbar-none py-0.5">
@@ -1059,10 +1044,10 @@ export default function GeminiReplicaChatApp() {
                             setActiveModelRole(role.id as any);
                             setShowModelBoard(false);
                           }}
-                          className={`group relative flex flex-col items-center justify-center py-2 px-3 sm:py-1.5 sm:px-2.5 rounded-xl transition-all duration-200 shrink-0 min-h-[44px] ${
+                          className={`group relative flex flex-col items-center justify-center py-2 px-3 sm:py-1.5 sm:px-2.5 rounded-xl transition-all duration-200 shrink-0 min-h-[44px] cursor-pointer ${
                             isSelected
-                              ? 'bg-white/[0.08] border border-white/15 shadow-[0_0_15px_rgba(255,255,255,0.08)]'
-                              : 'hover:bg-white/[0.03] active:bg-white/[0.06] border border-transparent opacity-65 hover:opacity-100 hover:scale-105 active:scale-95'
+                              ? 'bg-blue-50 border border-blue-200 text-blue-700 shadow-xs dark:bg-white/[0.08] dark:border-white/15 dark:text-white'
+                              : 'hover:bg-slate-100 dark:hover:bg-white/[0.03] active:bg-slate-200 dark:active:bg-white/[0.06] border border-transparent opacity-80 hover:opacity-100 hover:scale-105 active:scale-95'
                           }`}
                         >
                           {/* Glowing 3D Logo */}
@@ -1074,7 +1059,7 @@ export default function GeminiReplicaChatApp() {
 
                           {/* Role Title */}
                           <div className={`text-[11px] tracking-tight whitespace-nowrap transition-colors ${
-                            isSelected ? 'font-semibold text-white' : 'font-medium text-[#8e918f] group-hover:text-[#e3e3e3]'
+                            isSelected ? 'font-bold text-blue-700 dark:text-white' : 'font-medium text-slate-600 dark:text-[#8e918f] group-hover:text-slate-900 dark:group-hover:text-[#e3e3e3]'
                           }`}>
                             {role.label}
                           </div>
@@ -1088,7 +1073,7 @@ export default function GeminiReplicaChatApp() {
           </AnimatePresence>
 
           {/* Authentic Gemini/Claude Stacked Pill Container */}
-          <div className="relative flex flex-col bg-[#0d0d0e] border border-[#222225] focus-within:border-[#38383e] shadow-[0_8px_32px_rgba(0,0,0,0.8)] rounded-[24px] sm:rounded-[28px] p-2.5 sm:p-3 transition-all duration-200 z-30">
+          <div className="relative flex flex-col bg-white border border-slate-300 focus-within:border-blue-500 shadow-lg dark:bg-[#0d0d0e] dark:border-[#222225] dark:focus-within:border-[#38383e] dark:shadow-[0_8px_32px_rgba(0,0,0,0.8)] rounded-[24px] sm:rounded-[28px] p-2.5 sm:p-3 transition-all duration-200 z-30">
             {/* Top Tier: Growing Textarea Area */}
             <div className="w-full px-1 pt-0.5 pb-1 sm:pb-2">
               <textarea
@@ -1108,7 +1093,7 @@ export default function GeminiReplicaChatApp() {
                 }}
                 rows={1}
                 placeholder={`Ask ${MODEL_ROLES.find(r => r.id === activeModelRole)?.label} or query refinery operating standards...`}
-                className="w-full bg-transparent text-[15px] sm:text-[15px] text-[#e3e3e3] placeholder-[#8e918f] outline-none font-sans resize-none leading-relaxed overflow-y-auto block min-h-[32px] max-h-[160px] sm:max-h-[200px]"
+                className="w-full bg-transparent text-[15px] sm:text-[15px] text-slate-900 placeholder-slate-400 dark:text-[#e3e3e3] dark:placeholder-[#8e918f] outline-none font-sans resize-none leading-relaxed overflow-y-auto block min-h-[32px] max-h-[160px] sm:max-h-[200px]"
                 style={{ height: '32px' }}
               />
             </div>
@@ -1127,10 +1112,10 @@ export default function GeminiReplicaChatApp() {
                       setShowAttachMenu(!showAttachMenu);
                     }}
                     aria-label="Add files"
-                    className={`h-10 w-10 sm:h-9 sm:w-9 rounded-full flex items-center justify-center transition-all duration-200 ${
+                    className={`h-10 w-10 sm:h-9 sm:w-9 rounded-full flex items-center justify-center transition-all duration-200 cursor-pointer ${
                       showAttachMenu
-                        ? 'bg-[#1a1a1c] text-[#a8c7fa] rotate-45'
-                        : 'hover:bg-[#1a1a1c] active:bg-[#282a2c] text-[#c4c7c5] hover:text-white'
+                        ? 'bg-slate-100 text-blue-600 dark:bg-[#1a1a1c] dark:text-[#a8c7fa] rotate-45'
+                        : 'hover:bg-slate-100 active:bg-slate-200 text-slate-600 hover:text-slate-900 dark:hover:bg-[#1a1a1c] dark:active:bg-[#282a2c] dark:text-[#c4c7c5] dark:hover:text-white'
                     }`}
                   >
                     <Plus className="h-[19px] w-[19px] sm:h-[18px] sm:w-[18px] stroke-[2.2] transition-transform duration-200" />
@@ -1151,7 +1136,7 @@ export default function GeminiReplicaChatApp() {
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: 8, scale: 0.95 }}
                         transition={{ duration: 0.18, ease: [0.2, 0, 0, 1] }}
-                        className="absolute bottom-full left-0 mb-3 w-64 max-w-[calc(100vw-32px)] bg-[#0d0d0e] border border-[#222225] rounded-2xl p-1.5 shadow-[0_20px_50px_rgba(0,0,0,0.95)] z-50 backdrop-blur-xl"
+                        className="absolute bottom-full left-0 mb-3 w-64 max-w-[calc(100vw-32px)] bg-white border border-slate-200 dark:bg-[#0d0d0e] dark:border-[#222225] rounded-2xl p-1.5 shadow-2xl z-50 backdrop-blur-xl"
                       >
                         <button
                           type="button"
@@ -1159,14 +1144,14 @@ export default function GeminiReplicaChatApp() {
                             setShowAttachMenu(false);
                             fileInputRef.current?.click();
                           }}
-                          className="w-full flex items-center space-x-3 px-3 py-3 rounded-xl hover:bg-[#1a1a1c] active:bg-[#282a2c] text-xs text-[#e3e3e3] hover:text-white transition-colors group text-left min-h-[44px]"
+                          className="w-full flex items-center space-x-3 px-3 py-3 rounded-xl hover:bg-slate-100 active:bg-slate-200 dark:hover:bg-[#1a1a1c] dark:active:bg-[#282a2c] text-xs text-slate-900 hover:text-blue-600 dark:text-[#e3e3e3] dark:hover:text-white transition-colors group text-left min-h-[44px] cursor-pointer"
                         >
-                          <div className="h-7 w-7 rounded-lg bg-[#080808] flex items-center justify-center text-[#a8c7fa] group-hover:scale-105 transition-transform border border-[#1a1a1c] shrink-0">
+                          <div className="h-7 w-7 rounded-lg bg-blue-50 dark:bg-[#080808] flex items-center justify-center text-blue-600 dark:text-[#a8c7fa] group-hover:scale-105 transition-transform border border-blue-200 dark:border-[#1a1a1c] shrink-0">
                             <FileText className="h-3.5 w-3.5" />
                           </div>
                           <div>
-                            <div className="font-medium">Upload from device</div>
-                            <div className="text-[10px] text-[#8e918f]">PDF, TXT, DOCX files</div>
+                            <div className="font-bold">Upload from device</div>
+                            <div className="text-[10px] text-slate-500 dark:text-[#8e918f]">PDF, TXT, DOCX files</div>
                           </div>
                         </button>
 
@@ -1176,14 +1161,14 @@ export default function GeminiReplicaChatApp() {
                             setShowAttachMenu(false);
                             fileInputRef.current?.click();
                           }}
-                          className="w-full flex items-center space-x-3 px-3 py-3 rounded-xl hover:bg-[#1a1a1c] active:bg-[#282a2c] text-xs text-[#e3e3e3] hover:text-white transition-colors group text-left min-h-[44px]"
+                          className="w-full flex items-center space-x-3 px-3 py-3 rounded-xl hover:bg-slate-100 active:bg-slate-200 dark:hover:bg-[#1a1a1c] dark:active:bg-[#282a2c] text-xs text-slate-900 hover:text-emerald-600 dark:text-[#e3e3e3] dark:hover:text-white transition-colors group text-left min-h-[44px] cursor-pointer"
                         >
-                          <div className="h-7 w-7 rounded-lg bg-[#080808] flex items-center justify-center text-emerald-400 group-hover:scale-105 transition-transform border border-[#1a1a1c] shrink-0">
+                          <div className="h-7 w-7 rounded-lg bg-emerald-50 dark:bg-[#080808] flex items-center justify-center text-emerald-600 dark:text-emerald-400 group-hover:scale-105 transition-transform border border-emerald-200 dark:border-[#1a1a1c] shrink-0">
                             <Eye className="h-3.5 w-3.5" />
                           </div>
                           <div>
-                            <div className="font-medium">P&ID / Schematics</div>
-                            <div className="text-[10px] text-[#8e918f]">OCR & tag extraction</div>
+                            <div className="font-bold">P&ID / Schematics</div>
+                            <div className="text-[10px] text-slate-500 dark:text-[#8e918f]">OCR & tag extraction</div>
                           </div>
                         </button>
 
@@ -1193,14 +1178,14 @@ export default function GeminiReplicaChatApp() {
                             setShowAttachMenu(false);
                             handleSend('Execute centrifugal pump hydraulic power verification in isolated Python sandbox.');
                           }}
-                          className="w-full flex items-center space-x-3 px-3 py-3 rounded-xl hover:bg-[#1a1a1c] active:bg-[#282a2c] text-xs text-[#e3e3e3] hover:text-white transition-colors group text-left min-h-[44px]"
+                          className="w-full flex items-center space-x-3 px-3 py-3 rounded-xl hover:bg-slate-100 active:bg-slate-200 dark:hover:bg-[#1a1a1c] dark:active:bg-[#282a2c] text-xs text-slate-900 hover:text-amber-600 dark:text-[#e3e3e3] dark:hover:text-white transition-colors group text-left min-h-[44px] cursor-pointer"
                         >
-                          <div className="h-7 w-7 rounded-lg bg-[#080808] flex items-center justify-center text-amber-400 group-hover:scale-105 transition-transform border border-[#1a1a1c] shrink-0">
+                          <div className="h-7 w-7 rounded-lg bg-amber-50 dark:bg-[#080808] flex items-center justify-center text-amber-600 dark:text-amber-400 group-hover:scale-105 transition-transform border border-amber-200 dark:border-[#1a1a1c] shrink-0">
                             <Calculator className="h-3.5 w-3.5" />
                           </div>
                           <div>
-                            <div className="font-medium">Engineering Sandbox</div>
-                            <div className="text-[10px] text-[#8e918f]">Run Python calculations</div>
+                            <div className="font-bold">Engineering Sandbox</div>
+                            <div className="text-[10px] text-slate-500 dark:text-[#8e918f]">Run Python calculations</div>
                           </div>
                         </button>
                       </motion.div>
@@ -1220,15 +1205,15 @@ export default function GeminiReplicaChatApp() {
                     }
                     setShowModelBoard(!showModelBoard);
                   }}
-                  className="flex items-center space-x-1 sm:space-x-1.5 px-2.5 sm:px-3 py-2 sm:py-1.5 rounded-full bg-[#080808] hover:bg-[#1a1a1c] active:bg-[#282a2c] border border-[#222225] text-xs transition-all hover:scale-105 active:scale-95 shadow-sm min-h-[40px] sm:min-h-[36px]"
+                  className="flex items-center space-x-1 sm:space-x-1.5 px-2.5 sm:px-3 py-2 sm:py-1.5 rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-[#080808] dark:hover:bg-[#1a1a1c] dark:active:bg-[#282a2c] border border-slate-200 dark:border-[#222225] text-xs transition-all hover:scale-105 active:scale-95 shadow-xs min-h-[40px] sm:min-h-[36px] cursor-pointer"
                 >
                   <div className="scale-75 origin-center">
                     {MODEL_ROLES.find(r => r.id === activeModelRole)?.icon || <MasterHubIcon className="h-4 w-4" />}
                   </div>
-                  <span className="text-[11px] font-medium text-[#e3e3e3] capitalize hidden xs:inline">
+                  <span className="text-[11px] font-bold text-slate-800 dark:text-[#e3e3e3] capitalize hidden xs:inline">
                     {activeModelRole}
                   </span>
-                  <ChevronDown className={`h-3 w-3 text-[#8e918f] transition-transform duration-200 ${showModelBoard ? 'rotate-180' : ''}`} />
+                  <ChevronDown className={`h-3 w-3 text-slate-500 dark:text-[#8e918f] transition-transform duration-200 ${showModelBoard ? 'rotate-180' : ''}`} />
                 </button>
 
                 {/* Mic Icon */}
@@ -1236,9 +1221,9 @@ export default function GeminiReplicaChatApp() {
                   <button
                     type="button"
                     aria-label="Use microphone"
-                    className="h-10 w-10 sm:h-9 sm:w-9 rounded-full hover:bg-[#1a1a1c] active:bg-[#282a2c] flex items-center justify-center text-[#c4c7c5] hover:text-white transition-all duration-200"
+                    className="h-10 w-10 sm:h-9 sm:w-9 rounded-full hover:bg-slate-100 dark:hover:bg-[#1a1a1c] active:bg-slate-200 dark:active:bg-[#282a2c] flex items-center justify-center text-slate-600 hover:text-slate-900 dark:text-[#c4c7c5] dark:hover:text-white transition-all duration-200 cursor-pointer"
                   >
-                    <Mic className="h-[19px] w-[19px] sm:h-[18px] sm:w-[18px] text-[#c4c7c5]" />
+                    <Mic className="h-[19px] w-[19px] sm:h-[18px] sm:w-[18px] text-slate-600 dark:text-[#c4c7c5]" />
                   </button>
                 </CustomTooltip>
 
@@ -1246,7 +1231,7 @@ export default function GeminiReplicaChatApp() {
                 {isStreaming ? (
                   <button
                     onClick={handleStop}
-                    className="h-10 sm:h-9 px-3.5 rounded-full bg-rose-500/20 hover:bg-rose-500/30 active:bg-rose-500/40 text-rose-300 text-xs font-medium flex items-center space-x-1.5 transition-all"
+                    className="h-10 sm:h-9 px-3.5 rounded-full bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-700 dark:bg-rose-500/20 dark:hover:bg-rose-500/30 dark:border-transparent dark:text-rose-300 text-xs font-bold flex items-center space-x-1.5 transition-all cursor-pointer"
                   >
                     <Square className="h-3.5 w-3.5 fill-current" />
                     <span>Stop</span>
@@ -1256,10 +1241,10 @@ export default function GeminiReplicaChatApp() {
                     onClick={() => handleSend()}
                     disabled={!currentInput.trim()}
                     aria-label="Send message"
-                    className={`h-10 w-10 sm:h-9 sm:w-9 rounded-full flex items-center justify-center transition-all duration-200 shadow-sm ${
+                    className={`h-10 w-10 sm:h-9 sm:w-9 rounded-full flex items-center justify-center transition-all duration-200 shadow-sm cursor-pointer ${
                       currentInput.trim()
-                        ? 'bg-white text-[#131314] hover:bg-[#e3e3e3] active:scale-95'
-                        : 'bg-[#1a1a1c] text-[#8e918f] cursor-not-allowed opacity-60'
+                        ? 'bg-blue-600 text-white hover:bg-blue-700 dark:bg-white dark:text-black dark:hover:bg-[#f1f3f4]'
+                        : 'bg-slate-100 text-slate-400 dark:bg-[#1e1f20] dark:text-[#717478]'
                     }`}
                   >
                     <ArrowUp className="h-[19px] w-[19px] sm:h-[18px] sm:w-[18px] stroke-[2.5]" />
@@ -1269,23 +1254,29 @@ export default function GeminiReplicaChatApp() {
             </div>
           </div>
 
-          <div className="text-center text-[9px] sm:text-[10px] text-[#8e918f] pt-1.5 sm:pt-2 font-sans px-2 leading-tight">
-            MRPL Sovereign AI operates 100% on-premise without external network egress. Verify critical engineering directives.
+          <div className="text-center text-[9px] sm:text-[10px] text-slate-400 dark:text-[#8e918f] pt-1.5 sm:pt-2 font-sans px-2 leading-tight">
+            REVEAL 2.0 Sovereign AI Platform operates 100% on-premise without external network egress. Verify critical engineering directives.
           </div>
         </div>
       </>
     )}
+
+    {/* 4. Gemini / Claude-Style Interactive Document Canvas Side Panel */}
+    <DocumentCanvasPanel />
   </main>
 
-  {/* 3. Enterprise Artifacts & Deliverables Vault Modal Inspector */}
-  <ArtifactsModal
-    isOpen={showArtifactsModal}
-    onClose={() => setShowArtifactsModal(false)}
-  />
+    {/* 3. Enterprise Artifacts & Deliverables Vault Modal Inspector */}
+    <ArtifactsModal
+      isOpen={showArtifactsModal}
+      onClose={() => setShowArtifactsModal(false)}
+    />
 
-  {/* 4. Gemini / Claude-Style Interactive Document Canvas Side Panel */}
-  <DocumentCanvasPanel />
-</div>
+    {/* 4. Global Search Chats Command Palette Modal */}
+    <SearchChatsModal
+      isOpen={showSearchModal}
+      onClose={() => setShowSearchModal(false)}
+    />
+  </div>
   );
 }
 

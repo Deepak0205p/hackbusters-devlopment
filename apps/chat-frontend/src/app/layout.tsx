@@ -1,9 +1,19 @@
 import './globals.css';
 import React from 'react';
+import type { Metadata, Viewport } from 'next';
+import { ThemeProvider } from '@/components/ThemeProvider';
 
-export const metadata = {
-  title: 'MRPL Sovereign AI Workbench (SIH26117)',
-  description: 'On-premise air-gapped agentic AI workbench for MRPL refinery operations.',
+export const metadata: Metadata = {
+  title: 'REVEAL 2.0 - Sovereign AI Intelligence Platform',
+  description: 'On-premise air-gapped sovereign agentic AI workbench with multi-model orchestrator.',
+};
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  viewportFit: 'cover',
 };
 
 export default function RootLayout({
@@ -12,11 +22,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className="dark">
-      <body className="bg-[#131314] text-[#e3e3e3] font-sans antialiased min-h-screen flex flex-col selection:bg-[#a8c7fa]/30 selection:text-white overflow-hidden">
-        {children}
+    <html lang="en" suppressHydrationWarning>
+      <body className="bg-white text-slate-900 dark:bg-[#131314] dark:text-[#e3e3e3] font-sans antialiased h-screen h-[100dvh] flex flex-col selection:bg-blue-500/20 dark:selection:bg-[#a8c7fa]/30 overflow-hidden">
+        <ThemeProvider>
+          {children}
+        </ThemeProvider>
       </body>
     </html>
   );
 }
-

@@ -18,8 +18,12 @@ import {
   CheckCircle2,
   FileCode2,
   Layers,
-  Code
+  Code,
+  X,
+  RefreshCw,
+  Cpu
 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface PythonCanvasEditorProps {
   deliverable: DeliverableItem;
@@ -108,17 +112,17 @@ if __name__ == "__main__":
 
   const handleRunCode = async () => {
     setIsRunning(true);
-    setOutputConsole('Initializing Python 3.11 Sandbox (--network none, 2 vCPU, 512MB RAM)...');
-    await new Promise((resolve) => setTimeout(resolve, 600));
+    setOutputConsole('Initializing Python 3.11 WASM Sandbox (--network none, 2 vCPU, 512MB RAM)...');
+    await new Promise((resolve) => setTimeout(resolve, 500));
 
     const netGrm = (11.20 + 2.40 + (apiGravity - 32.0) * 0.15 - Math.max(0, (sulfurPct - 0.5) * 1.20)).toFixed(2);
     const dailyEbitda = (Number(netGrm) * 310500).toLocaleString('en-US', { maximumFractionDigits: 2 });
 
-    setOutputConsole(`[PYTHON 3.11 SANDBOX SUCCESS]
+    setOutputConsole(`[PYTHON 3.11 WASM SANDBOX SUCCESS]
 =====================================================
       MRPL CRUDE ASSAY REFINERY ECONOMICS RUNNER     
 =====================================================
-  crude_assay_api                : ${apiGravity}
+  crude_assay_api                : ${apiGravity}°
   sulfur_content_pct             : ${sulfurPct}%
   net_realized_grm_usd_bbl       : $${netGrm} / bbl
   daily_operating_ebitda_usd     : $${dailyEbitda}
@@ -143,35 +147,36 @@ if __name__ == "__main__":
   const lines = code.split('\n');
 
   return (
-    <div className="flex flex-col h-full bg-[#ffffff] text-[#0f172a] select-none font-sans">
-      {/* 1. Light Theme Ribbon Toolbar */}
-      <div className="flex flex-wrap items-center justify-between gap-2 px-4 py-2.5 bg-[#f8fafc] border-b border-[#e2e8f0] text-xs shrink-0 shadow-sm">
+    <div className="flex flex-col h-full bg-[#0f172a] text-[#f8fafc] select-none font-sans relative overflow-hidden">
+      {/* 1. STUDIO RIBBON HEADER */}
+      <div className="flex flex-wrap items-center justify-between gap-2 px-4 py-2.5 bg-[#1e293b] border-b border-slate-700/80 text-xs shrink-0 shadow-sm">
         {/* Left: Python File Badge & Runtime */}
         <div className="flex items-center space-x-2.5">
-          <div className="flex items-center space-x-1.5 px-2.5 py-1 rounded-lg bg-[#eff6ff] border border-[#bfdbfe] text-[#1d4ed8] font-semibold">
+          <div className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-[#3b82f6]/10 border border-[#3b82f6]/30 text-[#60a5fa] font-bold">
             <span className="text-sm">🐍</span>
             <span className="font-mono text-xs">{deliverable.filename}</span>
           </div>
-          <span className="text-[11px] text-[#64748b] font-medium hidden sm:inline">
-            Python 3.11 WASM Engine &bull; Air-Gapped Sandbox
-          </span>
+          <div className="hidden sm:flex items-center space-x-1.5 text-[11px] text-slate-400 font-mono">
+            <Cpu className="h-3.5 w-3.5 text-emerald-400" />
+            <span>Python 3.11 WASM Engine &bull; Air-Gapped Sandbox</span>
+          </div>
         </div>
 
         {/* Right: Actions */}
         <div className="flex items-center space-x-2">
           {/* Zoom / Font Size */}
-          <div className="flex items-center space-x-1 pr-2 border-r border-[#cbd5e1]">
+          <div className="flex items-center space-x-1 pr-2.5 border-r border-slate-700">
             <button
               onClick={() => setFontSize((s) => Math.max(10, s - 1))}
-              className="p-1 rounded hover:bg-[#e2e8f0] text-[#64748b]"
+              className="p-1 rounded hover:bg-slate-700 text-slate-400 hover:text-white"
               title="Decrease Font Size"
             >
               <ZoomOut className="h-3.5 w-3.5" />
             </button>
-            <span className="text-[11px] font-mono text-[#0f172a] font-semibold">{fontSize}px</span>
+            <span className="text-[11px] font-mono text-slate-200 font-bold">{fontSize}px</span>
             <button
               onClick={() => setFontSize((s) => Math.min(22, s + 1))}
-              className="p-1 rounded hover:bg-[#e2e8f0] text-[#64748b]"
+              className="p-1 rounded hover:bg-slate-700 text-slate-400 hover:text-white"
               title="Increase Font Size"
             >
               <ZoomIn className="h-3.5 w-3.5" />
@@ -180,16 +185,16 @@ if __name__ == "__main__":
 
           <button
             onClick={handleCopy}
-            className="flex items-center space-x-1 px-2.5 py-1 rounded-lg bg-[#ffffff] hover:bg-[#f1f5f9] border border-[#cbd5e1] text-[#334155] font-medium"
+            className="flex items-center space-x-1 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 font-semibold transition-colors cursor-pointer"
           >
-            {copied ? <Check className="h-3.5 w-3.5 text-emerald-600" /> : <Copy className="h-3.5 w-3.5" />}
+            {copied ? <Check className="h-3.5 w-3.5 text-emerald-400" /> : <Copy className="h-3.5 w-3.5 text-slate-400" />}
             <span>{copied ? 'Copied' : 'Copy'}</span>
           </button>
 
           <button
             onClick={handleDownload}
-            className="p-1.5 rounded-lg bg-[#ffffff] hover:bg-[#f1f5f9] border border-[#cbd5e1] text-[#334155]"
-            title="Download .py file"
+            className="p-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 transition-colors cursor-pointer"
+            title="Download .py script"
           >
             <Download className="h-3.5 w-3.5" />
           </button>
@@ -198,23 +203,23 @@ if __name__ == "__main__":
           <button
             onClick={handleRunCode}
             disabled={isRunning}
-            className="flex items-center space-x-1.5 px-3.5 py-1 rounded-lg bg-[#16a34a] hover:bg-[#15803d] text-white font-semibold shadow-sm transition-all hover:scale-[1.02]"
+            className="flex items-center space-x-1.5 px-4 py-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-500 hover:to-green-500 text-white font-bold shadow-md shadow-emerald-900/30 transition-all hover:scale-[1.02] active:scale-95 cursor-pointer disabled:opacity-50"
           >
-            <Play className={`h-3 w-3 fill-current ${isRunning ? 'animate-spin' : ''}`} />
+            <Play className={`h-3.5 w-3.5 fill-current ${isRunning ? 'animate-spin' : ''}`} />
             <span>{isRunning ? 'Running...' : 'Run Python Script'}</span>
           </button>
         </div>
       </div>
 
-      {/* 2. Interactive Parameter Sliders Bar (Refinery Physics Controls) */}
-      <div className="flex flex-wrap items-center gap-4 px-4 py-2 bg-[#f1f5f9] border-b border-[#e2e8f0] text-xs">
-        <span className="font-bold text-[#334155] flex items-center gap-1">
-          <Sliders className="h-3.5 w-3.5 text-[#1d4ed8]" />
-          <span>Interactive Parameters:</span>
+      {/* 2. INTERACTIVE REFINERY PARAMETER SLIDERS */}
+      <div className="flex flex-wrap items-center gap-5 px-4 py-2.5 bg-[#0f172a] border-b border-slate-800 text-xs">
+        <span className="font-bold text-slate-300 flex items-center gap-1.5">
+          <Sliders className="h-3.5 w-3.5 text-blue-400" />
+          <span>Simulation Variables:</span>
         </span>
 
-        <div className="flex items-center space-x-2">
-          <span className="text-[#64748b]">API Gravity:</span>
+        <div className="flex items-center space-x-2 bg-slate-800/80 px-3 py-1 rounded-xl border border-slate-700">
+          <span className="text-slate-400 text-[11px]">API Gravity:</span>
           <input
             type="range"
             min="20.0"
@@ -222,13 +227,13 @@ if __name__ == "__main__":
             step="0.1"
             value={apiGravity}
             onChange={(e) => setApiGravity(parseFloat(e.target.value))}
-            className="w-24 accent-[#1d4ed8] cursor-pointer"
+            className="w-28 accent-blue-500 cursor-pointer"
           />
-          <span className="font-mono font-bold text-[#0f172a]">{apiGravity}°</span>
+          <span className="font-mono font-bold text-blue-400">{apiGravity}°</span>
         </div>
 
-        <div className="flex items-center space-x-2">
-          <span className="text-[#64748b]">Sulfur Content:</span>
+        <div className="flex items-center space-x-2 bg-slate-800/80 px-3 py-1 rounded-xl border border-slate-700">
+          <span className="text-slate-400 text-[11px]">Sulfur Content:</span>
           <input
             type="range"
             min="0.1"
@@ -236,18 +241,18 @@ if __name__ == "__main__":
             step="0.05"
             value={sulfurPct}
             onChange={(e) => setSulfurPct(parseFloat(e.target.value))}
-            className="w-24 accent-[#ea580c] cursor-pointer"
+            className="w-28 accent-orange-500 cursor-pointer"
           />
-          <span className="font-mono font-bold text-[#0f172a]">{sulfurPct}%</span>
+          <span className="font-mono font-bold text-orange-400">{sulfurPct}%</span>
         </div>
       </div>
 
-      {/* 3. Code Editor Area (Crisp Light Theme) */}
-      <div className="flex-1 flex overflow-hidden bg-[#ffffff]">
+      {/* 3. CODE EDITOR AREA */}
+      <div className="flex-1 flex overflow-hidden bg-[#0b1120]">
         {showLineNumbers && (
           <div
             style={{ fontSize: `${fontSize}px` }}
-            className="w-12 bg-[#f8fafc] text-[#94a3b8] border-r border-[#e2e8f0] text-right pr-2 py-4 select-none font-mono leading-relaxed"
+            className="w-12 bg-[#0b1120] text-slate-600 border-r border-slate-800 text-right pr-3 py-4 select-none font-mono leading-relaxed"
           >
             {lines.map((_: string, i: number) => (
               <div key={i}>{i + 1}</div>
@@ -260,41 +265,51 @@ if __name__ == "__main__":
           onChange={handleCodeChange}
           spellCheck={false}
           style={{ fontSize: `${fontSize}px` }}
-          className="flex-1 h-full bg-[#ffffff] text-[#0f172a] focus:outline-none resize-none font-mono p-4 leading-relaxed overflow-auto selection:bg-[#bfdbfe]"
+          className="flex-1 h-full bg-[#0b1120] text-slate-100 focus:outline-none resize-none font-mono p-4 leading-relaxed overflow-auto selection:bg-blue-900/60"
         />
       </div>
 
-      {/* 4. Output Terminal Deck (Light Theme) */}
-      {outputConsole && (
-        <div className="h-48 bg-[#f8fafc] border-t border-[#cbd5e1] flex flex-col shrink-0">
-          <div className="flex items-center justify-between px-4 py-2 bg-[#f1f5f9] border-b border-[#e2e8f0] text-xs text-[#64748b]">
-            <div className="flex items-center space-x-1.5 text-[#15803d] font-bold">
-              <Terminal className="h-3.5 w-3.5" />
-              <span>PYTHON 3.11 OUTPUT TERMINAL</span>
+      {/* 4. OUTPUT TERMINAL DECK */}
+      <AnimatePresence>
+        {outputConsole && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 200, opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            className="bg-[#0f172a] border-t border-slate-700 flex flex-col shrink-0 z-20 shadow-2xl"
+          >
+            <div className="flex items-center justify-between px-4 py-2 bg-[#1e293b] border-b border-slate-700 text-xs text-slate-400">
+              <div className="flex items-center space-x-2 text-emerald-400 font-bold">
+                <Terminal className="h-3.5 w-3.5" />
+                <span>PYTHON 3.11 WASM SANDBOX RUNNER</span>
+              </div>
+              <button
+                onClick={() => setOutputConsole(null)}
+                className="text-slate-400 hover:text-white text-xs font-bold p-1"
+              >
+                ✕ Close
+              </button>
             </div>
-            <button
-              onClick={() => setOutputConsole(null)}
-              className="text-[#64748b] hover:text-[#0f172a] text-xs"
-            >
-              ✕ Close
-            </button>
-          </div>
-          <pre className="flex-1 p-3 text-xs font-mono text-[#1e293b] whitespace-pre-wrap overflow-auto bg-[#ffffff]">
-            {outputConsole}
-          </pre>
-        </div>
-      )}
+            <pre className="flex-1 p-4 text-xs font-mono text-emerald-300 whitespace-pre-wrap overflow-auto bg-[#090d16] selection:bg-emerald-900/40">
+              {outputConsole}
+            </pre>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-      {/* 5. Statistics Footer */}
-      <div className="flex items-center justify-between px-4 py-1.5 bg-[#f8fafc] border-t border-[#e2e8f0] text-[11px] text-[#64748b] font-mono shrink-0">
+      {/* 5. STATISTICS FOOTER */}
+      <div className="flex items-center justify-between px-5 py-2 bg-[#1e293b] border-t border-slate-700/80 text-[11px] text-slate-400 font-mono shrink-0">
         <div className="flex items-center space-x-3">
-          <span>Lines: <strong className="text-[#0f172a]">{lines.length}</strong></span>
+          <span>Lines: <strong className="text-white">{lines.length}</strong></span>
           <span>&bull;</span>
-          <span>Characters: <strong className="text-[#0f172a]">{code.length}</strong></span>
+          <span>Characters: <strong className="text-white">{code.length}</strong></span>
           <span>&bull;</span>
-          <span>Encoding: <strong>UTF-8</strong></span>
+          <span>Encoding: <strong className="text-slate-200">UTF-8</strong></span>
         </div>
-        <span className="text-[#16a34a] font-sans font-semibold">Python Data & Logic Studio</span>
+        <span className="text-emerald-400 font-sans font-bold flex items-center gap-1.5">
+          <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+          Python Sandbox Studio
+        </span>
       </div>
     </div>
   );
