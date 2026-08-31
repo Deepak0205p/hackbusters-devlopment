@@ -20,7 +20,6 @@ import { useDeliverableStore, DeliverableItem } from '@/store/useDeliverableStor
 import { useCanvasStore } from '@/store/useCanvasStore';
 import { DocumentCanvasPanel } from '@/components/canvas/DocumentCanvasPanel';
 import { AppSidebar } from '@/components/sidebar/AppSidebar';
-import { MobileBottomNav } from '@/components/sidebar/MobileBottomNav';
 import { useSidebarStore } from '@/store/useSidebarStore';
 import { SearchChatsModal } from '@/components/SearchChatsModal';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -888,9 +887,6 @@ export default function ArtifactsPage() {
           onClose={() => setShowSearchModal(false)}
         />
       </main>
-
-      {/* Mobile Bottom Navigation Bar */}
-      <MobileBottomNav onOpenSearch={() => setShowSearchModal(true)} />
     </div>
   );
 }

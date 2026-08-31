@@ -396,55 +396,56 @@ export function AppSidebar({ onOpenSearchModal, activePage = 'chat' }: AppSideba
             dragConstraints={{ left: 0, right: 0 }}
             dragElastic={0.2}
             onDragEnd={(_, info) => { if (info.offset.x < -80) closeSidebar(); }}
-            className="fixed inset-y-0 left-0 z-50 w-[82vw] max-w-[300px] bg-slate-50 border-r border-slate-200 dark:bg-[#080808] dark:border-[#1a1a1a]/80 flex flex-col justify-between select-none shadow-2xl md:hidden"
+            className="fixed inset-y-0 left-0 z-50 w-[85vw] max-w-[320px] bg-white dark:bg-[#0a0a0a] flex flex-col select-none shadow-2xl md:hidden"
           >
-            {/* Mobile Brand Header */}
-            <div className="flex items-center justify-between px-4 pt-4 pb-3 shrink-0">
-              <Link href="/chat" onClick={closeSidebar} className="flex items-center space-x-2.5">
+            {/* Header */}
+            <div className="flex items-center justify-between px-5 pt-5 pb-3 shrink-0">
+              <Link href="/chat" onClick={closeSidebar}>
                 <RevealBrand size="md" />
               </Link>
-              <button onClick={closeSidebar} aria-label="Close sidebar" className="h-9 w-9 rounded-full hover:bg-slate-200 dark:hover:bg-[#1e1f20] flex items-center justify-center text-slate-500 dark:text-[#8e918f] cursor-pointer">
-                <X className="h-4 w-4" />
+              <button onClick={closeSidebar} aria-label="Close" className="h-9 w-9 rounded-full hover:bg-slate-100 dark:hover:bg-[#1e1f20] active:bg-slate-200 flex items-center justify-center text-slate-500 dark:text-[#8e918f] transition-colors cursor-pointer">
+                <X className="h-5 w-5" />
               </button>
             </div>
 
-            <div className="flex flex-col flex-1 min-h-0 overflow-hidden">
+            {/* Body */}
+            <div className="flex flex-col flex-1 min-h-0 overflow-hidden px-3">
               {/* New Chat */}
-              <div className="px-3 pb-2 shrink-0">
-                <button onClick={handleNewChat} className="w-full flex items-center space-x-3 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white text-xs font-bold transition-all active:scale-[0.98] shadow-md min-h-[44px] cursor-pointer">
-                  <Plus className="h-4 w-4 shrink-0" />
+              <div className="pb-3">
+                <button onClick={handleNewChat} className="w-full flex items-center justify-center space-x-2 px-4 py-3 rounded-2xl bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white text-sm font-bold transition-all active:scale-[0.98] shadow-lg shadow-blue-600/20 min-h-[48px] cursor-pointer">
+                  <Plus className="h-4 w-4" />
                   <span>New chat</span>
                 </button>
               </div>
 
-              {/* Inline Search */}
-              <div className="px-3 pb-2 shrink-0">
+              {/* Search */}
+              <div className="pb-3">
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 dark:text-[#8e918f]" />
+                  <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 dark:text-[#8e918f]" />
                   <input
                     type="text"
                     placeholder="Search chats..."
                     value={chatSearch}
                     onChange={(e) => setChatSearch(e.target.value)}
-                    className="w-full pl-9 pr-8 py-2 rounded-xl bg-white border border-slate-200 text-xs text-slate-900 placeholder-slate-400 dark:bg-[#1e1f20] dark:border-[#3c4043]/50 dark:text-[#e3e3e3] dark:placeholder-[#8e918f] focus:outline-none focus:ring-2 focus:ring-blue-500/30 transition-all min-h-[36px]"
+                    className="w-full pl-10 pr-9 py-2.5 rounded-xl bg-slate-100 border-0 text-sm text-slate-900 placeholder-slate-400 dark:bg-[#1e1f20] dark:text-[#e3e3e3] dark:placeholder-[#8e918f] focus:outline-none focus:ring-2 focus:ring-blue-500/30 transition-all"
                   />
                   {chatSearch && (
-                    <button onClick={() => setChatSearch('')} className="absolute right-2 top-1/2 -translate-y-1/2 h-5 w-5 rounded-full hover:bg-slate-200 dark:hover:bg-[#3c4043] flex items-center justify-center text-slate-400 cursor-pointer">
+                    <button onClick={() => setChatSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 rounded-full hover:bg-slate-200 dark:hover:bg-[#3c4043] flex items-center justify-center text-slate-400 cursor-pointer">
                       <X className="h-3 w-3" />
                     </button>
                   )}
                 </div>
               </div>
 
-              {/* Navigation Links */}
-              <div className="px-3 pb-2 space-y-0.5 shrink-0">
-                <Link href="/chat" onClick={closeSidebar} className={`w-full flex items-center space-x-3 px-3 py-2 rounded-xl text-xs transition-colors min-h-[40px] cursor-pointer ${isChatActive ? 'bg-blue-50 text-blue-700 font-bold dark:bg-[#1e1f20] dark:text-[#a8c7fa]' : 'hover:bg-slate-200/80 text-slate-700 dark:text-[#c4c7c5] font-medium'}`}>
-                  <MessageSquare className="h-4 w-4 shrink-0" />
+              {/* Nav Links */}
+              <div className="pb-2 space-y-0.5">
+                <Link href="/chat" onClick={closeSidebar} className={`w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-sm transition-colors min-h-[44px] cursor-pointer ${isChatActive ? 'bg-blue-50 text-blue-700 font-bold dark:bg-[#1e1f20] dark:text-[#a8c7fa]' : 'text-slate-700 hover:bg-slate-100 dark:text-[#c4c7c5] dark:hover:bg-[#1e1f20] font-medium'}`}>
+                  <MessageSquare className="h-[18px] w-[18px] shrink-0" />
                   <span>Chats</span>
                 </Link>
-                <Link href="/artifacts" onClick={closeSidebar} className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs transition-colors min-h-[40px] cursor-pointer ${isArtifactsActive ? 'bg-blue-50 text-blue-700 font-bold dark:bg-[#1e1f20] dark:text-[#a8c7fa]' : 'hover:bg-slate-200/80 text-slate-700 dark:text-[#c4c7c5] font-medium'}`}>
+                <Link href="/artifacts" onClick={closeSidebar} className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm transition-colors min-h-[44px] cursor-pointer ${isArtifactsActive ? 'bg-blue-50 text-blue-700 font-bold dark:bg-[#1e1f20] dark:text-[#a8c7fa]' : 'text-slate-700 hover:bg-slate-100 dark:text-[#c4c7c5] dark:hover:bg-[#1e1f20] font-medium'}`}>
                   <div className="flex items-center space-x-3">
-                    <FileText className="h-4 w-4 shrink-0" />
+                    <FileText className="h-[18px] w-[18px] shrink-0" />
                     <span>Artifacts</span>
                   </div>
                   <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 border border-blue-200 dark:bg-blue-500/15 dark:text-blue-400 dark:border-blue-500/30">
@@ -453,23 +454,26 @@ export function AppSidebar({ onOpenSearchModal, activePage = 'chat' }: AppSideba
                 </Link>
               </div>
 
+              {/* Divider */}
+              <div className="border-t border-slate-200 dark:border-[#282a2c]/60 my-1" />
+
               {/* Recent Chats */}
-              <div className="flex-1 min-h-0 overflow-y-auto px-3 pt-2 border-t border-slate-200/60 dark:border-[#282a2c]/40">
-                <div className="px-1 pb-1.5 text-[10px] font-bold text-slate-400 dark:text-[#8e918f] uppercase tracking-wider">
-                  Recent Chats
+              <div className="flex-1 min-h-0 overflow-y-auto pt-1 pb-2">
+                <div className="px-2 pb-2 text-[10px] font-bold text-slate-400 dark:text-[#8e918f] uppercase tracking-wider">
+                  Recent
                 </div>
                 {groupedSessions.length === 0 ? (
-                  <div className="px-3 py-6 text-center">
-                    <MessageSquare className="h-8 w-8 text-slate-300 dark:text-[#3c4043] mx-auto mb-2" />
-                    <p className="text-[11px] text-slate-400 dark:text-[#8e918f] font-medium">
-                      {chatSearch ? 'No matches found' : 'No conversations yet'}
+                  <div className="px-3 py-8 text-center">
+                    <MessageSquare className="h-10 w-10 text-slate-200 dark:text-[#282a2c] mx-auto mb-2" />
+                    <p className="text-xs text-slate-400 dark:text-[#8e918f]">
+                      {chatSearch ? 'No matches' : 'Start a new chat'}
                     </p>
                   </div>
                 ) : (
-                  <div className="space-y-1">
+                  <div className="space-y-2">
                     {groupedSessions.map((group) => (
                       <div key={group.label}>
-                        <button onClick={() => toggleGroup(group.label)} className="w-full flex items-center justify-between px-2 py-1 text-[10px] font-bold text-slate-400 dark:text-[#8e918f] uppercase tracking-wider hover:text-slate-600 dark:hover:text-[#c4c7c5] cursor-pointer">
+                        <button onClick={() => toggleGroup(group.label)} className="w-full flex items-center justify-between px-2 py-1 text-[10px] font-bold text-slate-400 dark:text-[#8e918f] uppercase tracking-wider cursor-pointer">
                           <span>{group.label}</span>
                           <ChevronDown className={`h-3 w-3 transition-transform ${collapsedGroups[group.label] ? '-rotate-90' : ''}`} />
                         </button>
@@ -481,13 +485,13 @@ export function AppSidebar({ onOpenSearchModal, activePage = 'chat' }: AppSideba
                                 <button
                                   key={sess.id}
                                   onClick={() => handleSelectSession(sess.id)}
-                                  className={`w-full text-left px-3 py-1.5 rounded-xl text-xs transition-all flex items-center space-x-2.5 truncate min-h-[36px] cursor-pointer ${
+                                  className={`w-full text-left px-3 py-2 rounded-xl text-[13px] transition-all flex items-center space-x-2.5 truncate min-h-[40px] cursor-pointer ${
                                     isActive
                                       ? 'bg-blue-50 text-blue-700 font-bold dark:bg-[#1e1f20] dark:text-[#a8c7fa]'
-                                      : 'text-slate-700 hover:bg-slate-200/70 dark:text-[#c4c7c5] dark:hover:bg-[#1e1f20]/60 font-medium'
+                                      : 'text-slate-700 hover:bg-slate-100 dark:text-[#c4c7c5] dark:hover:bg-[#1e1f20]/60 font-medium'
                                   }`}
                                 >
-                                  <MessageSquare className="h-3 w-3 shrink-0 opacity-60" />
+                                  <MessageSquare className="h-3.5 w-3.5 shrink-0 opacity-50" />
                                   <span className="truncate">{sess.title || 'New conversation'}</span>
                                 </button>
                               );
@@ -501,20 +505,6 @@ export function AppSidebar({ onOpenSearchModal, activePage = 'chat' }: AppSideba
               </div>
             </div>
 
-            {/* Footer */}
-            <div className="shrink-0 px-3 pt-2 pb-3 border-t border-slate-200/60 dark:border-[#282a2c]/40">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-2 px-2">
-                  <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400">Theme</span>
-                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 capitalize font-semibold">
-                    {theme}
-                  </span>
-                </div>
-                <button onClick={cycleTheme} aria-label="Cycle theme" className="p-2 rounded-full hover:bg-slate-200 dark:hover:bg-[#1e1f20] text-slate-700 dark:text-[#e3e3e3] transition-all active:scale-95 cursor-pointer border border-slate-200 dark:border-[#3c4043]">
-                  {themeIcon}
-                </button>
-              </div>
-            </div>
           </motion.aside>
         )}
       </AnimatePresence>
@@ -523,8 +513,14 @@ export function AppSidebar({ onOpenSearchModal, activePage = 'chat' }: AppSideba
 
   return (
     <>
-      <MobileDrawer />
-      {isSidebarOpen ? <ExpandedView /> : <RailView />}
+      {/* Mobile: only show drawer, never show rail/expanded */}
+      <div className="md:hidden">
+        <MobileDrawer />
+      </div>
+      {/* Desktop: show rail or expanded, never show drawer */}
+      <div className="hidden md:block">
+        {isSidebarOpen ? <ExpandedView /> : <RailView />}
+      </div>
     </>
   );
 }

@@ -539,7 +539,12 @@ export default function GeminiReplicaChatApp() {
   const [activeView, setActiveView] = useState<'chat' | 'artifacts'>('chat');
   const [artifactSearchQuery, setArtifactSearchQuery] = useState('');
   const [copiedHash, setCopiedHash] = useState(false);
-  const { theme } = useThemeStore();
+  const { theme, setTheme } = useThemeStore();
+  const cycleTheme = () => {
+    const order: Array<'light' | 'dark' | 'system'> = ['light', 'dark', 'system'];
+    const idx = order.indexOf(theme as any);
+    setTheme(order[(idx + 1) % order.length] as any);
+  };
 
   const {
     deliverables,
@@ -858,6 +863,29 @@ export default function GeminiReplicaChatApp() {
                   </svg>
                 </button>
                 <RevealBrand size="sm" />
+              </div>
+              <div className="flex items-center space-x-1">
+                <button
+                  onClick={() => setShowSearchModal(true)}
+                  aria-label="Search"
+                  className="h-9 w-9 rounded-full hover:bg-slate-100 dark:hover:bg-[#1e1f20] active:bg-slate-200 text-slate-600 hover:text-slate-900 dark:text-[#c4c7c5] dark:hover:text-white flex items-center justify-center transition-colors cursor-pointer"
+                >
+                  <Search className="h-4 w-4" />
+                </button>
+                <button
+                  onClick={cycleTheme}
+                  aria-label="Toggle theme"
+                  className="h-9 w-9 rounded-full hover:bg-slate-100 dark:hover:bg-[#1e1f20] active:bg-slate-200 text-slate-600 dark:text-[#c4c7c5] flex items-center justify-center transition-colors cursor-pointer"
+                >
+                  {theme === 'dark' ? <Sun className="h-4 w-4 text-amber-400" /> : <Moon className="h-4 w-4 text-blue-600" />}
+                </button>
+                <button
+                  onClick={createNewChat}
+                  aria-label="New chat"
+                  className="h-9 w-9 rounded-full bg-blue-50 hover:bg-blue-100 active:scale-95 border border-blue-200 text-blue-700 dark:bg-[#1e1f20] dark:hover:bg-[#282a2c] dark:border-[#3c4043]/40 dark:text-[#a8c7fa] flex items-center justify-center transition-all shadow-xs cursor-pointer"
+                >
+                  <Plus className="h-4 w-4" />
+                </button>
               </div>
             </header>
 
