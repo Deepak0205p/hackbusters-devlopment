@@ -173,11 +173,9 @@ export function AppSidebar({ onOpenSearchModal, activePage = 'chat' }: AppSideba
     <aside className="relative hidden md:flex flex-col items-center w-[68px] h-full bg-slate-50 border-r border-slate-200 dark:bg-[#080808] dark:border-[#1a1a1a]/80 shrink-0 select-none transition-all duration-300 z-50">
       {/* Brand / Expand */}
       <div className="flex flex-col items-center pt-4 pb-3 w-full">
-        <SidebarTooltip text="Expand sidebar">
-          <button onClick={toggleSidebar} aria-label="Expand sidebar" className="h-11 w-11 rounded-full hover:bg-slate-200 active:bg-slate-300 dark:hover:bg-[#1e1f20] dark:active:bg-[#282a2c] flex items-center justify-center text-slate-600 hover:text-slate-900 dark:text-[#c4c7c5] dark:hover:text-white transition-all duration-200 hover:scale-105 active:scale-95 cursor-pointer">
-            <RevealLogoIcon className="h-5 w-5" />
-          </button>
-        </SidebarTooltip>
+        <button onClick={toggleSidebar} aria-label="Expand sidebar" className="h-11 w-11 rounded-full hover:bg-slate-200 active:bg-slate-300 dark:hover:bg-[#1e1f20] dark:active:bg-[#282a2c] flex items-center justify-center text-slate-600 hover:text-slate-900 dark:text-[#c4c7c5] dark:hover:text-white transition-all duration-200 hover:scale-105 active:scale-95 cursor-pointer">
+          <RevealLogoIcon className="h-5 w-5" />
+        </button>
       </div>
 
       {/* Actions */}
@@ -231,11 +229,9 @@ export function AppSidebar({ onOpenSearchModal, activePage = 'chat' }: AppSideba
           <Link href="/chat" onClick={() => { if (typeof window !== 'undefined' && window.innerWidth < 768) closeSidebar(); }} className="flex items-center space-x-2.5 group">
             <RevealBrand size="md" />
           </Link>
-          <SidebarTooltip text="Collapse sidebar">
-            <button onClick={toggleSidebar} aria-label="Collapse sidebar" className="h-8 w-8 rounded-full hover:bg-slate-200 active:bg-slate-300 dark:hover:bg-[#1e1f20] dark:active:bg-[#282a2c] flex items-center justify-center text-slate-500 hover:text-slate-900 dark:text-[#8e918f] dark:hover:text-[#e3e3e3] transition-colors cursor-pointer">
-              <PanelLeftClose className="h-4 w-4" />
-            </button>
-          </SidebarTooltip>
+          <button onClick={toggleSidebar} aria-label="Collapse sidebar" className="h-8 w-8 rounded-full hover:bg-slate-200 active:bg-slate-300 dark:hover:bg-[#1e1f20] dark:active:bg-[#282a2c] flex items-center justify-center text-slate-500 hover:text-slate-900 dark:text-[#8e918f] dark:hover:text-[#e3e3e3] transition-colors cursor-pointer">
+            <PanelLeftClose className="h-4 w-4" />
+          </button>
         </div>
 
         {/* New Chat */}
