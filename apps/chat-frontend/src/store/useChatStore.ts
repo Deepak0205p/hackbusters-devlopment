@@ -53,7 +53,7 @@ interface ChatState {
   deleteSession: (id: string) => void;
   setMessages: (messages: ChatMessage[]) => void;
   addMessage: (message: ChatMessage) => void;
-  setCurrentInput: (input: string) => void;
+  setCurrentInput: (input: string | ((prev: string) => string)) => void;
   setActiveScenario: (scenario: 'furnace' | 'pump' | 'pid' | 'general') => void;
   setStreaming: (isStreaming: boolean) => void;
   handleStreamEvent: (event: any) => void;
@@ -140,7 +140,15 @@ export const useChatStore = create<ChatState>((set, get) => ({
       return { messages: newMsgs, sessions: updatedSessions };
     });
   },
-  setCurrentInput: (currentInput) => set({ currentInput }),
+  setCurrentInput: (inputOrUpdater) =>
+    set((state) => ({
+      currentInput:
+        typeof inputOrUpdater === 'function'
+          ? (inputOrUpdater as (prev: string) => string)(state.currentInput || '')
+          : typeof inputOrUpdater === 'string'
+          ? inputOrUpdater
+          : '',
+    })),
   setActiveScenario: (activeScenario) => set({ activeScenario }),
   setStreaming: (isStreaming) => set({ isStreaming }),
   clearTrace: () => set({ activeTraceSteps: [], currentRouting: null }),

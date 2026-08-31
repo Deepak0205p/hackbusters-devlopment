@@ -507,7 +507,10 @@ export default function GeminiReplicaChatApp() {
           }
         }
         if (transcript) {
-          setCurrentInput((prev) => (prev ? `${prev.trim()} ${transcript.trim()}` : transcript.trim()));
+          const currentVal = useChatStore.getState().currentInput;
+          const prevStr = typeof currentVal === 'string' ? currentVal : '';
+          const nextText = prevStr ? `${prevStr.trim()} ${transcript.trim()}` : transcript.trim();
+          setCurrentInput(nextText);
         }
       };
 
@@ -540,7 +543,8 @@ export default function GeminiReplicaChatApp() {
   }, [currentInput]);
 
   const handleSend = (textToSend?: string) => {
-    const prompt = (textToSend || currentInput).trim();
+    const rawInput = typeof textToSend === 'string' ? textToSend : (typeof currentInput === 'string' ? currentInput : '');
+    const prompt = rawInput.trim();
     if (!prompt || isStreaming) return;
 
     setCurrentInput('');
@@ -1342,10 +1346,10 @@ export default function GeminiReplicaChatApp() {
                 ) : (
                   <button
                     onClick={() => handleSend()}
-                    disabled={!currentInput.trim()}
+                    disabled={!(typeof currentInput === 'string' && currentInput.trim().length > 0)}
                     aria-label="Send message"
                     className={`h-10 w-10 sm:h-9 sm:w-9 rounded-full flex items-center justify-center transition-all duration-200 shadow-sm cursor-pointer ${
-                      currentInput.trim()
+                      typeof currentInput === 'string' && currentInput.trim().length > 0
                         ? 'bg-blue-600 text-white hover:bg-blue-700 dark:bg-white dark:text-black dark:hover:bg-[#f1f3f4]'
                         : 'bg-slate-100 text-slate-400 dark:bg-[#1e1f20] dark:text-[#717478]'
                     }`}
