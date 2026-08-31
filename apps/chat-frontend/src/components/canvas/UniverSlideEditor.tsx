@@ -219,6 +219,7 @@ export function UniverSlideEditor({ deliverable }: UniverSlideEditorProps) {
   const [activeRibbonTab, setActiveRibbonTab] = useState<'home' | 'insert' | 'design' | 'transitions' | 'slideshow'>('home');
   const [isPresenting, setIsPresenting] = useState(false);
   const [showNotesDrawer, setShowNotesDrawer] = useState(false);
+  const [showSidebar, setShowSidebar] = useState(true);
   const [aspectRatio, setAspectRatio] = useState<'16:9' | '4:3'>('16:9');
   const [transitionEffect, setTransitionEffect] = useState<'fade' | 'slide' | 'zoom'>('fade');
   const [zoomLevel, setZoomLevel] = useState<number>(100);
@@ -738,107 +739,129 @@ export function UniverSlideEditor({ deliverable }: UniverSlideEditorProps) {
       {/* 3. MAIN WORKSPACE: DESKTOP SIDEBAR + CENTRAL SLIDE CANVAS */}
       <div className="flex-1 flex flex-col md:flex-row overflow-hidden relative">
         {/* Desktop-Only Left Sidebar: Slide Thumbnails Navigator */}
-        <div className="hidden md:flex w-64 border-r border-[#e2e8f0] bg-[#f8fafc] flex-col shrink-0 select-none shadow-xs">
-          {/* Header Bar */}
-          <div className="flex items-center justify-between px-4 py-3 border-b border-[#e2e8f0] bg-white/80 backdrop-blur-sm shrink-0">
-            <div className="flex items-center space-x-2">
-              <span className="text-xs font-extrabold text-[#0f172a] uppercase tracking-wider">Slides</span>
-              <span className="px-2 py-0.5 rounded-full bg-[#f1f5f9] text-[#475569] font-mono text-[10px] font-bold border border-[#e2e8f0]">
-                {slides.length}
-              </span>
-            </div>
-            <button
-              onClick={() => handleAddSlide('content')}
-              className="flex items-center space-x-1 px-2.5 py-1 rounded-lg text-xs font-bold bg-[#ea580c]/10 hover:bg-[#ea580c]/20 text-[#ea580c] transition-all active:scale-95 border border-[#ea580c]/20 shadow-xs cursor-pointer"
-              title="Add New Slide"
-            >
-              <Plus className="h-3.5 w-3.5" />
-              <span>Add</span>
-            </button>
-          </div>
-
-          {/* Vertical Thumbnails Scroll Area */}
-          <div className="flex-1 overflow-y-auto p-3 space-y-3">
-            {slides.map((s, idx) => {
-              const isSelected = activeSlideIndex === idx;
-              return (
-                <div
-                  key={s.id}
-                  onClick={() => setActiveSlideIndex(idx)}
-                  className={`group relative flex flex-col p-2.5 rounded-2xl transition-all cursor-pointer border ${
-                    isSelected
-                      ? 'bg-white border-[#ea580c] shadow-md ring-2 ring-[#ea580c]/20'
-                      : 'bg-white border-[#e2e8f0] hover:border-[#cbd5e1] hover:shadow-xs'
-                  }`}
+        {showSidebar && (
+          <div className="hidden md:flex w-44 lg:w-48 xl:w-52 border-r border-[#e2e8f0] bg-[#f8fafc] flex-col shrink-0 select-none shadow-xs">
+            {/* Header Bar */}
+            <div className="flex items-center justify-between px-3 py-2.5 border-b border-[#e2e8f0] bg-white/80 backdrop-blur-sm shrink-0">
+              <div className="flex items-center space-x-1.5">
+                <span className="text-xs font-extrabold text-[#0f172a] uppercase tracking-wider">Slides</span>
+                <span className="px-1.5 py-0.5 rounded-full bg-[#f1f5f9] text-[#475569] font-mono text-[10px] font-bold border border-[#e2e8f0]">
+                  {slides.length}
+                </span>
+              </div>
+              <div className="flex items-center space-x-1">
+                <button
+                  onClick={() => handleAddSlide('content')}
+                  className="p-1 rounded-lg text-[#ea580c] hover:bg-[#ea580c]/10 transition-colors"
+                  title="Add New Slide"
                 >
-                  {/* Top Bar: Index & Layout Tag */}
-                  <div className="flex items-center justify-between mb-2 px-0.5">
-                    <span className={`text-[11px] font-mono font-bold ${isSelected ? 'text-[#ea580c]' : 'text-[#64748b]'}`}>
-                      #{idx + 1}
-                    </span>
-                    <span className="text-[9px] font-mono font-semibold uppercase px-1.5 py-0.5 rounded bg-[#f1f5f9] text-[#475569] border border-[#e2e8f0]/80">
-                      {s.layout}
-                    </span>
-                  </div>
+                  <Plus className="h-3.5 w-3.5" />
+                </button>
+                <button
+                  onClick={() => setShowSidebar(false)}
+                  className="p-1 rounded-lg text-[#64748b] hover:text-[#0f172a] hover:bg-[#e2e8f0] transition-colors"
+                  title="Collapse Sidebar"
+                >
+                  <ChevronLeft className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            </div>
 
-                  {/* 16:9 Realistic Miniature Slide Wireframe Box */}
+            {/* Vertical Thumbnails Scroll Area */}
+            <div className="flex-1 overflow-y-auto p-2.5 space-y-2.5 scrollbar-none">
+              {slides.map((s, idx) => {
+                const isSelected = activeSlideIndex === idx;
+                return (
                   <div
-                    style={{ backgroundColor: s.bgColor || '#ffffff' }}
-                    className={`relative w-full aspect-[16/9] rounded-xl border overflow-hidden flex flex-col transition-all shadow-inner ${
-                      isSelected ? 'border-[#ea580c]/40 ring-1 ring-[#ea580c]/30' : 'border-[#e2e8f0]'
+                    key={s.id}
+                    onClick={() => setActiveSlideIndex(idx)}
+                    className={`group relative flex flex-col p-2 rounded-xl transition-all cursor-pointer border ${
+                      isSelected
+                        ? 'bg-white border-[#ea580c] shadow-md ring-2 ring-[#ea580c]/20'
+                        : 'bg-white border-[#e2e8f0] hover:border-[#cbd5e1] hover:shadow-xs'
                     }`}
                   >
-                    {/* Top Accent Strip */}
+                    {/* Top Bar: Index & Layout Tag */}
+                    <div className="flex items-center justify-between mb-1.5 px-0.5">
+                      <span className={`text-[10px] font-mono font-bold ${isSelected ? 'text-[#ea580c]' : 'text-[#64748b]'}`}>
+                        #{idx + 1}
+                      </span>
+                      <span className="text-[8px] font-mono font-semibold uppercase px-1 py-0.2 rounded bg-[#f1f5f9] text-[#475569] border border-[#e2e8f0]/80">
+                        {s.layout}
+                      </span>
+                    </div>
+
+                    {/* 16:9 Realistic Miniature Slide Wireframe Box */}
                     <div
-                      className="h-1.5 w-full shrink-0"
-                      style={{ backgroundColor: s.accentColor || '#ea580c' }}
-                    />
+                      style={{ backgroundColor: s.bgColor || '#ffffff' }}
+                      className={`relative w-full aspect-[16/9] rounded-lg border overflow-hidden flex flex-col transition-all shadow-inner ${
+                        isSelected ? 'border-[#ea580c]/40 ring-1 ring-[#ea580c]/30' : 'border-[#e2e8f0]'
+                      }`}
+                    >
+                      {/* Top Accent Strip */}
+                      <div
+                        className="h-1 w-full shrink-0"
+                        style={{ backgroundColor: s.accentColor || '#ea580c' }}
+                      />
 
-                    {/* Miniature Layout Representation */}
-                    <SlideMiniatureSkeleton slide={s} />
+                      {/* Miniature Layout Representation */}
+                      <SlideMiniatureSkeleton slide={s} />
 
-                    {/* Hover Quick Action Buttons */}
-                    <div className="absolute top-1.5 right-1.5 flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity bg-white/95 backdrop-blur-sm p-0.5 rounded-md shadow-md border border-[#e2e8f0]">
-                      <button
-                        type="button"
-                        onClick={(e) => handleDuplicateSlideAt(idx, e)}
-                        className="p-1 rounded hover:bg-[#f1f5f9] text-[#475569] hover:text-[#0f172a] transition-colors"
-                        title="Duplicate Slide"
-                      >
-                        <Copy className="h-3 w-3" />
-                      </button>
-                      {slides.length > 1 && (
+                      {/* Hover Quick Action Buttons */}
+                      <div className="absolute top-1 right-1 flex items-center space-x-0.5 opacity-0 group-hover:opacity-100 transition-opacity bg-white/95 backdrop-blur-sm p-0.5 rounded shadow-xs border border-[#e2e8f0]">
                         <button
                           type="button"
-                          onClick={(e) => handleDeleteSlideAt(idx, e)}
-                          className="p-1 rounded hover:bg-red-50 text-[#64748b] hover:text-red-600 transition-colors"
-                          title="Delete Slide"
+                          onClick={(e) => handleDuplicateSlideAt(idx, e)}
+                          className="p-0.5 rounded hover:bg-[#f1f5f9] text-[#475569] hover:text-[#0f172a] transition-colors"
+                          title="Duplicate Slide"
                         >
-                          <Trash2 className="h-3 w-3" />
+                          <Copy className="h-2.5 w-2.5" />
                         </button>
-                      )}
+                        {slides.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={(e) => handleDeleteSlideAt(idx, e)}
+                            className="p-0.5 rounded hover:bg-red-50 text-[#64748b] hover:text-red-600 transition-colors"
+                            title="Delete Slide"
+                          >
+                            <Trash2 className="h-2.5 w-2.5" />
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
-              );
-            })}
+                );
+              })}
 
-            {/* Bottom Add Slide Button */}
-            <button
-              onClick={() => handleAddSlide('content')}
-              className="w-full flex items-center justify-center space-x-2 py-3 rounded-2xl border-2 border-dashed border-[#cbd5e1] hover:border-[#ea580c] hover:bg-[#ea580c]/5 text-xs font-bold text-[#64748b] hover:text-[#ea580c] transition-all cursor-pointer"
-            >
-              <Plus className="h-4 w-4" />
-              <span>New Slide</span>
-            </button>
+              {/* Bottom Add Slide Button */}
+              <button
+                onClick={() => handleAddSlide('content')}
+                className="w-full flex items-center justify-center space-x-1.5 py-2 rounded-xl border border-dashed border-[#cbd5e1] hover:border-[#ea580c] hover:bg-[#ea580c]/5 text-[11px] font-bold text-[#64748b] hover:text-[#ea580c] transition-all cursor-pointer"
+              >
+                <Plus className="h-3.5 w-3.5" />
+                <span>New Slide</span>
+              </button>
+            </div>
           </div>
-        </div>
+        )}
 
-        {/* Center Canvas & Mobile Workspace (Full Priority on Mobile) */}
-        <div className="flex-1 flex flex-col overflow-hidden bg-[#f1f5f9]">
+        {/* Center Canvas & Mobile Workspace (Full Priority on Mobile & Desktop Split Screen) */}
+        <div className="flex-1 flex flex-col overflow-hidden bg-[#f1f5f9] relative">
+          {/* Uncollapse Sidebar Floating Tab on Desktop when hidden */}
+          {!showSidebar && (
+            <button
+              onClick={() => setShowSidebar(true)}
+              className="hidden md:flex absolute top-3 left-3 z-10 items-center space-x-1.5 px-2.5 py-1.5 bg-white/95 backdrop-blur-sm border border-[#cbd5e1] rounded-xl shadow-md text-xs font-bold text-[#0f172a] hover:bg-slate-50 transition-all cursor-pointer"
+              title="Show Slide Thumbnails"
+            >
+              <ChevronRight className="h-3.5 w-3.5 text-[#ea580c]" />
+              <span>Slides ({slides.length})</span>
+            </button>
+          )}
+
           {/* Main Slide Presentation Stage Area */}
           <div
-            className="flex-1 overflow-y-auto p-2.5 xs:p-4 sm:p-8 md:p-12 flex flex-col items-center justify-start sm:justify-center relative"
+            className="flex-1 overflow-y-auto p-2.5 xs:p-4 sm:p-6 lg:p-8 flex flex-col items-center justify-start sm:justify-center relative"
             style={{ backgroundImage: 'radial-gradient(#cbd5e1 1px, transparent 1px)', backgroundSize: '20px 20px' }}
           >
             {/* The Responsive Slide Card */}
@@ -851,7 +874,7 @@ export function UniverSlideEditor({ deliverable }: UniverSlideEditorProps) {
                 backgroundColor: currentSlide.bgColor || '#ffffff',
                 transformOrigin: 'center center',
               }}
-              className="w-full max-w-4xl min-h-[340px] sm:min-h-0 sm:aspect-[16/9] text-[#0f172a] rounded-2xl sm:rounded-3xl border border-slate-200/90 shadow-lg sm:shadow-[0_20px_50px_rgba(0,0,0,0.08)] p-4 xs:p-6 sm:p-10 md:p-14 flex flex-col justify-between relative transition-all overflow-hidden bg-white"
+              className="w-full max-w-4xl min-h-[360px] sm:min-h-[420px] aspect-auto lg:aspect-[16/9] text-[#0f172a] rounded-2xl sm:rounded-3xl border border-slate-200/90 shadow-lg sm:shadow-[0_20px_50px_rgba(0,0,0,0.08)] p-4 sm:p-6 lg:p-8 xl:p-10 flex flex-col justify-between relative transition-all bg-white overflow-hidden"
             >
               {/* Top Accent Strip */}
               <div
