@@ -32,6 +32,7 @@ import {
   FileCheck2,
   FileSpreadsheet
 } from 'lucide-react';
+import { CustomDropdown } from '@/components/ui/CustomDropdown';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export interface SlideData {
@@ -553,22 +554,24 @@ export function UniverSlideEditor({ deliverable }: UniverSlideEditorProps) {
               </button>
             </div>
 
-            {/* Layout Selector */}
+            {/* Layout Selector (Custom Dropdown) */}
             <div className="flex items-center space-x-2 pr-3 border-r border-[#e2e8f0]">
               <span className="text-[#64748b] font-semibold text-[11px] uppercase tracking-wider">Layout:</span>
-              <select
+              <CustomDropdown
                 value={currentSlide.layout}
-                onChange={(e) => handleUpdateSlide({ layout: e.target.value as any })}
-                className="bg-[#f8fafc] text-[#0f172a] px-2.5 py-1 rounded-lg border border-[#cbd5e1] text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-[#ea580c] cursor-pointer"
-              >
-                <option value="title">Title Slide</option>
-                <option value="content">Content & Bullets</option>
-                <option value="two-column">Two-Column Comparison</option>
-                <option value="kpi-grid">Executive Metrics Grid</option>
-                <option value="timeline">Milestone Timeline</option>
-                <option value="table">Data Table</option>
-                <option value="quote">Executive Quote</option>
-              </select>
+                onChange={(val) => handleUpdateSlide({ layout: val as any })}
+                size="xs"
+                options={[
+                  { value: 'title', label: 'Title Slide' },
+                  { value: 'content', label: 'Content & Bullets' },
+                  { value: 'two-column', label: 'Two-Column Comparison' },
+                  { value: 'kpi-grid', label: 'Executive Metrics Grid' },
+                  { value: 'timeline', label: 'Milestone Timeline' },
+                  { value: 'table', label: 'Data Table' },
+                  { value: 'quote', label: 'Executive Quote' },
+                ]}
+                buttonClassName="bg-[#f8fafc] text-[#0f172a] border-[#cbd5e1] rounded-lg font-semibold"
+              />
             </div>
 
             {/* Accent Color Palette Selector */}

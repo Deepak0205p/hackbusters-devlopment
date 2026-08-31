@@ -30,6 +30,7 @@ import {
   Printer,
   ChevronDown
 } from 'lucide-react';
+import { CustomDropdown } from '@/components/ui/CustomDropdown';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface UniverSheetEditorProps {
@@ -385,36 +386,40 @@ export function UniverSheetEditor({ deliverable }: UniverSheetEditorProps) {
       <div className="flex items-center gap-2 px-2 sm:px-4 py-2 bg-white border-b border-[#e2e8f0] text-xs shadow-xs relative z-20 shrink-0 overflow-x-auto scrollbar-none flex-nowrap">
         {activeRibbonTab === 'home' && (
           <>
-            {/* Font Family & Size */}
+            {/* Font Family & Size (Custom Dropdowns) */}
             <div className="flex items-center space-x-1.5 pr-2.5 border-r border-[#e2e8f0]">
-              <select
+              <CustomDropdown
                 value={selectedFont}
-                onChange={(e) => {
-                  setSelectedFont(e.target.value);
-                  handleApplyStyle({ fontFamily: e.target.value });
+                onChange={(val) => {
+                  setSelectedFont(val);
+                  handleApplyStyle({ fontFamily: val });
                 }}
-                className="bg-[#f8fafc] text-[#0f172a] px-2.5 py-1 rounded-lg border border-[#cbd5e1] text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-[#15803d] cursor-pointer"
-              >
-                <option value="Inter">Inter (Clean)</option>
-                <option value="Arial">Arial</option>
-                <option value="Georgia">Georgia</option>
-                <option value="JetBrains Mono">JetBrains Mono</option>
-              </select>
+                size="xs"
+                options={[
+                  { value: 'Inter', label: 'Inter' },
+                  { value: 'Arial', label: 'Arial' },
+                  { value: 'Georgia', label: 'Georgia' },
+                  { value: 'JetBrains Mono', label: 'JetBrains Mono' },
+                ]}
+                buttonClassName="bg-[#f8fafc] text-[#0f172a] border-[#cbd5e1] rounded-lg font-semibold"
+              />
 
-              <select
+              <CustomDropdown
                 value={selectedFontSize}
-                onChange={(e) => {
-                  setSelectedFontSize(Number(e.target.value));
-                  handleApplyStyle({ fontSize: Number(e.target.value) });
+                onChange={(val) => {
+                  setSelectedFontSize(Number(val));
+                  handleApplyStyle({ fontSize: Number(val) });
                 }}
-                className="bg-[#f8fafc] text-[#0f172a] px-2 py-1 rounded-lg border border-[#cbd5e1] text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-[#15803d] cursor-pointer w-14"
-              >
-                <option value={10}>10pt</option>
-                <option value={11}>11pt</option>
-                <option value={12}>12pt</option>
-                <option value={14}>14pt</option>
-                <option value={16}>16pt</option>
-              </select>
+                size="xs"
+                options={[
+                  { value: 10, label: '10pt' },
+                  { value: 11, label: '11pt' },
+                  { value: 12, label: '12pt' },
+                  { value: 14, label: '14pt' },
+                  { value: 16, label: '16pt' },
+                ]}
+                buttonClassName="bg-[#f8fafc] text-[#0f172a] border-[#cbd5e1] rounded-lg font-semibold w-16"
+              />
             </div>
 
             {/* Typography Styles */}

@@ -18,6 +18,7 @@ import {
   ShieldCheck,
   AlertCircle
 } from 'lucide-react';
+import { CustomDropdown } from './CustomDropdown';
 
 export function RagObservatory() {
   // RAG Ingestion State
@@ -219,16 +220,18 @@ export function RagObservatory() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-1">
                 <label className="text-xs text-[#888888]">Knowledge Category</label>
-                <select
+                <CustomDropdown
                   value={selectedCategory}
-                  onChange={(e) => setSelectedCategory(e.target.value)}
-                  className="w-full rounded bg-[#111111] border border-[#262626] p-2.5 text-xs text-[#ededed] focus:outline-none focus:border-[#444444]"
-                >
-                  <option value="sop_mops">Refinery SOPs & MOPs (Operations)</option>
-                  <option value="security_policies">Security Policies & Statutory Compliance</option>
-                  <option value="mrpl_engineering">MRPL Technical Engineering Standards</option>
-                  <option value="ongc_compliance">ONGC Corporate Compliance Standards</option>
-                </select>
+                  onChange={(val) => setSelectedCategory(val)}
+                  size="sm"
+                  options={[
+                    { value: 'sop_mops', label: 'Refinery SOPs & MOPs (Operations)' },
+                    { value: 'security_policies', label: 'Security Policies & Statutory Compliance' },
+                    { value: 'mrpl_engineering', label: 'MRPL Technical Engineering Standards' },
+                    { value: 'ongc_compliance', label: 'ONGC Corporate Compliance Standards' },
+                  ]}
+                  buttonClassName="w-full rounded-xl bg-[#111111] border-[#262626] text-xs"
+                />
               </div>
 
               <div className="space-y-1">

@@ -46,8 +46,12 @@ import {
   Sliders,
   CheckCircle2,
   FileEdit,
-  Maximize2
+  Maximize2,
+  Heading1,
+  Heading2,
+  Heading3
 } from 'lucide-react';
+import { CustomDropdown } from '@/components/ui/CustomDropdown';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface UniverDocEditorProps {
@@ -308,39 +312,43 @@ export function UniverDocEditor({ deliverable }: UniverDocEditorProps) {
               </button>
             </div>
 
-            {/* Font Family & Size Selectors */}
+            {/* Font Family & Size Selectors (Custom Dropdowns) */}
             <div className="flex items-center space-x-1.5 pr-2.5 border-r border-[#e2e8f0]">
-              <select
+              <CustomDropdown
                 value={selectedFont}
-                onChange={(e) => {
-                  setSelectedFont(e.target.value);
-                  exec('fontName', e.target.value);
+                onChange={(val) => {
+                  setSelectedFont(val);
+                  exec('fontName', val);
                 }}
-                className="bg-[#f8fafc] text-[#0f172a] px-2.5 py-1 rounded-lg border border-[#cbd5e1] text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-[#2563eb] cursor-pointer"
-              >
-                <option value="Inter">Inter (Clean UI)</option>
-                <option value="Arial">Arial Standard</option>
-                <option value="Georgia">Georgia Serif</option>
-                <option value="Times New Roman">Times New Roman</option>
-                <option value="Courier New">Courier Mono</option>
-              </select>
+                size="xs"
+                options={[
+                  { value: 'Inter', label: 'Inter (Clean UI)' },
+                  { value: 'Arial', label: 'Arial Standard' },
+                  { value: 'Georgia', label: 'Georgia Serif' },
+                  { value: 'Times New Roman', label: 'Times New Roman' },
+                  { value: 'Courier New', label: 'Courier Mono' },
+                ]}
+                buttonClassName="bg-[#f8fafc] text-[#0f172a] border-[#cbd5e1] rounded-lg font-semibold"
+              />
 
-              <select
+              <CustomDropdown
                 value={selectedFontSize}
-                onChange={(e) => {
-                  setSelectedFontSize(e.target.value);
-                  exec('fontSize', e.target.value);
+                onChange={(val) => {
+                  setSelectedFontSize(val);
+                  exec('fontSize', val);
                 }}
-                className="bg-[#f8fafc] text-[#0f172a] px-2 py-1 rounded-lg border border-[#cbd5e1] text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-[#2563eb] cursor-pointer w-14"
-              >
-                <option value="1">8pt</option>
-                <option value="2">10pt</option>
-                <option value="3">12pt</option>
-                <option value="4">14pt</option>
-                <option value="5">18pt</option>
-                <option value="6">24pt</option>
-                <option value="7">36pt</option>
-              </select>
+                size="xs"
+                options={[
+                  { value: '1', label: '8pt' },
+                  { value: '2', label: '10pt' },
+                  { value: '3', label: '12pt' },
+                  { value: '4', label: '14pt' },
+                  { value: '5', label: '18pt' },
+                  { value: '6', label: '24pt' },
+                  { value: '7', label: '36pt' },
+                ]}
+                buttonClassName="bg-[#f8fafc] text-[#0f172a] border-[#cbd5e1] rounded-lg font-semibold w-16"
+              />
             </div>
 
             {/* Basic Typography Styles */}

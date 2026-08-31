@@ -26,6 +26,7 @@ import {
   Sliders,
   ChevronDown
 } from 'lucide-react';
+import { CustomDropdown } from '@/components/ui/CustomDropdown';
 
 interface CodeCanvasEditorProps {
   deliverable: DeliverableItem;
@@ -487,20 +488,19 @@ Rendered interactive DOM preview in isolated sandbox frame.`);
 
           <div className="h-4 w-px bg-[#262634]" />
 
-          {/* Interactive Language Selector Dropdown */}
-          <div className="flex items-center space-x-1.5 bg-[#14141e] border border-[#262638] rounded-xl px-2.5 py-1">
+          {/* Interactive Language Selector Dropdown (Custom Dropdown) */}
+          <div className="flex items-center space-x-1.5">
             <span className="text-[11px] text-[#8e918f]">Language:</span>
-            <select
+            <CustomDropdown
               value={currentLang}
-              onChange={(e) => handleLanguageChange(e.target.value as SupportedLang)}
-              className="bg-transparent text-[#a8c7fa] font-mono text-xs font-semibold focus:outline-none cursor-pointer"
-            >
-              {Object.entries(LANGUAGE_CONFIGS).map(([key, cfg]) => (
-                <option key={key} value={key} className="bg-[#12121a] text-[#e3e3e3]">
-                  {cfg.label} ({cfg.ext})
-                </option>
-              ))}
-            </select>
+              onChange={(val) => handleLanguageChange(val as SupportedLang)}
+              size="xs"
+              options={Object.entries(LANGUAGE_CONFIGS).map(([key, cfg]) => ({
+                value: key,
+                label: `${cfg.label} (${cfg.ext})`,
+              }))}
+              buttonClassName="bg-[#14141e] text-[#a8c7fa] border-[#262638] rounded-xl font-mono text-xs font-semibold"
+            />
           </div>
 
           {/* View Tab Switcher for HTML/Web Code */}
