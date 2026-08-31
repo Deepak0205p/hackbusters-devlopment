@@ -444,6 +444,7 @@ export default function GeminiReplicaChatApp() {
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [isListening, setIsListening] = useState(false);
   const recognitionRef = useRef<any>(null);
+  const speechBaseTextRef = useRef<string>('');
   const bottomRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -495,23 +496,65 @@ export default function GeminiReplicaChatApp() {
       recognition.interimResults = true;
       recognition.lang = 'en-US';
 
+      // Snapshot the exact text in the prompt box before recording started
+      const currentVal = useChatStore.getState().currentInput;
+      speechBaseTextRef.current = typeof currentVal === 'string' ? currentVal.trim() : '';
+
       recognition.onstart = () => {
         setIsListening(true);
       };
 
       recognition.onresult = (event: any) => {
-        let transcript = '';
-        for (let i = event.resultIndex; i < event.results.length; ++i) {
-          if (event.results[i].isFinal) {
-            transcript += event.results[i][0].transcript;
+        let finalTranscript = '';
+        let interimTranscript = '';
+
+        for (let i = 0; i < event.results.length; ++i) {
+          const res = event.results[i];
+          if (!res || !res[0]) continue;
+          const text = (res[0].transcript || '').trim();
+          if (!text) continue;
+
+          if (res.isFinal) {
+            if (!finalTranscript) {
+              finalTranscript = text;
+            } else {
+              const lowerFinal = finalTranscript.toLowerCase();
+              const lowerText = text.toLowerCase();
+              if (lowerText.startsWith(lowerFinal)) {
+                // Mobile Android Chrome sends accumulated string; take the newest full sentence
+                finalTranscript = text;
+              } else if (lowerFinal.endsWith(lowerText) || lowerFinal.includes(lowerText)) {
+                // Duplicate fragment already present
+              } else {
+                // Desktop incremental chunk
+                finalTranscript = `${finalTranscript} ${text}`;
+              }
+            }
+          } else {
+            interimTranscript = text;
           }
         }
-        if (transcript) {
-          const currentVal = useChatStore.getState().currentInput;
-          const prevStr = typeof currentVal === 'string' ? currentVal : '';
-          const nextText = prevStr ? `${prevStr.trim()} ${transcript.trim()}` : transcript.trim();
-          setCurrentInput(nextText);
+
+        let sessionSpeech = finalTranscript;
+        if (interimTranscript) {
+          const lowerFinal = finalTranscript.toLowerCase().trim();
+          const lowerInterim = interimTranscript.toLowerCase().trim();
+          if (!lowerFinal) {
+            sessionSpeech = interimTranscript;
+          } else if (lowerInterim.startsWith(lowerFinal)) {
+            sessionSpeech = interimTranscript;
+          } else if (lowerFinal.endsWith(lowerInterim) || lowerFinal.includes(lowerInterim)) {
+            sessionSpeech = finalTranscript;
+          } else {
+            sessionSpeech = `${finalTranscript} ${interimTranscript}`;
+          }
         }
+
+        sessionSpeech = sessionSpeech.trim();
+        const base = speechBaseTextRef.current;
+        const combined = base ? (sessionSpeech ? `${base} ${sessionSpeech}` : base) : sessionSpeech;
+
+        setCurrentInput(combined);
       };
 
       recognition.onerror = (event: any) => {
