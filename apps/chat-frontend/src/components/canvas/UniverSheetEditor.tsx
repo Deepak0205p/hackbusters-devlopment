@@ -349,42 +349,40 @@ export function UniverSheetEditor({ deliverable }: UniverSheetEditorProps) {
 
   return (
     <div className="flex flex-col h-full bg-[#f8fafc] text-[#1e293b] select-none font-sans relative overflow-hidden">
-      {/* 1. TOP STUDIO RIBBON HEADER */}
-      <div className="flex items-center justify-between px-4 pt-2.5 pb-1 bg-white border-b border-[#e2e8f0] text-xs shrink-0 shadow-xs">
+      {/* 1. TOP STUDIO RIBBON HEADER (Mobile Scrollable) */}
+      <div className="flex items-center justify-between px-2 sm:px-4 pt-2 pb-1 bg-white border-b border-[#e2e8f0] text-xs shrink-0 shadow-xs gap-2 overflow-x-auto scrollbar-none">
         {/* Left: Tab Switcher */}
-        <div className="flex items-center space-x-1.5">
-          <div className="flex items-center space-x-1 p-1 bg-[#f1f5f9] rounded-xl border border-[#e2e8f0]">
-            {(['home', 'insert', 'formulas', 'data', 'view'] as const).map((tab) => (
-              <button
-                key={tab}
-                onClick={() => setActiveRibbonTab(tab)}
-                className={`px-3 py-1.5 rounded-lg font-semibold text-xs transition-all capitalize ${
-                  activeRibbonTab === tab
-                    ? 'bg-white text-[#15803d] shadow-sm font-bold'
-                    : 'text-[#64748b] hover:text-[#0f172a] hover:bg-white/50'
-                }`}
-              >
-                {tab === 'data' ? 'Data & Sort' : tab}
-              </button>
-            ))}
-          </div>
+        <div className="flex items-center space-x-1 p-0.5 sm:p-1 bg-[#f1f5f9] rounded-xl border border-[#e2e8f0] shrink-0">
+          {(['home', 'insert', 'formulas', 'data', 'view'] as const).map((tab) => (
+            <button
+              key={tab}
+              onClick={() => setActiveRibbonTab(tab)}
+              className={`px-2.5 sm:px-3 py-1.5 rounded-lg font-semibold text-xs transition-all capitalize whitespace-nowrap ${
+                activeRibbonTab === tab
+                  ? 'bg-white text-[#15803d] shadow-sm font-bold'
+                  : 'text-[#64748b] hover:text-[#0f172a] hover:bg-white/50'
+              }`}
+            >
+              {tab === 'data' ? 'Data & Sort' : tab}
+            </button>
+          ))}
         </div>
 
         {/* Right Header Actions */}
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center space-x-2 shrink-0">
           <button
             onClick={exportCSV}
-            className="flex items-center space-x-1.5 px-3.5 py-1.5 rounded-xl bg-[#15803d] hover:bg-[#166534] text-white text-xs font-bold shadow-md shadow-emerald-600/20 transition-all hover:scale-[1.02] active:scale-95 cursor-pointer"
+            className="flex items-center space-x-1 sm:space-x-1.5 px-2.5 sm:px-3.5 py-1.5 rounded-xl bg-[#15803d] hover:bg-[#166534] text-white text-xs font-bold shadow-md shadow-emerald-600/20 transition-all hover:scale-[1.02] active:scale-95 cursor-pointer shrink-0"
             title="Download CSV / Excel"
           >
             <Download className="h-3.5 w-3.5" />
-            <span>Export CSV</span>
+            <span className="hidden xs:inline">Export CSV</span>
           </button>
         </div>
       </div>
 
       {/* 2. RIBBON ACTION TOOLBAR */}
-      <div className="flex flex-wrap items-center gap-2.5 px-4 py-2.5 bg-white border-b border-[#e2e8f0] text-xs shadow-xs relative z-20 shrink-0">
+      <div className="flex items-center gap-2 px-2 sm:px-4 py-2 bg-white border-b border-[#e2e8f0] text-xs shadow-xs relative z-20 shrink-0 overflow-x-auto scrollbar-none flex-nowrap">
         {activeRibbonTab === 'home' && (
           <>
             {/* Font Family & Size */}
@@ -624,12 +622,12 @@ export function UniverSheetEditor({ deliverable }: UniverSheetEditorProps) {
 
       {/* 3. FORMULA BAR */}
       {showFormulaBar && (
-        <div className="flex items-center space-x-2.5 px-4 py-2 bg-white border-b border-[#e2e8f0] shadow-2xs">
-          <div className="flex items-center space-x-1 px-3 py-1 rounded-lg bg-[#f1f5f9] border border-[#cbd5e1] text-[11px] font-mono text-[#0f172a] font-bold min-w-[54px] justify-center shadow-xs">
+        <div className="flex items-center space-x-2 px-2.5 sm:px-4 py-1.5 sm:py-2 bg-white border-b border-[#e2e8f0] shadow-2xs">
+          <div className="flex items-center space-x-1 px-2.5 py-1 rounded-lg bg-[#f1f5f9] border border-[#cbd5e1] text-[11px] font-mono text-[#0f172a] font-bold min-w-[48px] justify-center shadow-xs shrink-0">
             {String.fromCharCode(65 + selectedCell.col)}
             {selectedCell.row + 1}
           </div>
-          <div className="text-[13px] font-mono font-black text-emerald-700 select-none">fx</div>
+          <div className="text-[13px] font-mono font-black text-emerald-700 select-none shrink-0">fx</div>
           <input
             type="text"
             value={formulaInput}
@@ -637,8 +635,8 @@ export function UniverSheetEditor({ deliverable }: UniverSheetEditorProps) {
               setFormulaInput(e.target.value);
               handleCellValueChange(selectedCell.row, selectedCell.col, e.target.value);
             }}
-            placeholder="Type cell value or formula (=SUM(B2:E2), =AVERAGE...)"
-            className="flex-1 bg-[#f8fafc] text-[#0f172a] text-xs font-mono px-3 py-1.5 rounded-lg border border-[#cbd5e1] focus:border-emerald-600 focus:bg-white focus:outline-none placeholder-[#94a3b8] transition-colors"
+            placeholder="Type cell value or formula (=SUM(B2:E2)...)"
+            className="flex-1 bg-[#f8fafc] text-[#0f172a] text-xs font-mono px-2.5 sm:px-3 py-1.5 rounded-lg border border-[#cbd5e1] focus:border-emerald-600 focus:bg-white focus:outline-none placeholder-[#94a3b8] transition-colors min-w-0"
           />
         </div>
       )}
@@ -651,13 +649,13 @@ export function UniverSheetEditor({ deliverable }: UniverSheetEditorProps) {
         <table className={`w-full border-collapse font-sans text-xs ${showGridlines ? '' : 'border-transparent'}`}>
           <thead>
             <tr className="bg-[#f8fafc] border-b border-[#cbd5e1] sticky top-0 z-10 select-none">
-              <th className="w-12 px-2.5 py-2 text-center text-[10px] font-mono font-bold text-[#64748b] border-r border-[#cbd5e1] bg-[#f1f5f9]">
+              <th className="w-10 sm:w-12 px-2 py-2 text-center text-[10px] font-mono font-bold text-[#64748b] border-r border-[#cbd5e1] bg-[#f1f5f9]">
                 #
               </th>
               {currentSheet.rows[0]?.map((_, colIdx) => (
                 <th
                   key={colIdx}
-                  className="px-3.5 py-2 text-center font-mono text-[11px] font-bold text-[#475569] border-r border-[#cbd5e1] min-w-[130px]"
+                  className="px-2.5 sm:px-3.5 py-2 text-center font-mono text-[11px] font-bold text-[#475569] border-r border-[#cbd5e1] min-w-[95px] sm:min-w-[130px]"
                 >
                   {String.fromCharCode(65 + colIdx)}
                 </th>
@@ -673,7 +671,7 @@ export function UniverSheetEditor({ deliverable }: UniverSheetEditorProps) {
                 }`}
               >
                 {/* Row Header Number */}
-                <td className="px-2.5 py-2 text-center text-[10px] font-mono font-bold text-[#64748b] bg-[#f1f5f9] border-r border-[#cbd5e1] select-none">
+                <td className="px-2 sm:px-2.5 py-2 text-center text-[10px] font-mono font-bold text-[#64748b] bg-[#f1f5f9] border-r border-[#cbd5e1] select-none">
                   {rowIdx + 1}
                 </td>
 
@@ -692,7 +690,7 @@ export function UniverSheetEditor({ deliverable }: UniverSheetEditorProps) {
                         textDecoration: cell.style?.underline ? 'underline' : 'none',
                         textAlign: cell.style?.align || (colIdx === 0 ? 'left' : 'right'),
                       }}
-                      className={`px-3 py-1.5 border-r border-[#e2e8f0] transition-all relative ${
+                      className={`px-2.5 sm:px-3 py-1.5 border-r border-[#e2e8f0] transition-all relative ${
                         isSelected
                           ? 'ring-2 ring-[#15803d] bg-emerald-50/40 z-10'
                           : ''
@@ -702,12 +700,7 @@ export function UniverSheetEditor({ deliverable }: UniverSheetEditorProps) {
                         type="text"
                         value={cell.value}
                         onChange={(e) => handleCellValueChange(rowIdx, colIdx, e.target.value)}
-                        style={{
-                          textAlign: cell.style?.align || (colIdx === 0 ? 'left' : 'right'),
-                        }}
-                        className={`w-full bg-transparent border-none focus:outline-none ${
-                          rowIdx === 0 ? 'font-bold text-[#0f172a]' : 'text-[#0f172a]'
-                        }`}
+                        className="w-full bg-transparent border-none outline-none text-xs font-medium cursor-pointer focus:cursor-text"
                       />
                     </td>
                   );
@@ -718,10 +711,10 @@ export function UniverSheetEditor({ deliverable }: UniverSheetEditorProps) {
         </table>
       </div>
 
-      {/* 5. BOTTOM SHEET NAVIGATOR & STATISTICS FOOTER */}
-      <div className="flex items-center justify-between px-4 py-2.5 bg-[#f1f5f9] border-t border-[#cbd5e1] text-xs shrink-0 shadow-xs">
+      {/* 5. BOTTOM WORKSHEETS TAB BAR & STATUS FOOTER */}
+      <div className="flex items-center justify-between px-3 sm:px-4 py-2 sm:py-2.5 bg-[#f1f5f9] border-t border-[#cbd5e1] text-xs shrink-0 shadow-xs overflow-x-auto scrollbar-none gap-3">
         {/* Left: Sheet Tabs */}
-        <div className="flex items-center space-x-1.5">
+        <div className="flex items-center space-x-1.5 shrink-0">
           {sheets.map((sheet, idx) => (
             <button
               key={sheet.id}
@@ -729,7 +722,7 @@ export function UniverSheetEditor({ deliverable }: UniverSheetEditorProps) {
                 setActiveSheetIndex(idx);
                 setSelectedCell({ row: 1, col: 1 });
               }}
-              className={`flex items-center space-x-1.5 px-3.5 py-1.5 rounded-xl font-bold text-xs transition-all cursor-pointer ${
+              className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-xl font-bold text-xs transition-all cursor-pointer whitespace-nowrap ${
                 activeSheetIndex === idx
                   ? 'bg-white text-[#15803d] border border-[#cbd5e1] shadow-xs ring-1 ring-emerald-500/20'
                   : 'text-[#64748b] hover:text-[#0f172a] hover:bg-white/60'
@@ -741,7 +734,7 @@ export function UniverSheetEditor({ deliverable }: UniverSheetEditorProps) {
           ))}
           <button
             onClick={handleAddSheet}
-            className="p-1.5 rounded-xl hover:bg-white text-emerald-700 border border-transparent hover:border-[#cbd5e1] transition-all cursor-pointer"
+            className="p-1.5 rounded-xl hover:bg-white text-emerald-700 border border-transparent hover:border-[#cbd5e1] transition-all cursor-pointer shrink-0"
             title="Add New Worksheet"
           >
             <Plus className="h-4 w-4" />
@@ -749,16 +742,16 @@ export function UniverSheetEditor({ deliverable }: UniverSheetEditorProps) {
         </div>
 
         {/* Right: Live Cell Statistics */}
-        <div className="flex items-center space-x-3 text-[11px] text-[#64748b] font-mono">
+        <div className="flex items-center space-x-2 sm:space-x-3 text-[11px] text-[#64748b] font-mono shrink-0">
           <span>SUM: <strong className="text-[#15803d]">{stats.sum}</strong></span>
           <span>&bull;</span>
-          <span>AVERAGE: <strong className="text-blue-700">{stats.avg}</strong></span>
-          <span>&bull;</span>
-          <span>COUNT: <strong className="text-[#0f172a]">{stats.count}</strong></span>
+          <span>AVG: <strong className="text-blue-700">{stats.avg}</strong></span>
+          <span className="hidden sm:inline">&bull;</span>
+          <span className="hidden sm:inline">COUNT: <strong className="text-[#0f172a]">{stats.count}</strong></span>
           <span>&bull;</span>
           <span className="text-[#15803d] font-sans font-bold flex items-center gap-1.5">
-            <span className="h-2 w-2 rounded-full bg-[#15803d] animate-pulse" />
-            Excel Spreadsheet Studio
+            <span className="h-1.5 w-1.5 rounded-full bg-[#15803d] animate-pulse" />
+            Excel Studio
           </span>
         </div>
       </div>

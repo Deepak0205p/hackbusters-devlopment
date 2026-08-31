@@ -239,29 +239,27 @@ export function UniverDocEditor({ deliverable }: UniverDocEditorProps) {
 
   return (
     <div className="flex flex-col h-full bg-[#f8fafc] text-[#1e293b] select-none font-sans relative overflow-hidden">
-      {/* 1. TOP STUDIO RIBBON HEADER */}
-      <div className="flex items-center justify-between px-4 pt-2.5 pb-1 bg-white border-b border-[#e2e8f0] text-xs shrink-0 shadow-xs">
+      {/* 1. TOP STUDIO RIBBON HEADER (Mobile Scrollable) */}
+      <div className="flex items-center justify-between px-2 sm:px-4 pt-2 pb-1 bg-white border-b border-[#e2e8f0] text-xs shrink-0 shadow-xs gap-2 overflow-x-auto scrollbar-none">
         {/* Left: Tab Switcher Bar */}
-        <div className="flex items-center space-x-1.5">
-          <div className="flex items-center space-x-1 p-1 bg-[#f1f5f9] rounded-xl border border-[#e2e8f0]">
-            {(['home', 'insert', 'layout', 'review', 'view'] as const).map((tab) => (
-              <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
-                className={`px-3 py-1.5 rounded-lg font-semibold text-xs transition-all capitalize ${
-                  activeTab === tab
-                    ? 'bg-white text-[#2563eb] shadow-sm font-bold'
-                    : 'text-[#64748b] hover:text-[#0f172a] hover:bg-white/50'
-                }`}
-              >
-                {tab === 'review' ? 'Review & Safety' : tab}
-              </button>
-            ))}
-          </div>
+        <div className="flex items-center space-x-1 p-0.5 sm:p-1 bg-[#f1f5f9] rounded-xl border border-[#e2e8f0] shrink-0">
+          {(['home', 'insert', 'layout', 'review', 'view'] as const).map((tab) => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className={`px-2.5 sm:px-3 py-1.5 rounded-lg font-semibold text-xs transition-all capitalize whitespace-nowrap ${
+                activeTab === tab
+                  ? 'bg-white text-[#2563eb] shadow-sm font-bold'
+                  : 'text-[#64748b] hover:text-[#0f172a] hover:bg-white/50'
+              }`}
+            >
+              {tab === 'review' ? 'Review & Safety' : tab}
+            </button>
+          ))}
         </div>
 
         {/* Right Header Actions: Quick Copy & Print */}
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center space-x-1.5 sm:space-x-2 shrink-0">
           <button
             onClick={() => {
               if (editorRef.current) {
@@ -270,26 +268,26 @@ export function UniverDocEditor({ deliverable }: UniverDocEditorProps) {
                 setTimeout(() => setCopied(false), 2000);
               }
             }}
-            className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-[#f8fafc] hover:bg-[#f1f5f9] text-[#0f172a] border border-[#cbd5e1] font-semibold text-xs transition-all cursor-pointer"
+            className="flex items-center space-x-1 sm:space-x-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-[#f8fafc] hover:bg-[#f1f5f9] text-[#0f172a] border border-[#cbd5e1] font-semibold text-xs transition-all cursor-pointer"
             title="Copy Text to Clipboard"
           >
             {copied ? <Check className="h-3.5 w-3.5 text-emerald-600" /> : <Copy className="h-3.5 w-3.5 text-[#475569]" />}
-            <span>{copied ? 'Copied' : 'Copy'}</span>
+            <span className="hidden xs:inline">{copied ? 'Copied' : 'Copy'}</span>
           </button>
 
           <button
             onClick={() => window.print()}
-            className="flex items-center space-x-1.5 px-3.5 py-1.5 rounded-xl bg-[#2563eb] hover:bg-[#1d4ed8] text-white text-xs font-bold shadow-md shadow-blue-500/20 transition-all hover:scale-[1.02] active:scale-95 cursor-pointer"
+            className="flex items-center space-x-1 sm:space-x-1.5 px-2.5 sm:px-3.5 py-1.5 rounded-xl bg-[#2563eb] hover:bg-[#1d4ed8] text-white text-xs font-bold shadow-md shadow-blue-500/20 transition-all hover:scale-[1.02] active:scale-95 cursor-pointer shrink-0"
             title="Print or Export as PDF"
           >
             <Printer className="h-3.5 w-3.5" />
-            <span>Print / PDF</span>
+            <span className="hidden xs:inline">Print / PDF</span>
           </button>
         </div>
       </div>
 
       {/* 2. RIBBON ACTION TOOLBAR */}
-      <div className="flex flex-wrap items-center gap-2.5 px-4 py-2.5 bg-white border-b border-[#e2e8f0] text-xs shadow-xs relative z-20 shrink-0">
+      <div className="flex items-center gap-2 px-2 sm:px-4 py-2 bg-white border-b border-[#e2e8f0] text-xs shadow-xs relative z-20 shrink-0 overflow-x-auto scrollbar-none flex-nowrap">
         {activeTab === 'home' && (
           <>
             {/* Undo / Redo */}
@@ -707,7 +705,7 @@ export function UniverDocEditor({ deliverable }: UniverDocEditorProps) {
           setShowColorDropdown(false);
           setShowHighlightDropdown(false);
         }}
-        className="flex-1 overflow-auto p-2 xs:p-4 sm:p-10 flex flex-col items-center bg-[#f1f5f9] relative"
+        className="flex-1 overflow-auto p-2 sm:p-8 flex flex-col items-center bg-[#f1f5f9] relative"
         style={{ backgroundImage: 'radial-gradient(#cbd5e1 1px, transparent 1px)', backgroundSize: '20px 20px' }}
       >
         {/* Simulated Top Margin Ruler */}
@@ -732,12 +730,12 @@ export function UniverDocEditor({ deliverable }: UniverDocEditorProps) {
             transformOrigin: 'top center',
             backgroundColor: pageBgColor,
           }}
-          className={`w-full max-w-4xl min-h-[500px] sm:min-h-[900px] text-[#0f172a] border border-slate-200/80 ${
+          className={`w-full max-w-4xl min-h-[450px] sm:min-h-[900px] text-[#0f172a] border border-slate-200/80 ${
             showRuler ? 'sm:rounded-b-2xl sm:border-t-0 rounded-xl' : 'rounded-xl sm:rounded-2xl'
-          } p-4 xs:p-6 sm:p-14 shadow-[0_10px_35px_rgba(0,0,0,0.06)] relative transition-all overflow-hidden`}
+          } p-3.5 xs:p-6 sm:p-14 shadow-sm sm:shadow-[0_10px_35px_rgba(0,0,0,0.06)] relative transition-all overflow-hidden bg-white`}
         >
           {/* Subtle Top Header Tag */}
-          <div className="flex items-center justify-between text-[9px] sm:text-[10px] text-[#94a3b8] border-b border-slate-100 pb-3 mb-4 select-none font-mono font-medium">
+          <div className="flex items-center justify-between text-[9px] sm:text-[10px] text-[#94a3b8] border-b border-slate-100 pb-2.5 sm:pb-3 mb-3 sm:mb-4 select-none font-mono font-medium">
             <span>MRPL SOP ENGINE</span>
             <span>INTERNAL USE</span>
           </div>
@@ -748,11 +746,11 @@ export function UniverDocEditor({ deliverable }: UniverDocEditorProps) {
             contentEditable
             suppressContentEditableWarning
             onInput={handleInput}
-            className="outline-none text-[14.5px] leading-relaxed font-sans max-w-none focus:outline-none min-h-[700px] text-[#0f172a]"
+            className="outline-none text-[13.5px] sm:text-[14.5px] leading-relaxed font-sans max-w-none focus:outline-none min-h-[400px] sm:min-h-[700px] text-[#0f172a]"
           />
 
           {/* Bottom Sheet Footer Tag */}
-          <div className="flex items-center justify-between text-[10px] text-[#94a3b8] border-t border-slate-100 pt-6 mt-12 select-none font-mono">
+          <div className="flex items-center justify-between text-[9px] sm:text-[10px] text-[#94a3b8] border-t border-slate-100 pt-4 sm:pt-6 mt-8 sm:mt-12 select-none font-mono">
             <span>Form B / Ref: OISD-STD-105</span>
             <span>Page 1 of 1</span>
           </div>
@@ -760,17 +758,17 @@ export function UniverDocEditor({ deliverable }: UniverDocEditorProps) {
       </div>
 
       {/* 4. BOTTOM STATISTICS & STATUS FOOTER */}
-      <div className="flex items-center justify-between px-5 py-2.5 bg-white border-t border-[#e2e8f0] text-xs text-[#64748b] shrink-0 shadow-xs">
-        <div className="flex items-center space-x-3 font-mono">
+      <div className="flex items-center justify-between px-3 sm:px-5 py-2 sm:py-2.5 bg-white border-t border-[#e2e8f0] text-[11px] sm:text-xs text-[#64748b] shrink-0 shadow-xs overflow-x-auto scrollbar-none gap-2">
+        <div className="flex items-center space-x-2 sm:space-x-3 font-mono shrink-0">
           <span>Words: <strong className="text-[#0f172a]">{wordCount}</strong></span>
           <span>&bull;</span>
-          <span>Characters: <strong className="text-[#0f172a]">{charCount}</strong></span>
-          <span>&bull;</span>
-          <span>Page 1 of 1</span>
+          <span>Chars: <strong className="text-[#0f172a]">{charCount}</strong></span>
+          <span className="hidden sm:inline">&bull;</span>
+          <span className="hidden sm:inline">Page 1 of 1</span>
           <span>&bull;</span>
           <span className="text-[#2563eb] font-sans font-bold flex items-center gap-1.5">
-            <span className="h-2 w-2 rounded-full bg-[#2563eb] animate-pulse" />
-            Word Processor Studio
+            <span className="h-1.5 w-1.5 sm:h-2 sm:w-2 rounded-full bg-[#2563eb] animate-pulse" />
+            Word Studio
           </span>
         </div>
       </div>

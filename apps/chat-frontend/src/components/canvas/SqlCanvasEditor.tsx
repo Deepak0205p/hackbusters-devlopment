@@ -112,24 +112,21 @@ ORDER BY p.operating_temp_c DESC;
 
   return (
     <div className="flex flex-col h-full bg-[#0f172a] text-[#f8fafc] select-none font-sans relative overflow-hidden">
-      {/* 1. TOP STUDIO RIBBON HEADER */}
-      <div className="flex flex-wrap items-center justify-between gap-2 px-4 py-2.5 bg-[#1e293b] border-b border-slate-700/80 text-xs shrink-0 shadow-sm">
-        {/* Left: DB & SQL File Badge */}
-        <div className="flex items-center space-x-2.5">
-          <div className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 font-bold">
-            <Database className="h-4 w-4 text-cyan-400" />
-            <span className="font-mono text-xs">{deliverable.filename}</span>
-          </div>
-          <div className="hidden sm:flex items-center space-x-1.5 text-[11px] text-slate-400 font-mono">
-            <Server className="h-3.5 w-3.5 text-cyan-400" />
-            <span>PostgreSQL 16 &bull; Air-Gapped Engine</span>
+      {/* 1. TOP STATUS & ACTION BAR (Mobile Optimized) */}
+      <div className="flex items-center justify-between px-2.5 sm:px-4 py-2 sm:py-2.5 bg-[#0b1120] border-b border-slate-800 text-xs shrink-0 gap-2 overflow-x-auto scrollbar-none">
+        {/* Left: DB Engine Status */}
+        <div className="flex items-center space-x-2 shrink-0">
+          <div className="flex items-center space-x-1.5 px-2.5 sm:px-3 py-1 rounded-xl bg-cyan-950/40 border border-cyan-800/40 text-cyan-400 font-mono text-[10px] sm:text-xs">
+            <Server className="h-3.5 w-3.5 text-cyan-400 shrink-0" />
+            <span className="hidden sm:inline">PostgreSQL 16 &bull; Air-Gapped Engine</span>
+            <span className="sm:hidden">Postgres 16</span>
           </div>
         </div>
 
         {/* Right: Actions */}
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center space-x-1.5 sm:space-x-2 shrink-0">
           {/* Zoom / Font Size */}
-          <div className="flex items-center space-x-1 pr-2.5 border-r border-slate-700">
+          <div className="hidden sm:flex items-center space-x-1 pr-2.5 border-r border-slate-700">
             <button
               onClick={() => setFontSize((s) => Math.max(10, s - 1))}
               className="p-1 rounded hover:bg-slate-700 text-slate-400 hover:text-white"
@@ -149,10 +146,10 @@ ORDER BY p.operating_temp_c DESC;
 
           <button
             onClick={handleCopy}
-            className="flex items-center space-x-1 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 font-semibold transition-colors cursor-pointer"
+            className="flex items-center space-x-1 px-2.5 sm:px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 font-semibold transition-colors cursor-pointer"
           >
             {copied ? <Check className="h-3.5 w-3.5 text-emerald-400" /> : <Copy className="h-3.5 w-3.5 text-slate-400" />}
-            <span>{copied ? 'Copied' : 'Copy'}</span>
+            <span className="hidden xs:inline">{copied ? 'Copied' : 'Copy'}</span>
           </button>
 
           <button
@@ -167,10 +164,10 @@ ORDER BY p.operating_temp_c DESC;
           <button
             onClick={handleRunQuery}
             disabled={isRunning}
-            className="flex items-center space-x-1.5 px-4 py-1.5 rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold shadow-md shadow-cyan-900/30 transition-all hover:scale-[1.02] active:scale-95 cursor-pointer disabled:opacity-50"
+            className="flex items-center space-x-1.5 px-3 sm:px-4 py-1.5 rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white text-xs font-bold shadow-md shadow-cyan-900/30 transition-all hover:scale-[1.02] active:scale-95 cursor-pointer disabled:opacity-50 shrink-0"
           >
             <Play className={`h-3.5 w-3.5 fill-current ${isRunning ? 'animate-spin' : ''}`} />
-            <span>{isRunning ? 'Executing...' : 'Execute SQL (F5)'}</span>
+            <span>{isRunning ? 'Executing...' : 'Run SQL'}</span>
           </button>
         </div>
       </div>

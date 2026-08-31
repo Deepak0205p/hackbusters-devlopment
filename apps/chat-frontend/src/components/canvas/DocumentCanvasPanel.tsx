@@ -168,35 +168,35 @@ export function DocumentCanvasPanel() {
             : 'w-full md:w-[60vw] lg:w-[54vw] xl:w-[50vw]'
         }`}
       >
-        {/* 1. Canvas Top Header (Clean Light Theme) */}
-        <div className="flex items-center justify-between px-3 sm:px-4 py-2.5 sm:py-3 bg-[#ffffff] border-b border-[#e2e8f0] shrink-0 shadow-sm">
+        {/* 1. Canvas Top Header (Clean Light Theme & Mobile Optimized) */}
+        <div className="flex items-center justify-between px-2.5 sm:px-4 py-2 sm:py-3 bg-[#ffffff] border-b border-[#e2e8f0] shrink-0 shadow-sm gap-2">
           {/* Left: Document Info, Type Badge & Live Auto-Save Status */}
-          <div className="flex items-center space-x-2.5 sm:space-x-3 min-w-0 flex-1">
+          <div className="flex items-center space-x-2 sm:space-x-3 min-w-0 flex-1">
             <div className="p-1.5 sm:p-2 rounded-xl bg-[#f8fafc] border border-[#e2e8f0] shrink-0">
               {renderFileIcon()}
             </div>
             <div className="min-w-0 flex-1">
               <div className="flex items-center space-x-1.5 sm:space-x-2">
-                <h2 className="text-xs sm:text-sm font-bold text-[#0f172a] truncate max-w-[130px] xs:max-w-[200px] sm:max-w-none">
+                <h2 className="text-xs sm:text-sm font-bold text-[#0f172a] truncate max-w-[120px] xs:max-w-[180px] sm:max-w-none">
                   {activeDeliverable.filename}
                 </h2>
-                <span className="px-1.5 sm:px-2 py-0.5 rounded text-[9px] sm:text-[10px] font-bold uppercase tracking-wider bg-[#f1f5f9] border border-[#cbd5e1] text-[#334155] shrink-0">
+                <span className="px-1.5 py-0.5 rounded text-[9px] sm:text-[10px] font-bold uppercase tracking-wider bg-[#f1f5f9] border border-[#cbd5e1] text-[#334155] shrink-0">
                   {ext.replace('.', '') || activeDeliverable.type}
                 </span>
 
                 {/* Live Auto-Save Indicator in Title Bar */}
                 {isSaving ? (
-                  <span className="hidden xs:flex items-center space-x-1 px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200 shrink-0">
+                  <span className="hidden sm:flex items-center space-x-1 px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200 shrink-0">
                     <span className="h-1.5 w-1.5 rounded-full bg-blue-600 animate-pulse" />
                     <span>Saving...</span>
                   </span>
                 ) : hasUnsavedChanges ? (
-                  <span className="hidden xs:flex items-center space-x-1 px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200 shrink-0">
+                  <span className="hidden sm:flex items-center space-x-1 px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200 shrink-0">
                     <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
                     <span>Editing</span>
                   </span>
                 ) : (
-                  <span className="hidden xs:flex items-center space-x-1 px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 shrink-0">
+                  <span className="hidden sm:flex items-center space-x-1 px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 shrink-0">
                     <span className="h-1.5 w-1.5 rounded-full bg-emerald-600" />
                     <span>Saved</span>
                   </span>
@@ -213,7 +213,7 @@ export function DocumentCanvasPanel() {
             <button
               onClick={() => saveChanges(activeDeliverable.id)}
               disabled={isSaving}
-              className="flex items-center space-x-1 sm:space-x-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-300 transition-colors shadow-sm cursor-pointer"
+              className="flex items-center space-x-1 sm:space-x-1.5 px-2 sm:px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-300 transition-colors shadow-sm cursor-pointer"
             >
               <Save className="h-3.5 w-3.5" />
               <span className="hidden xs:inline">{isSaving ? 'Saving...' : 'Save'}</span>

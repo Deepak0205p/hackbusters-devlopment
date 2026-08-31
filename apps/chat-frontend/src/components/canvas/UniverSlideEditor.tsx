@@ -458,32 +458,30 @@ export function UniverSlideEditor({ deliverable }: UniverSlideEditorProps) {
 
   return (
     <div className="flex flex-col h-full bg-[#f8fafc] text-[#1e293b] select-none font-sans relative overflow-hidden">
-      {/* 1. TOP STUDIO RIBBON HEADER */}
-      <div className="flex items-center justify-between px-4 pt-2.5 pb-1 bg-white border-b border-[#e2e8f0] text-xs shrink-0 shadow-xs">
+      {/* 1. TOP STUDIO RIBBON HEADER (Mobile Scrollable) */}
+      <div className="flex items-center justify-between px-2 sm:px-4 pt-2 pb-1 bg-white border-b border-[#e2e8f0] text-xs shrink-0 shadow-xs gap-2 overflow-x-auto scrollbar-none">
         {/* Left: Tab Switcher Bar */}
-        <div className="flex items-center space-x-1.5">
-          <div className="flex items-center space-x-1 p-1 bg-[#f1f5f9] rounded-xl border border-[#e2e8f0]">
-            {(['home', 'insert', 'design', 'transitions', 'slideshow'] as const).map((tab) => (
-              <button
-                key={tab}
-                onClick={() => setActiveRibbonTab(tab)}
-                className={`px-3 py-1.5 rounded-lg font-semibold text-xs transition-all capitalize ${
-                  activeRibbonTab === tab
-                    ? 'bg-white text-[#ea580c] shadow-sm font-bold'
-                    : 'text-[#64748b] hover:text-[#0f172a] hover:bg-white/50'
-                }`}
-              >
-                {tab === 'slideshow' ? 'Slide Show' : tab === 'insert' ? 'Insert' : tab}
-              </button>
-            ))}
-          </div>
+        <div className="flex items-center space-x-1 p-0.5 sm:p-1 bg-[#f1f5f9] rounded-xl border border-[#e2e8f0] shrink-0">
+          {(['home', 'insert', 'design', 'transitions', 'slideshow'] as const).map((tab) => (
+            <button
+              key={tab}
+              onClick={() => setActiveRibbonTab(tab)}
+              className={`px-2.5 sm:px-3 py-1.5 rounded-lg font-semibold text-xs transition-all capitalize whitespace-nowrap ${
+                activeRibbonTab === tab
+                  ? 'bg-white text-[#ea580c] shadow-sm font-bold'
+                  : 'text-[#64748b] hover:text-[#0f172a] hover:bg-white/50'
+              }`}
+            >
+              {tab === 'slideshow' ? 'Slide Show' : tab === 'insert' ? 'Insert' : tab}
+            </button>
+          ))}
         </div>
 
         {/* Right Header Actions: Speaker Notes & Fullscreen Present */}
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center space-x-1.5 sm:space-x-2 shrink-0">
           <button
             onClick={() => setShowNotesDrawer(!showNotesDrawer)}
-            className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all ${
+            className={`flex items-center space-x-1 sm:space-x-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all ${
               showNotesDrawer
                 ? 'bg-[#ffedd5] text-[#c2410c] border-[#fed7aa] shadow-xs'
                 : 'bg-white text-[#475569] border-[#cbd5e1] hover:bg-[#f8fafc]'
@@ -491,21 +489,21 @@ export function UniverSlideEditor({ deliverable }: UniverSlideEditorProps) {
             title="Toggle Speaker Notes Drawer"
           >
             <MessageSquare className="h-3.5 w-3.5 text-[#ea580c]" />
-            <span className="hidden sm:inline">Speaker Notes</span>
+            <span className="hidden sm:inline">Notes</span>
           </button>
 
           <button
             onClick={() => setIsPresenting(true)}
-            className="flex items-center space-x-1.5 px-4 py-1.5 rounded-xl bg-gradient-to-r from-[#ea580c] to-[#c2410c] hover:from-[#c2410c] hover:to-[#9a3412] text-white text-xs font-bold shadow-md shadow-orange-500/20 transition-all hover:scale-[1.02] active:scale-95 cursor-pointer"
+            className="flex items-center space-x-1 sm:space-x-1.5 px-3 sm:px-4 py-1.5 rounded-xl bg-gradient-to-r from-[#ea580c] to-[#c2410c] hover:from-[#c2410c] hover:to-[#9a3412] text-white text-xs font-bold shadow-md shadow-orange-500/20 transition-all hover:scale-[1.02] active:scale-95 cursor-pointer shrink-0"
           >
             <Play className="h-3.5 w-3.5 fill-current" />
-            <span>Present (F5)</span>
+            <span className="hidden xs:inline">Present</span>
           </button>
         </div>
       </div>
 
       {/* 2. RIBBON ACTION TOOLBAR */}
-      <div className="flex flex-wrap items-center gap-3 px-4 py-2.5 bg-white border-b border-[#e2e8f0] text-xs shadow-xs shrink-0">
+      <div className="flex items-center gap-2.5 px-2 sm:px-4 py-2 bg-white border-b border-[#e2e8f0] text-xs shadow-xs shrink-0 overflow-x-auto scrollbar-none flex-nowrap">
         {activeRibbonTab === 'home' && (
           <>
             {/* Slide Operations */}
@@ -742,7 +740,7 @@ export function UniverSlideEditor({ deliverable }: UniverSlideEditorProps) {
         {/* Left / Top on Mobile: Slide Thumbnails Navigator */}
         <div className="w-full md:w-64 border-b md:border-b-0 md:border-r border-[#e2e8f0] bg-[#f8fafc] flex flex-col shrink-0 select-none shadow-xs">
           {/* Header Bar */}
-          <div className="flex items-center justify-between px-3 md:px-4 py-2 md:py-3 border-b border-[#e2e8f0] bg-white/80 backdrop-blur-sm shrink-0">
+          <div className="flex items-center justify-between px-2.5 md:px-4 py-1.5 md:py-3 border-b border-[#e2e8f0] bg-white/80 backdrop-blur-sm shrink-0">
             <div className="flex items-center space-x-2">
               <span className="text-xs font-extrabold text-[#0f172a] uppercase tracking-wider">Slides</span>
               <span className="px-2 py-0.5 rounded-full bg-[#f1f5f9] text-[#475569] font-mono text-[10px] font-bold border border-[#e2e8f0]">
@@ -760,25 +758,25 @@ export function UniverSlideEditor({ deliverable }: UniverSlideEditorProps) {
           </div>
 
           {/* Thumbnails Scroll Area */}
-          <div className="flex flex-row md:flex-col overflow-x-auto md:overflow-y-auto p-2 md:p-3 space-x-2 md:space-x-0 md:space-y-3 shrink-0 md:shrink md:flex-1">
+          <div className="flex flex-row md:flex-col overflow-x-auto md:overflow-y-auto p-1.5 md:p-3 space-x-1.5 md:space-x-0 md:space-y-3 shrink-0 md:shrink md:flex-1 scrollbar-none">
             {slides.map((s, idx) => {
               const isSelected = activeSlideIndex === idx;
               return (
                 <div
                   key={s.id}
                   onClick={() => setActiveSlideIndex(idx)}
-                  className={`group relative flex flex-col p-2 md:p-2.5 rounded-xl md:rounded-2xl transition-all cursor-pointer border shrink-0 w-36 md:w-auto ${
+                  className={`group relative flex flex-col p-1.5 md:p-2.5 rounded-xl md:rounded-2xl transition-all cursor-pointer border shrink-0 w-28 xs:w-32 sm:w-36 md:w-auto ${
                     isSelected
                       ? 'bg-white border-[#ea580c] shadow-md ring-2 ring-[#ea580c]/20'
                       : 'bg-white border-[#e2e8f0] hover:border-[#cbd5e1] hover:shadow-xs'
                   }`}
                 >
                   {/* Top Bar: Index & Layout Tag */}
-                  <div className="flex items-center justify-between mb-2 px-0.5">
-                    <span className={`text-[11px] font-mono font-bold ${isSelected ? 'text-[#ea580c]' : 'text-[#64748b]'}`}>
+                  <div className="flex items-center justify-between mb-1 sm:mb-2 px-0.5">
+                    <span className={`text-[10px] sm:text-[11px] font-mono font-bold ${isSelected ? 'text-[#ea580c]' : 'text-[#64748b]'}`}>
                       #{idx + 1}
                     </span>
-                    <span className="text-[9px] font-mono font-semibold uppercase px-1.5 py-0.5 rounded bg-[#f1f5f9] text-[#475569] border border-[#e2e8f0]/80">
+                    <span className="text-[8px] sm:text-[9px] font-mono font-semibold uppercase px-1 sm:px-1.5 py-0.5 rounded bg-[#f1f5f9] text-[#475569] border border-[#e2e8f0]/80">
                       {s.layout}
                     </span>
                   </div>
@@ -786,13 +784,13 @@ export function UniverSlideEditor({ deliverable }: UniverSlideEditorProps) {
                   {/* 16:9 Realistic Miniature Slide Wireframe Box */}
                   <div
                     style={{ backgroundColor: s.bgColor || '#ffffff' }}
-                    className={`relative w-full aspect-[16/9] rounded-xl border overflow-hidden flex flex-col transition-all shadow-inner ${
+                    className={`relative w-full aspect-[16/9] rounded-lg sm:rounded-xl border overflow-hidden flex flex-col transition-all shadow-inner ${
                       isSelected ? 'border-[#ea580c]/40 ring-1 ring-[#ea580c]/30' : 'border-[#e2e8f0]'
                     }`}
                   >
                     {/* Top Accent Strip */}
                     <div
-                      className="h-1.5 w-full shrink-0"
+                      className="h-1 sm:h-1.5 w-full shrink-0"
                       style={{ backgroundColor: s.accentColor || '#ea580c' }}
                     />
 
@@ -800,7 +798,7 @@ export function UniverSlideEditor({ deliverable }: UniverSlideEditorProps) {
                     <SlideMiniatureSkeleton slide={s} />
 
                     {/* Hover Quick Action Buttons */}
-                    <div className="absolute top-1.5 right-1.5 flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity bg-white/95 backdrop-blur-sm p-0.5 rounded-md shadow-md border border-[#e2e8f0]">
+                    <div className="absolute top-1 right-1 hidden sm:flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity bg-white/95 backdrop-blur-sm p-0.5 rounded-md shadow-md border border-[#e2e8f0]">
                       <button
                         type="button"
                         onClick={(e) => handleDuplicateSlideAt(idx, e)}
@@ -821,16 +819,6 @@ export function UniverSlideEditor({ deliverable }: UniverSlideEditorProps) {
                       )}
                     </div>
                   </div>
-
-                  {/* Slide Title & Subtitle Preview Below */}
-                  <div className="mt-2.5 px-0.5">
-                    <div className="font-bold text-xs text-[#0f172a] truncate">
-                      {s.title || 'Untitled Slide'}
-                    </div>
-                    <div className="text-[10px] text-[#64748b] truncate mt-0.5">
-                      {s.subtitle || 'No subtitle'}
-                    </div>
-                  </div>
                 </div>
               );
             })}
@@ -838,7 +826,7 @@ export function UniverSlideEditor({ deliverable }: UniverSlideEditorProps) {
             {/* Bottom Add Slide Button */}
             <button
               onClick={() => handleAddSlide('content')}
-              className="w-full flex items-center justify-center space-x-2 py-3 rounded-2xl border-2 border-dashed border-[#cbd5e1] hover:border-[#ea580c] hover:bg-[#ea580c]/5 text-xs font-bold text-[#64748b] hover:text-[#ea580c] transition-all cursor-pointer"
+              className="hidden md:flex w-full items-center justify-center space-x-2 py-3 rounded-2xl border-2 border-dashed border-[#cbd5e1] hover:border-[#ea580c] hover:bg-[#ea580c]/5 text-xs font-bold text-[#64748b] hover:text-[#ea580c] transition-all cursor-pointer"
             >
               <Plus className="h-4 w-4" />
               <span>New Slide</span>
@@ -847,7 +835,7 @@ export function UniverSlideEditor({ deliverable }: UniverSlideEditorProps) {
         </div>
 
         {/* Center: Slide Presentation Canvas Workspace */}
-        <div className="flex-1 overflow-auto p-6 sm:p-12 flex flex-col items-center justify-center bg-[#f1f5f9] relative" style={{ backgroundImage: 'radial-gradient(#cbd5e1 1px, transparent 1px)', backgroundSize: '20px 20px' }}>
+        <div className="flex-1 overflow-auto p-2 sm:p-8 md:p-12 flex flex-col items-center justify-center bg-[#f1f5f9] relative" style={{ backgroundImage: 'radial-gradient(#cbd5e1 1px, transparent 1px)', backgroundSize: '20px 20px' }}>
           <motion.div
             key={currentSlide.id}
             initial={{ opacity: 0, scale: 0.98 }}
@@ -859,21 +847,21 @@ export function UniverSlideEditor({ deliverable }: UniverSlideEditorProps) {
             }}
             className={`w-full max-w-4xl ${
               aspectRatio === '16:9' ? 'aspect-[16/9]' : 'aspect-[4/3]'
-            } text-[#0f172a] rounded-3xl border border-slate-200/80 shadow-[0_20px_50px_rgba(0,0,0,0.08)] p-8 sm:p-14 flex flex-col justify-between relative transition-all overflow-hidden`}
+            } text-[#0f172a] rounded-xl sm:rounded-3xl border border-slate-200/80 shadow-md sm:shadow-[0_20px_50px_rgba(0,0,0,0.08)] p-4 xs:p-6 sm:p-10 md:p-14 flex flex-col justify-between relative transition-all overflow-hidden`}
           >
             {/* Top Accent Strip */}
             <div
-              className="absolute top-0 inset-x-0 h-2.5"
+              className="absolute top-0 inset-x-0 h-1.5 sm:h-2.5"
               style={{ backgroundColor: currentSlide.accentColor || '#ea580c' }}
             />
 
             {/* Slide Header Section */}
-            <div className="space-y-1">
+            <div className="space-y-0.5 sm:space-y-1">
               <input
                 type="text"
                 value={currentSlide.title}
                 onChange={(e) => handleUpdateSlide({ title: e.target.value })}
-                className="w-full text-2xl sm:text-3xl font-extrabold tracking-tight bg-transparent border-none focus:outline-none focus:ring-2 focus:ring-[#ea580c]/30 rounded-xl px-2 py-0.5 text-[#0f172a]"
+                className="w-full text-base xs:text-lg sm:text-2xl md:text-3xl font-extrabold tracking-tight bg-transparent border-none focus:outline-none focus:ring-1 sm:focus:ring-2 focus:ring-[#ea580c]/30 rounded-lg sm:rounded-xl px-1 sm:px-2 py-0.5 text-[#0f172a]"
                 placeholder="Slide Title"
               />
 
@@ -881,7 +869,7 @@ export function UniverSlideEditor({ deliverable }: UniverSlideEditorProps) {
                 type="text"
                 value={currentSlide.subtitle}
                 onChange={(e) => handleUpdateSlide({ subtitle: e.target.value })}
-                className="w-full text-xs sm:text-sm text-[#64748b] font-medium bg-transparent border-none focus:outline-none focus:ring-2 focus:ring-[#ea580c]/30 rounded-xl px-2 py-0.5"
+                className="w-full text-[10px] xs:text-xs sm:text-sm text-[#64748b] font-medium bg-transparent border-none focus:outline-none focus:ring-1 sm:focus:ring-2 focus:ring-[#ea580c]/30 rounded-lg sm:rounded-xl px-1 sm:px-2 py-0.5"
                 placeholder="Subtitle & Context"
               />
             </div>
