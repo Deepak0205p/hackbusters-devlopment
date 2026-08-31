@@ -15,17 +15,17 @@ export function MessageItem({ message }: MessageItemProps) {
   const isUser = message.role === 'user';
 
   return (
-    <div className={`w-full py-4 border-b border-[#1a1a1a]/60 flex gap-3 sm:gap-4 ${
-      isUser ? 'bg-transparent' : 'bg-[#0a0a0a]/30'
+    <div className={`w-full py-4 border-b border-gray-100/60 flex gap-3 sm:gap-4 ${
+      isUser ? 'bg-transparent' : 'bg-gray-50/30'
     }`}>
       {/* Avatar Column */}
       <div className="shrink-0 pt-0.5">
         {isUser ? (
-          <div className="h-7 w-7 rounded-lg bg-[#222222] border border-[#333333] flex items-center justify-center text-[#ededed]">
+          <div className="h-7 w-7 rounded-lg bg-gray-200 border border-gray-200 flex items-center justify-center text-gray-900">
             <User className="h-4 w-4" />
           </div>
         ) : (
-          <div className="h-7 w-7 rounded-lg bg-[#0070f3]/15 border border-[#0070f3]/30 flex items-center justify-center text-[#0070f3]">
+          <div className="h-7 w-7 rounded-lg bg-blue-600/15 border border-blue-600/30 flex items-center justify-center text-blue-600">
             <Sparkles className="h-4 w-4" />
           </div>
         )}
@@ -34,9 +34,9 @@ export function MessageItem({ message }: MessageItemProps) {
       {/* Message Body Column */}
       <div className="flex-1 min-w-0 space-y-2">
         {/* Header Name & Timestamp */}
-        <div className="flex items-center justify-between text-[11px] font-mono text-[#777777]">
+        <div className="flex items-center justify-between text-[11px] font-mono text-gray-500">
           <div className="flex items-center space-x-2">
-            <span className={`font-medium ${isUser ? 'text-[#ededed]' : 'text-[#0070f3]'}`}>
+            <span className={`font-medium ${isUser ? 'text-gray-900' : 'text-blue-600'}`}>
               {isUser ? 'Operator' : 'MRPL Sovereign Assistant'}
             </span>
             <span>&bull;</span>
@@ -60,7 +60,7 @@ export function MessageItem({ message }: MessageItemProps) {
         )}
 
         {/* Main Response Content Text */}
-        <div className="text-xs sm:text-[13px] leading-relaxed text-[#ededed] font-sans whitespace-pre-wrap selection:bg-[#0070f3]/30">
+        <div className="text-xs sm:text-[13px] leading-relaxed text-gray-900 font-sans whitespace-pre-wrap selection:bg-blue-600/30">
           {message.content}
         </div>
 
@@ -70,11 +70,11 @@ export function MessageItem({ message }: MessageItemProps) {
             {message.deliverable_ids.map((delivId) => (
               <div
                 key={delivId}
-                className="flex items-center space-x-2 px-3 py-1.5 rounded-lg bg-[#111111] border border-[#2a2a2a] text-[11px] font-mono hover:border-[#444444] transition-all"
+                className="flex items-center space-x-2 px-3 py-1.5 rounded-lg bg-gray-100 border border-gray-200 text-[11px] font-mono hover:border-gray-300 transition-all"
               >
-                <FileText className="h-3.5 w-3.5 text-[#0070f3]" />
-                <span className="text-[#ededed] font-medium">{delivId}</span>
-                <Button size="sm" variant="ghost" className="h-6 px-2 text-[10px] text-[#0070f3] hover:text-white hover:bg-[#0070f3]/20 rounded transition-colors">
+                <FileText className="h-3.5 w-3.5 text-blue-600" />
+                <span className="text-gray-900 font-medium">{delivId}</span>
+                <Button size="sm" variant="ghost" className="h-6 px-2 text-[10px] text-blue-600 hover:text-gray-900 hover:bg-blue-600/20 rounded transition-colors">
                   <Download className="h-3 w-3 mr-1" />
                   Download
                 </Button>

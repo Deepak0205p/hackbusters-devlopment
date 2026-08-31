@@ -13,10 +13,10 @@ export function ModelCardGrid() {
 
   if (models.length === 0) {
     return (
-      <div className="p-8 text-center rounded-md bg-[#0a0a0a] border border-[#262626] font-mono text-xs text-[#888888] space-y-2">
-        <p className="text-[#ededed] font-semibold">No LLM weights (.gguf / Ollama models) detected in local codebase</p>
-        <p className="text-[#666666] text-[11px]">
-          Place GGUF models in <code className="text-[#00e599]">/models/gguf</code> or pull via Ollama to activate dynamic LLM orchestration.
+      <div className="p-8 text-center rounded-md bg-gray-50 border border-gray-200 font-mono text-xs text-gray-500 space-y-2">
+        <p className="text-gray-900 font-semibold">No LLM weights (.gguf / Ollama models) detected in local codebase</p>
+        <p className="text-gray-400 text-[11px]">
+          Place GGUF models in <code className="text-emerald-600">/models/gguf</code> or pull via Ollama to activate dynamic LLM orchestration.
         </p>
       </div>
     );
@@ -38,16 +38,16 @@ export function ModelCardGrid() {
           >
             <Card className={`border transition-colors min-h-[220px] flex flex-col justify-between ${
               isLoadedInVram 
-                ? 'border-[#0070f3]/40 bg-[#141414]' 
-                : 'border-[#262626] bg-[#111111]'
+                ? 'border-blue-600/40 bg-gray-100' 
+                : 'border-gray-200 bg-gray-100'
             }`}>
               <CardHeader className="pb-2">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-2">
-                    <span className="text-[11px] font-mono text-[#888888] uppercase tracking-wider">
+                    <span className="text-[11px] font-mono text-gray-500 uppercase tracking-wider">
                       {model.domain}
                     </span>
-                    <CardTitle className="text-xs font-semibold text-[#ededed]">
+                    <CardTitle className="text-xs font-semibold text-gray-900">
                       {model.display_name || model.name}
                     </CardTitle>
                   </div>
@@ -65,52 +65,52 @@ export function ModelCardGrid() {
                   </div>
                 </div>
                 {/* Reserved height to prevent CLS */}
-                <CardDescription className="text-xs text-[#888888] mt-1 min-h-[32px] line-clamp-2">
+                <CardDescription className="text-xs text-gray-500 mt-1 min-h-[32px] line-clamp-2">
                   {model.description}
                 </CardDescription>
               </CardHeader>
 
               <CardContent className="py-2 text-xs">
-                <div className="grid grid-cols-2 gap-2 p-2.5 rounded bg-[#0a0a0a] border border-[#262626] font-mono text-[11px]">
+                <div className="grid grid-cols-2 gap-2 p-2.5 rounded bg-gray-50 border border-gray-200 font-mono text-[11px]">
                   <div>
-                    <span className="text-[#666666]">Architecture: </span>
-                    <span className="text-[#ededed]">Air-Gapped Sovereign</span>
+                    <span className="text-gray-400">Architecture: </span>
+                    <span className="text-gray-900">Air-Gapped Sovereign</span>
                   </div>
                   <div>
-                    <span className="text-[#666666]">Quant: </span>
-                    <span className="text-[#ededed]">{model.quantization}</span>
+                    <span className="text-gray-400">Quant: </span>
+                    <span className="text-gray-900">{model.quantization}</span>
                   </div>
                   <div>
-                    <span className="text-[#666666]">Footprint: </span>
-                    <span className="text-[#ededed] font-medium tabular-nums">{model.vram_mb} MB</span>
+                    <span className="text-gray-400">Footprint: </span>
+                    <span className="text-gray-900 font-medium tabular-nums">{model.vram_mb} MB</span>
                   </div>
                   <div>
-                    <span className="text-[#666666]">Memory State: </span>
-                    <span className={isLoadedInVram ? "text-[#00e599]" : "text-[#666666]"}>
+                    <span className="text-gray-400">Memory State: </span>
+                    <span className={isLoadedInVram ? "text-emerald-600" : "text-gray-400"}>
                       {isLoadedInVram ? "Loaded in VRAM" : "Paged out (LRU)"}
                     </span>
                   </div>
                 </div>
 
                 {/* 1-IP Hybrid Node Binding */}
-                <div className="mt-2.5 flex items-center justify-between px-2.5 py-1.5 rounded bg-[#0d0d0d] border border-[#222222] font-mono text-[11px]">
+                <div className="mt-2.5 flex items-center justify-between px-2.5 py-1.5 rounded bg-gray-50 border border-gray-100 font-mono text-[11px]">
                   <div className="flex items-center space-x-1.5">
-                    <div className={`h-1.5 w-1.5 rounded-full ${model.node_ip && model.node_ip !== '127.0.0.1' ? 'bg-[#0070f3] animate-pulse' : 'bg-[#00e599]'}`} />
-                    <span className="text-[#888888]">Compute Node:</span>
+                    <div className={`h-1.5 w-1.5 rounded-full ${model.node_ip && model.node_ip !== '127.0.0.1' ? 'bg-blue-600 animate-pulse' : 'bg-emerald-600'}`} />
+                    <span className="text-gray-500">Compute Node:</span>
                   </div>
                   <div className="flex items-center space-x-1">
-                    <span className="text-[#ededed] bg-[#1a1a1a] px-1.5 py-0.5 rounded border border-[#333333] text-[10px]">
+                    <span className="text-gray-900 bg-gray-100 px-1.5 py-0.5 rounded border border-gray-200 text-[10px]">
                       {model.node_ip || '127.0.0.1'}
                     </span>
-                    <span className="text-[10px] text-[#666666]">
+                    <span className="text-[10px] text-gray-400">
                       {model.node_ip === '127.0.0.1' || !model.node_ip ? '(Local GPU)' : '(LAN Laptop)'}
                     </span>
                   </div>
                 </div>
               </CardContent>
 
-              <CardFooter className="pt-2 flex justify-between items-center mt-2 border-t border-[#262626]/50 min-h-[52px]">
-                <span className="text-[11px] text-[#666666] font-mono">
+              <CardFooter className="pt-2 flex justify-between items-center mt-2 border-t border-gray-200/50 min-h-[52px]">
+                <span className="text-[11px] text-gray-400 font-mono">
                   Swap Latency: &lt;1.2s
                 </span>
 
@@ -131,7 +131,7 @@ export function ModelCardGrid() {
                 )}
 
                 {model.is_primary && (
-                  <div className="flex items-center space-x-1.5 text-[#00e599] text-xs font-mono min-h-[44px]">
+                  <div className="flex items-center space-x-1.5 text-emerald-600 text-xs font-mono min-h-[44px]">
                     <CheckCircle2 className="h-3.5 w-3.5" />
                     <span>Permanent Lock</span>
                   </div>

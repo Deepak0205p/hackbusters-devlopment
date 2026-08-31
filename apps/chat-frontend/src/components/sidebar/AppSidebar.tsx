@@ -17,7 +17,10 @@ import {
   ChevronDown,
   Trash2,
   X,
+  LogOut,
+  UserCheck
 } from 'lucide-react';
+import { useAuthStore } from '@/store/useAuthStore';
 import { useChatStore } from '@/store/useChatStore';
 import { useDeliverableStore } from '@/store/useDeliverableStore';
 import { useThemeStore } from '@/store/useThemeStore';
@@ -103,13 +106,18 @@ interface AppSidebarProps {
 export function AppSidebar({ onOpenSearchModal, activePage = 'chat' }: AppSidebarProps) {
   const router = useRouter();
   const pathname = usePathname();
-  const { sessions, activeSessionId, selectSession, createNewChat } = useChatStore();
+  const { sessions, activeSessionId, selectSession, createNewChat, fetchUserSessions } = useChatStore();
   const { deliverables } = useDeliverableStore();
   const { theme, toggleTheme } = useThemeStore();
   const { isOpen: isSidebarOpen, toggle: toggleSidebar, close: closeSidebar } = useSidebarStore();
 
   const [chatSearch, setChatSearch] = useState('');
   const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({});
+  const { user, logout } = useAuthStore();
+
+  useEffect(() => {
+    fetchUserSessions(user?.username || 'operator');
+  }, [user, fetchUserSessions]);
 
   // Keyboard shortcuts: Cmd+B toggle sidebar, Cmd+K search
   useEffect(() => {
@@ -143,19 +151,19 @@ export function AppSidebar({ onOpenSearchModal, activePage = 'chat' }: AppSideba
 
   const groupedSessions = useMemo(() => groupChatsByTime(filteredSessions), [filteredSessions]);
 
-  const handleNewChat = useCallback(() => {
-    createNewChat();
-    if (pathname !== '/' && pathname !== '/chat') router.push('/chat');
+  const handleNewChat = useCallback(async () => {
+    const newId = await createNewChat(user?.username || 'operator');
+    router.push(`/chat/${newId}`);
     if (typeof window !== 'undefined' && window.innerWidth < 768) closeSidebar();
-  }, [createNewChat, pathname, router, closeSidebar]);
+  }, [createNewChat, user, router, closeSidebar]);
 
   const handleSelectSession = useCallback(
     (sessionId: string) => {
       selectSession(sessionId);
-      if (pathname !== '/' && pathname !== '/chat') router.push('/chat');
+      router.push(`/chat/${sessionId}`);
       if (typeof window !== 'undefined' && window.innerWidth < 768) closeSidebar();
     },
-    [selectSession, pathname, router, closeSidebar]
+    [selectSession, router, closeSidebar]
   );
 
   const cycleTheme = useCallback(() => {
@@ -198,18 +206,27 @@ export function AppSidebar({ onOpenSearchModal, activePage = 'chat' }: AppSideba
           </Link>
         </SidebarTooltip>
 
-        <SidebarTooltip text={`Artifacts (${deliverables.length})`}>
+        <SidebarTooltip text="Artifacts">
           <Link href="/artifacts" aria-label="Artifacts" className={`relative h-10 w-10 flex items-center justify-center rounded-full transition-all duration-200 hover:scale-105 active:scale-95 cursor-pointer ${isArtifactsActive ? 'bg-blue-50 text-blue-700 dark:bg-[#1e1f20] dark:text-[#a8c7fa]' : 'hover:bg-slate-200 text-slate-700 hover:text-slate-900 dark:hover:bg-[#1e1f20] dark:text-[#c4c7c5] dark:hover:text-white'}`}>
             <FileText className="h-4 w-4" />
-            <span className="absolute -top-0.5 -right-0.5 h-4 w-4 rounded-full bg-blue-600 text-[9px] font-bold font-mono text-white flex items-center justify-center border border-white dark:border-black shadow-xs">
-              {deliverables.length}
-            </span>
           </Link>
         </SidebarTooltip>
       </div>
 
       {/* Footer */}
       <div className="flex flex-col items-center space-y-3 pb-4 w-full">
+        {user && (
+          <SidebarTooltip text={`Sign Out (@${user.username})`}>
+            <button
+              onClick={logout}
+              aria-label="Sign Out"
+              className="h-10 w-10 rounded-full hover:bg-rose-100 dark:hover:bg-rose-950/40 text-slate-700 hover:text-rose-600 dark:text-[#e3e3e3] dark:hover:text-rose-400 flex items-center justify-center transition-all hover:scale-105 active:scale-95 cursor-pointer border border-slate-200 dark:border-[#3c4043]"
+            >
+              <LogOut className="h-4 w-4" />
+            </button>
+          </SidebarTooltip>
+        )}
+
         <SidebarTooltip text={`Theme: ${theme}`}>
           <button onClick={cycleTheme} aria-label="Cycle theme" className="h-10 w-10 rounded-full hover:bg-slate-200 dark:hover:bg-[#1e1f20] flex items-center justify-center text-slate-700 dark:text-[#e3e3e3] transition-all hover:scale-105 active:scale-95 cursor-pointer border border-slate-200 dark:border-[#3c4043]">
             {themeIcon}
@@ -278,19 +295,14 @@ export function AppSidebar({ onOpenSearchModal, activePage = 'chat' }: AppSideba
           <Link
             href="/artifacts"
             onClick={() => { if (typeof window !== 'undefined' && window.innerWidth < 768) closeSidebar(); }}
-            className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs transition-colors min-h-[38px] cursor-pointer ${
+            className={`w-full flex items-center space-x-3 px-3 py-2 rounded-xl text-xs transition-colors min-h-[38px] cursor-pointer ${
               isArtifactsActive
                 ? 'bg-blue-50 text-blue-700 font-bold dark:bg-[#1e1f20] dark:text-[#a8c7fa]'
                 : 'hover:bg-slate-200/80 text-slate-700 hover:text-slate-900 dark:hover:bg-[#1e1f20] dark:text-[#c4c7c5] dark:hover:text-white font-medium'
             }`}
           >
-            <div className="flex items-center space-x-3">
-              <FileText className="h-4 w-4 shrink-0" />
-              <span>Artifacts</span>
-            </div>
-            <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 border border-blue-200 dark:bg-blue-500/15 dark:text-blue-400 dark:border-blue-500/30">
-              {deliverables.length}
-            </span>
+            <FileText className="h-4 w-4 shrink-0" />
+            <span>Artifacts</span>
           </Link>
         </div>
 
@@ -346,7 +358,36 @@ export function AppSidebar({ onOpenSearchModal, activePage = 'chat' }: AppSideba
       </div>
 
       {/* Footer */}
-      <div className="shrink-0 px-3 pt-2 pb-3 border-t border-slate-200/60 dark:border-[#282a2c]/40">
+      <div className="shrink-0 px-3 pt-2 pb-3 border-t border-slate-200/60 dark:border-[#282a2c]/40 space-y-2">
+        {/* Active Operator Pill */}
+        {user && (
+          <div className="flex items-center justify-between p-2 rounded-xl bg-white dark:bg-[#141416] border border-slate-200 dark:border-[#222228]">
+            <div className="flex items-center space-x-2.5 min-w-0">
+              <div className="h-7 w-7 rounded-lg bg-blue-500/10 border border-blue-500/30 flex items-center justify-center text-blue-600 dark:text-blue-400 font-bold text-xs shrink-0">
+                {user.full_name ? user.full_name.charAt(0).toUpperCase() : 'U'}
+              </div>
+              <div className="min-w-0">
+                <div className="text-xs font-bold text-slate-800 dark:text-white truncate">
+                  {user.full_name || user.username}
+                </div>
+                <div className="text-[10px] text-slate-400 font-mono truncate">
+                  @{user.username} • {user.role}
+                </div>
+              </div>
+            </div>
+            <button
+              onClick={() => {
+                logout();
+                router.push('/login');
+              }}
+              title="Sign Out"
+              className="p-1.5 rounded-lg hover:bg-rose-500/10 text-slate-400 hover:text-rose-500 transition-colors"
+            >
+              <LogOut className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        )}
+
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2 px-2">
             <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400">Theme</span>
@@ -436,14 +477,9 @@ export function AppSidebar({ onOpenSearchModal, activePage = 'chat' }: AppSideba
                   <MessageSquare className="h-[18px] w-[18px] shrink-0" />
                   <span>Chats</span>
                 </Link>
-                <Link href="/artifacts" onClick={closeSidebar} className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm transition-colors min-h-[44px] cursor-pointer ${isArtifactsActive ? 'bg-blue-50 text-blue-700 font-bold dark:bg-[#1e1f20] dark:text-[#a8c7fa]' : 'text-slate-700 hover:bg-slate-100 dark:text-[#c4c7c5] dark:hover:bg-[#1e1f20] font-medium'}`}>
-                  <div className="flex items-center space-x-3">
-                    <FileText className="h-[18px] w-[18px] shrink-0" />
-                    <span>Artifacts</span>
-                  </div>
-                  <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 border border-blue-200 dark:bg-blue-500/15 dark:text-blue-400 dark:border-blue-500/30">
-                    {deliverables.length}
-                  </span>
+                <Link href="/artifacts" onClick={closeSidebar} className={`w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-sm transition-colors min-h-[44px] cursor-pointer ${isArtifactsActive ? 'bg-blue-50 text-blue-700 font-bold dark:bg-[#1e1f20] dark:text-[#a8c7fa]' : 'text-slate-700 hover:bg-slate-100 dark:text-[#c4c7c5] dark:hover:bg-[#1e1f20] font-medium'}`}>
+                  <FileText className="h-[18px] w-[18px] shrink-0" />
+                  <span>Artifacts</span>
                 </Link>
               </div>
 
@@ -496,8 +532,37 @@ export function AppSidebar({ onOpenSearchModal, activePage = 'chat' }: AppSideba
                   </div>
                 )}
               </div>
-            </div>
 
+              {/* Mobile Drawer Footer with Operator & Logout */}
+              {user && (
+                <div className="shrink-0 p-3 border-t border-slate-200 dark:border-[#282a2c]/60 flex items-center justify-between bg-white dark:bg-[#101014] rounded-xl mt-2">
+                  <div className="flex items-center space-x-2 min-w-0">
+                    <div className="h-7 w-7 rounded-lg bg-blue-500/10 border border-blue-500/30 flex items-center justify-center text-blue-600 dark:text-blue-400 font-bold text-xs shrink-0">
+                      {user.full_name ? user.full_name.charAt(0).toUpperCase() : 'U'}
+                    </div>
+                    <div className="min-w-0">
+                      <div className="text-xs font-bold text-slate-800 dark:text-white truncate">
+                        {user.full_name || user.username}
+                      </div>
+                      <div className="text-[10px] text-slate-400 font-mono truncate">
+                        @{user.username}
+                      </div>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => {
+                      logout();
+                      closeSidebar();
+                      router.push('/login');
+                    }}
+                    className="p-1.5 rounded-lg hover:bg-rose-500/10 text-slate-400 hover:text-rose-500 transition-colors"
+                    title="Sign Out"
+                  >
+                    <LogOut className="h-4 w-4" />
+                  </button>
+                </div>
+              )}
+            </div>
           </motion.aside>
         )}
       </AnimatePresence>

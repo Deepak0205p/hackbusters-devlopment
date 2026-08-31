@@ -17,12 +17,12 @@ export function ActiveSocketTable() {
   );
 
   return (
-    <Card className="border-[#262626] bg-[#111111]">
-      <CardHeader className="py-3 px-4 border-b border-[#262626]">
+    <Card className="border-gray-200 bg-gray-100">
+      <CardHeader className="py-3 px-4 border-b border-gray-200">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center space-x-2">
-            <Network className="h-4 w-4 text-[#0070f3]" />
-            <CardTitle className="text-xs font-semibold text-[#ededed]">
+            <Network className="h-4 w-4 text-blue-600" />
+            <CardTitle className="text-xs font-semibold text-gray-900">
               Active Socket Connection Sniffer (psutil Daemon)
             </CardTitle>
             <Badge variant="outline" className="font-mono text-[10px]">
@@ -32,16 +32,16 @@ export function ActiveSocketTable() {
 
           <div className="flex items-center space-x-2">
             <div className="relative">
-              <Search className="h-3 w-3 absolute left-2.5 top-2 text-[#666666]" />
+              <Search className="h-3 w-3 absolute left-2.5 top-2 text-gray-400" />
               <input
                 type="text"
                 placeholder="Filter sockets / IPs..."
                 value={filterQuery}
                 onChange={(e) => setFilterQuery(e.target.value)}
-                className="h-7 pl-7 pr-2.5 rounded bg-[#0a0a0a] border border-[#262626] text-[11px] text-[#ededed] placeholder:text-[#666666] focus:outline-none focus:border-[#0070f3]"
+                className="h-7 pl-7 pr-2.5 rounded bg-gray-50 border border-gray-200 text-[11px] text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-blue-600"
               />
             </div>
-            <span className="text-[11px] font-mono text-[#00e599] flex items-center">
+            <span className="text-[11px] font-mono text-emerald-600 flex items-center">
               <ShieldCheck className="h-3.5 w-3.5 mr-1" />
               All Permitted
             </span>
@@ -52,7 +52,7 @@ export function ActiveSocketTable() {
       <CardContent className="p-0">
         <div className="overflow-x-auto">
           <table className="w-full text-xs text-left">
-            <thead className="bg-[#0a0a0a] text-[#888888] text-[11px] font-mono border-b border-[#262626]">
+            <thead className="bg-gray-50 text-gray-500 text-[11px] font-mono border-b border-gray-200">
               <tr>
                 <th className="py-2.5 px-3.5">PID</th>
                 <th className="py-2.5 px-3.5">Process Name</th>
@@ -63,25 +63,25 @@ export function ActiveSocketTable() {
                 <th className="py-2.5 px-3.5 text-right">Security Audit</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#262626]/50 font-mono text-[11px]">
+            <tbody className="divide-y divide-gray-200/50 font-mono text-[11px]">
               {filteredSockets.map((sock) => (
-                <tr key={sock.id} className="hover:bg-[#141414]">
-                  <td className="py-2 px-3.5 text-[#666666]">{sock.pid}</td>
-                  <td className="py-2 px-3.5 text-[#ededed] font-medium">{sock.process_name}</td>
-                  <td className="py-2 px-3.5 text-[#888888]">{sock.local_address}</td>
-                  <td className="py-2 px-3.5 text-[#ededed]">{sock.remote_address}</td>
+                <tr key={sock.id} className="hover:bg-gray-200">
+                  <td className="py-2 px-3.5 text-gray-400">{sock.pid}</td>
+                  <td className="py-2 px-3.5 text-gray-900 font-medium">{sock.process_name}</td>
+                  <td className="py-2 px-3.5 text-gray-500">{sock.local_address}</td>
+                  <td className="py-2 px-3.5 text-gray-900">{sock.remote_address}</td>
                   <td className="py-2 px-3.5">
                     <span className={`px-1.5 py-0.5 rounded text-[10px] font-semibold border ${
                       sock.tier === 'LOCALHOST'
-                        ? 'border-[#333333] bg-[#1f1f1f] text-[#888888]'
+                        ? 'border-gray-300 bg-gray-200 text-gray-500'
                         : sock.tier === 'LAN_HOTSPOT'
-                        ? 'border-[#0070f3]/40 bg-[#0070f3]/10 text-[#0070f3]'
-                        : 'border-[#e5484d] bg-[#e5484d]/10 text-[#e5484d]'
+                        ? 'border-blue-600/40 bg-blue-50 text-blue-600'
+                        : 'border-red-600 bg-red-600/10 text-red-600'
                     }`}>
                       {sock.tier}
                     </span>
                   </td>
-                  <td className="py-2 px-3.5 text-[#888888]">{sock.status}</td>
+                  <td className="py-2 px-3.5 text-gray-500">{sock.status}</td>
                   <td className="py-2 px-3.5 text-right">
                     <Badge variant={sock.security_verdict === 'BREACH_FLAGGED' ? 'destructive' : 'success'} className="text-[10px] py-0">
                       {sock.security_verdict}

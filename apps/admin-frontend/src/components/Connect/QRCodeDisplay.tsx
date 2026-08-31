@@ -83,12 +83,12 @@ export function QRCodeDisplay({ connectUrl, deploymentMode }: QRCodeDisplayProps
   };
 
   return (
-    <Card className="border-[#262626] bg-[#111111] min-h-[360px] flex flex-col justify-between">
-      <CardHeader className="py-3 px-4 border-b border-[#262626]">
+    <Card className="border-gray-200 bg-gray-100 min-h-[360px] flex flex-col justify-between">
+      <CardHeader className="py-3 px-4 border-b border-gray-200">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
-            <QrCode className="h-4 w-4 text-[#0070f3]" />
-            <CardTitle className="text-xs font-semibold text-[#ededed]">
+            <QrCode className="h-4 w-4 text-blue-600" />
+            <CardTitle className="text-xs font-semibold text-gray-900">
               Mobile Quick Connect (Zero Config)
             </CardTitle>
           </div>
@@ -105,7 +105,7 @@ export function QRCodeDisplay({ connectUrl, deploymentMode }: QRCodeDisplayProps
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ type: "spring", stiffness: 120, damping: 20 }}
-          className="p-3 bg-white rounded-lg shadow-md border border-[#333333]"
+          className="p-3 bg-white rounded-lg shadow-md border border-gray-200"
         >
           <svg
             viewBox={`0 0 ${size} ${size}`}
@@ -132,8 +132,8 @@ export function QRCodeDisplay({ connectUrl, deploymentMode }: QRCodeDisplayProps
 
         {/* Resolved Connection URL */}
         <div className="w-full max-w-sm text-center space-y-2">
-          <div className="p-2.5 rounded bg-[#0a0a0a] border border-[#262626] flex items-center justify-between font-mono text-xs">
-            <span className="text-[#ededed] truncate mr-2">{connectUrl}</span>
+          <div className="p-2.5 rounded bg-gray-50 border border-gray-200 flex items-center justify-between font-mono text-xs">
+            <span className="text-gray-900 truncate mr-2">{connectUrl}</span>
             <Button
               size="sm"
               variant="outline"
@@ -143,8 +143,8 @@ export function QRCodeDisplay({ connectUrl, deploymentMode }: QRCodeDisplayProps
             >
               {copied ? (
                 <>
-                  <Check className="h-3.5 w-3.5 text-[#00e599] mr-1" />
-                  <span className="text-[#00e599]">Copied</span>
+                  <Check className="h-3.5 w-3.5 text-emerald-600 mr-1" />
+                  <span className="text-emerald-600">Copied</span>
                 </>
               ) : (
                 <>
@@ -154,7 +154,7 @@ export function QRCodeDisplay({ connectUrl, deploymentMode }: QRCodeDisplayProps
               )}
             </Button>
           </div>
-          <p className="text-[11px] text-[#888888]">
+          <p className="text-[11px] text-gray-500">
             Scan with your smartphone camera or open in mobile Safari/Chrome.
           </p>
         </div>

@@ -31,7 +31,6 @@ export function MobileBottomNav({ onOpenSearch }: MobileBottomNavProps) {
       href: '/artifacts',
       active: isArtifacts,
       icon: <FileText className="h-5 w-5" />,
-      badge: deliverables.length || undefined,
     },
     {
       label: 'Search',

@@ -161,30 +161,30 @@ export function RagObservatory() {
   return (
     <div className="space-y-4">
       {/* Header Banner */}
-      <div className="rounded-md bg-[#0a0a0a] border border-[#262626] p-5 space-y-1.5">
-        <div className="flex items-center gap-2 text-[#ededed]">
-          <Database className="w-4 h-4 text-[#0070f3]" />
-          <h2 className="text-sm font-semibold text-[#ededed]">RAG Knowledge Engine & Document Operations</h2>
+      <div className="rounded-md bg-gray-50 border border-gray-200 p-5 space-y-1.5">
+        <div className="flex items-center gap-2 text-gray-900">
+          <Database className="w-4 h-4 text-blue-600" />
+          <h2 className="text-sm font-semibold text-gray-900">RAG Knowledge Engine & Document Operations</h2>
         </div>
-        <p className="text-xs text-[#888888]">
+        <p className="text-xs text-gray-500">
           On-premise ChromaDB vector database with BAAI/bge-small-en-v1.5 embeddings, instant SOP/Policy ingestor, and universal multi-format document converter.
         </p>
       </div>
 
       {/* Sub-Tab Navigation Strip (Synced with URL Hash /rag#ingest and /rag#converter) */}
-      <div className="flex items-center gap-2 border-b border-[#262626] pb-2">
+      <div className="flex items-center gap-2 border-b border-gray-200 pb-2">
         <button
           type="button"
           onClick={() => changeTab('ingest')}
           className={`flex items-center gap-2 px-3.5 py-2 rounded-md text-xs font-medium transition-all ${
             activeTab === 'ingest'
-              ? 'bg-[#171717] text-[#0070f3] border border-[#0070f3]/40 shadow-sm font-semibold'
-              : 'text-[#888888] hover:text-[#ededed] hover:bg-[#111111] border border-transparent'
+              ? 'bg-blue-50 text-blue-700 border border-blue-200 shadow-sm font-semibold'
+              : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100 border border-transparent'
           }`}
         >
           <UploadCloud className="w-3.5 h-3.5" />
           <span>1. Ingest SOP / MOP / Security Policy into RAG</span>
-          <span className="text-[10px] font-mono text-[#666666] ml-1">#ingest</span>
+          <span className="text-[10px] font-mono text-gray-400 ml-1">#ingest</span>
         </button>
 
         <button
@@ -192,13 +192,13 @@ export function RagObservatory() {
           onClick={() => changeTab('converter')}
           className={`flex items-center gap-2 px-3.5 py-2 rounded-md text-xs font-medium transition-all ${
             activeTab === 'converter'
-              ? 'bg-[#171717] text-[#00e599] border border-[#00e599]/40 shadow-sm font-semibold'
-              : 'text-[#888888] hover:text-[#ededed] hover:bg-[#111111] border border-transparent'
+              ? 'bg-emerald-50 text-emerald-700 border border-emerald-200 shadow-sm font-semibold'
+              : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100 border border-transparent'
           }`}
         >
           <Download className="w-3.5 h-3.5" />
           <span>2. Universal Document Format Converter</span>
-          <span className="text-[10px] font-mono text-[#666666] ml-1">#converter</span>
+          <span className="text-[10px] font-mono text-gray-400 ml-1">#converter</span>
         </button>
       </div>
 
@@ -206,20 +206,20 @@ export function RagObservatory() {
       {activeTab === 'ingest' && (
         <div className="space-y-4">
           {/* Ingest SOP Card */}
-          <div className="rounded-md bg-[#0a0a0a] border border-[#262626] p-5 space-y-4">
-            <div className="flex items-center justify-between border-b border-[#262626] pb-3">
-              <h3 className="text-xs font-semibold text-[#ededed] flex items-center gap-2">
-                <UploadCloud className="w-3.5 h-3.5 text-[#0070f3]" />
+          <div className="rounded-md bg-gray-50 border border-gray-200 p-5 space-y-4">
+            <div className="flex items-center justify-between border-b border-gray-200 pb-3">
+              <h3 className="text-xs font-semibold text-gray-900 flex items-center gap-2">
+                <UploadCloud className="w-3.5 h-3.5 text-blue-600" />
                 Ingest SOP / MOP / Security Policy into RAG
               </h3>
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[#111111] text-[#00e599] border border-[#262626]">
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">
                 REAL-TIME UPSERT
               </span>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-1">
-                <label className="text-xs text-[#888888]">Knowledge Category</label>
+                <label className="text-xs text-gray-500">Knowledge Category</label>
                 <CustomDropdown
                   value={selectedCategory}
                   onChange={(val) => setSelectedCategory(val)}
@@ -230,17 +230,17 @@ export function RagObservatory() {
                     { value: 'mrpl_engineering', label: 'MRPL Technical Engineering Standards' },
                     { value: 'ongc_compliance', label: 'ONGC Corporate Compliance Standards' },
                   ]}
-                  buttonClassName="w-full rounded-xl bg-[#111111] border-[#262626] text-xs"
+                  buttonClassName="w-full rounded-xl bg-gray-100 border-gray-200 text-xs"
                 />
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs text-[#888888]">Select Document (.pdf, .docx, .txt, .md)</label>
+                <label className="text-xs text-gray-500">Select Document (.pdf, .docx, .txt, .md)</label>
                 <input
                   type="file"
                   accept=".pdf,.docx,.txt,.md"
                   onChange={(e) => setUploadFile(e.target.files?.[0] || null)}
-                  className="w-full text-xs text-[#888888] file:mr-3 file:py-2 file:px-3 file:rounded file:border-0 file:text-xs file:font-medium file:bg-[#171717] file:text-[#ededed] hover:file:bg-[#262626] cursor-pointer"
+                  className="w-full text-xs text-gray-500 file:mr-3 file:py-2 file:px-3 file:rounded file:border-0 file:text-xs file:font-medium file:bg-gray-100 file:text-gray-900 hover:file:bg-gray-200 cursor-pointer"
                 />
               </div>
             </div>
@@ -248,7 +248,7 @@ export function RagObservatory() {
             <button
               onClick={handleIngestFile}
               disabled={!uploadFile || isIngesting}
-              className="w-full py-2.5 bg-[#0070f3] hover:bg-[#0060df] disabled:opacity-50 text-white text-xs font-medium rounded transition-colors flex items-center justify-center gap-1.5"
+              className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-xs font-medium rounded transition-colors flex items-center justify-center gap-1.5"
             >
               <RefreshCw className={`w-3.5 h-3.5 ${isIngesting ? 'animate-spin' : ''}`} />
               {isIngesting ? 'Extracting Clauses & Embedding...' : 'Build / Upsert to ChromaDB RAG'}
@@ -257,15 +257,15 @@ export function RagObservatory() {
             {ingestStatus && (
               <div className={`p-3 rounded border text-xs font-mono space-y-1 ${
                 ingestStatus.status === 'success' || ingestStatus.success
-                  ? 'bg-[#111111] text-[#00e599] border-[#262626]' 
-                  : 'bg-[#111111] text-[#e5484d] border-[#262626]'
+                  ? 'bg-emerald-50 text-emerald-700 border-emerald-200' 
+                  : 'bg-red-50 text-red-700 border-red-200'
               }`}>
                 <div className="font-semibold flex items-center gap-1.5">
-                  {ingestStatus.status === 'success' || ingestStatus.success ? <CheckCircle2 className="w-3.5 h-3.5 text-[#00e599]" /> : <AlertCircle className="w-3.5 h-3.5 text-[#e5484d]" />}
+                  {ingestStatus.status === 'success' || ingestStatus.success ? <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> : <AlertCircle className="w-3.5 h-3.5 text-red-600" />}
                   <span>{ingestStatus.message || ingestStatus.detail}</span>
                 </div>
                 {ingestStatus.chunks_indexed !== undefined && (
-                  <div className="text-[11px] text-[#888888]">
+                  <div className="text-[11px] text-gray-500">
                     Processed: {ingestStatus.chunks_indexed} chunks | Total KB Chunks: {ingestStatus.total_in_chromadb || ingestStatus.total_collection_chunks}
                   </div>
                 )}
@@ -274,9 +274,9 @@ export function RagObservatory() {
           </div>
 
           {/* Semantic Search Tester */}
-          <div className="rounded-md bg-[#0a0a0a] border border-[#262626] p-5 space-y-4">
-            <h3 className="text-xs font-semibold text-[#ededed] flex items-center gap-2">
-              <Search className="w-3.5 h-3.5 text-[#0070f3]" />
+          <div className="rounded-md bg-gray-50 border border-gray-200 p-5 space-y-4">
+            <h3 className="text-xs font-semibold text-gray-900 flex items-center gap-2">
+              <Search className="w-3.5 h-3.5 text-blue-600" />
               Semantic RAG Knowledge Explorer
             </h3>
 
@@ -286,13 +286,13 @@ export function RagObservatory() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                className="flex-1 rounded bg-[#111111] border border-[#262626] p-2.5 text-xs text-[#ededed] font-mono focus:outline-none focus:border-[#444444]"
+                className="flex-1 rounded bg-gray-100 border border-gray-200 p-2.5 text-xs text-gray-900 font-mono focus:outline-none focus:border-gray-400"
                 placeholder="Type query (e.g., furnace shutdown, pump pressure) to search vector store..."
               />
               <button
                 onClick={handleSearch}
                 disabled={isSearching || !searchQuery.trim()}
-                className="px-4 py-2 bg-[#0070f3] hover:bg-[#0060df] disabled:opacity-50 text-white text-xs font-medium rounded transition-colors flex items-center gap-1.5"
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-xs font-medium rounded transition-colors flex items-center gap-1.5"
               >
                 <Search className="w-3.5 h-3.5" />
                 {isSearching ? 'Querying...' : 'Search'}
@@ -302,23 +302,23 @@ export function RagObservatory() {
             {hasSearched && (
               <div className="space-y-2 pt-1">
                 {searchResults.length === 0 ? (
-                  <div className="p-4 rounded bg-[#111111] border border-[#262626] text-center text-xs text-[#666666] font-mono">
+                  <div className="p-4 rounded bg-gray-100 border border-gray-200 text-center text-xs text-gray-400 font-mono">
                     No matching document clauses found in ChromaDB for "{searchQuery}".
                   </div>
                 ) : (
                   searchResults.map((res, i) => (
-                    <div key={res.id || i} className="p-3 rounded bg-[#111111] border border-[#262626] space-y-1.5">
+                    <div key={res.id || i} className="p-3 rounded bg-gray-100 border border-gray-200 space-y-1.5">
                       <div className="flex items-center justify-between text-xs">
                         <div className="flex items-center gap-2">
-                          <Bookmark className="w-3.5 h-3.5 text-[#0070f3]" />
-                          <span className="font-semibold text-[#ededed]">{res.document}</span>
-                          <span className="text-[#888888] font-mono text-[11px]">{res.clause}</span>
+                          <Bookmark className="w-3.5 h-3.5 text-blue-600" />
+                          <span className="font-semibold text-gray-900">{res.document}</span>
+                          <span className="text-gray-500 font-mono text-[11px]">{res.clause}</span>
                         </div>
-                        <span className="font-mono text-[11px] px-2 py-0.5 rounded bg-[#171717] text-[#00e599] border border-[#333333]">
+                        <span className="font-mono text-[11px] px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">
                           Score: {(res.similarityScore * 100).toFixed(1)}%
                         </span>
                       </div>
-                      <p className="text-xs text-[#888888] font-mono leading-relaxed pl-5">
+                      <p className="text-xs text-gray-500 font-mono leading-relaxed pl-5">
                         "{res.content}"
                       </p>
                     </div>
@@ -334,30 +334,30 @@ export function RagObservatory() {
       {activeTab === 'converter' && (
         <div className="space-y-4">
           {/* Converter Action Box */}
-          <div className="rounded-md bg-[#0a0a0a] border border-[#262626] p-5 space-y-4">
-            <div className="flex items-center justify-between border-b border-[#262626] pb-3">
-              <h3 className="text-xs font-semibold text-[#ededed] flex items-center gap-2">
-                <Download className="w-3.5 h-3.5 text-[#00e599]" />
+          <div className="rounded-md bg-gray-50 border border-gray-200 p-5 space-y-4">
+            <div className="flex items-center justify-between border-b border-gray-200 pb-3">
+              <h3 className="text-xs font-semibold text-gray-900 flex items-center gap-2">
+                <Download className="w-3.5 h-3.5 text-emerald-600" />
                 Universal Document Format Converter
               </h3>
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[#111111] text-[#00e599] border border-[#262626]">
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">
                 ON-PREMISE ENGINE
               </span>
             </div>
 
             <div className="space-y-4 max-w-3xl">
               <div className="space-y-1.5">
-                <label className="text-xs text-[#888888]">Input File (.pdf, .docx, .txt, .csv, .xlsx, .pptx)</label>
+                <label className="text-xs text-gray-500">Input File (.pdf, .docx, .txt, .csv, .xlsx, .pptx)</label>
                 <input
                   type="file"
                   accept=".pdf,.docx,.txt,.csv,.xlsx,.pptx"
                   onChange={(e) => setConvertFile(e.target.files?.[0] || null)}
-                  className="w-full text-xs text-[#888888] file:mr-3 file:py-2 file:px-3 file:rounded file:border-0 file:text-xs file:font-medium file:bg-[#171717] file:text-[#ededed] hover:file:bg-[#262626] cursor-pointer"
+                  className="w-full text-xs text-gray-500 file:mr-3 file:py-2 file:px-3 file:rounded file:border-0 file:text-xs file:font-medium file:bg-gray-100 file:text-gray-900 hover:file:bg-gray-200 cursor-pointer"
                 />
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs text-[#888888]">Target Export Format</label>
+                <label className="text-xs text-gray-500">Target Export Format</label>
                 <div className="grid grid-cols-4 gap-2">
                   {[
                     { id: 'docx', label: 'Word (.docx)', icon: FileText },
@@ -374,11 +374,11 @@ export function RagObservatory() {
                         onClick={() => setTargetFormat(fmt.id)}
                         className={`p-3 rounded border text-center flex flex-col items-center gap-1.5 transition-all ${
                           isSel
-                            ? 'bg-[#171717] border-[#00e599] text-[#ededed]'
-                            : 'bg-[#111111] border-[#262626] text-[#888888] hover:border-[#444444]'
+                            ? 'bg-emerald-50 border-emerald-500 text-gray-900'
+                            : 'bg-gray-100 border-gray-200 text-gray-500 hover:border-gray-300'
                         }`}
                       >
-                        <Icon className={`w-4 h-4 ${isSel ? 'text-[#00e599]' : 'text-[#888888]'}`} />
+                        <Icon className={`w-4 h-4 ${isSel ? 'text-emerald-600' : 'text-gray-500'}`} />
                         <span className="text-xs font-medium">{fmt.id.toUpperCase()}</span>
                       </button>
                     );
@@ -389,15 +389,15 @@ export function RagObservatory() {
               <button
                 onClick={handleConvertDocument}
                 disabled={!convertFile || isConverting}
-                className="w-full py-2.5 bg-[#171717] hover:bg-[#262626] text-[#ededed] border border-[#333333] disabled:opacity-50 text-xs font-medium rounded transition-colors flex items-center justify-center gap-1.5"
+                className="w-full py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-900 border border-gray-200 disabled:opacity-50 text-xs font-medium rounded transition-colors flex items-center justify-center gap-1.5"
               >
-                <Download className="w-3.5 h-3.5 text-[#00e599]" />
+                <Download className="w-3.5 h-3.5 text-emerald-600" />
                 {isConverting ? 'Converting Document...' : 'Convert & Download File'}
               </button>
 
               {convertStatus && (
-                <div className="p-3 rounded bg-[#111111] border border-[#262626] text-xs font-mono text-[#00e599] flex items-center gap-2">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-[#00e599]" />
+                <div className="p-3 rounded bg-emerald-50 border border-emerald-200 text-xs font-mono text-emerald-700 flex items-center gap-2">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
                   <span>{convertStatus}</span>
                 </div>
               )}
@@ -405,18 +405,18 @@ export function RagObservatory() {
           </div>
 
           {/* Supported File Formats & Conversion Matrix */}
-          <div className="rounded-md bg-[#0a0a0a] border border-[#262626] p-5 space-y-4">
-            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#262626] pb-3">
+          <div className="rounded-md bg-gray-50 border border-gray-200 p-5 space-y-4">
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-gray-200 pb-3">
               <div>
-                <h3 className="text-xs font-semibold text-[#ededed] flex items-center gap-2">
-                  <Layers className="w-3.5 h-3.5 text-[#0070f3]" />
+                <h3 className="text-xs font-semibold text-gray-900 flex items-center gap-2">
+                  <Layers className="w-3.5 h-3.5 text-blue-600" />
                   Supported Document Formats &amp; Engine Specifications
                 </h3>
-                <p className="text-[11px] text-[#888888] mt-0.5">
+                <p className="text-[11px] text-gray-500 mt-0.5">
                   Universal multi-format parser and generator running 100% on-premise without external cloud APIs.
                 </p>
               </div>
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[#111111] text-[#00e599] border border-[#262626]">
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">
                 6 NATIVE FORMATS
               </span>
             </div>
@@ -481,23 +481,23 @@ export function RagObservatory() {
               ].map((fmt) => {
                 const Icon = fmt.icon;
                 return (
-                  <div key={fmt.ext} className="p-3.5 rounded-md bg-[#111111] border border-[#262626] space-y-2 hover:border-[#333333] transition-colors">
+                  <div key={fmt.ext} className="p-3.5 rounded-md bg-gray-100 border border-gray-200 space-y-2 hover:border-gray-300 transition-colors">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <Icon className="w-4 h-4 text-[#888888]" />
-                        <span className="text-xs font-semibold text-[#ededed]">{fmt.label}</span>
+                        <Icon className="w-4 h-4 text-gray-500" />
+                        <span className="text-xs font-semibold text-gray-900">{fmt.label}</span>
                       </div>
                       <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold border ${fmt.color}`}>
                         .{fmt.ext}
                       </span>
                     </div>
 
-                    <p className="text-[11px] text-[#888888] leading-relaxed">
+                    <p className="text-[11px] text-gray-500 leading-relaxed">
                       {fmt.useCase}
                     </p>
 
-                    <div className="pt-2 border-t border-[#1f1f1f] flex items-center justify-between text-[10px] font-mono text-[#666666]">
-                      <span>Engine: <span className="text-[#ededed]">{fmt.engine}</span></span>
+                    <div className="pt-2 border-t border-gray-200 flex items-center justify-between text-[10px] font-mono text-gray-400">
+                      <span>Engine: <span className="text-gray-900">{fmt.engine}</span></span>
                     </div>
                   </div>
                 );
@@ -506,26 +506,26 @@ export function RagObservatory() {
           </div>
 
           {/* Physical Document Library */}
-          <div className="rounded-md bg-[#0a0a0a] border border-[#262626] p-5 space-y-4">
-            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#262626] pb-3">
+          <div className="rounded-md bg-gray-50 border border-gray-200 p-5 space-y-4">
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-gray-200 pb-3">
               <div>
-                <h3 className="text-xs font-semibold text-[#ededed] flex items-center gap-2">
-                  <FileText className="w-3.5 h-3.5 text-[#0070f3]" />
+                <h3 className="text-xs font-semibold text-gray-900 flex items-center gap-2">
+                  <FileText className="w-3.5 h-3.5 text-blue-600" />
                   Codebase Physical Documents Library
                 </h3>
-                <p className="text-[11px] text-[#888888] mt-0.5">
+                <p className="text-[11px] text-gray-500 mt-0.5">
                   Live inventory of all physical documents and manuals stored across repository directories.
                 </p>
               </div>
-              <span className="text-[10px] font-mono text-[#888888]">
-                Total: <span className="text-[#ededed]">{existingFiles.length} files</span>
+              <span className="text-[10px] font-mono text-gray-500">
+                Total: <span className="text-gray-900">{existingFiles.length} files</span>
               </span>
             </div>
 
             {/* Live Document Table */}
             <div className="overflow-x-auto">
               <table className="w-full text-xs text-left">
-                <thead className="bg-[#111111] text-[#888888] text-[11px] font-mono border-b border-[#262626]">
+                <thead className="bg-gray-100 text-gray-500 text-[11px] font-mono border-b border-gray-200">
                   <tr>
                     <th className="py-2 px-3">Document Name</th>
                     <th className="py-2 px-3">Format</th>
@@ -534,10 +534,10 @@ export function RagObservatory() {
                     <th className="py-2 px-3 text-right">Action</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[#262626]/50 font-mono text-[11px]">
+                <tbody className="divide-y divide-gray-200 font-mono text-[11px]">
                   {existingFiles.length === 0 ? (
                     <tr>
-                      <td colSpan={5} className="py-6 text-center text-[#666666]">
+                      <td colSpan={5} className="py-6 text-center text-gray-400">
                         Loading codebase document library...
                       </td>
                     </tr>
@@ -548,12 +548,12 @@ export function RagObservatory() {
                         doc.format === 'docx' ? 'text-[#0070f3] border-[#0070f3]/30 bg-[#0070f3]/10' :
                         doc.format === 'xlsx' ? 'text-[#00e599] border-[#00e599]/30 bg-[#00e599]/10' :
                         doc.format === 'pptx' ? 'text-[#f5a623] border-[#f5a623]/30 bg-[#f5a623]/10' :
-                        'text-[#ededed] border-[#333333] bg-[#1a1a1a]';
+                        'text-gray-900 border-gray-200 bg-gray-100';
 
                       return (
-                        <tr key={doc.id} className="hover:bg-[#111111]">
-                          <td className="py-2 px-3 text-[#ededed] font-medium flex items-center gap-2">
-                            <FileText className="w-3 h-3 text-[#888888]" />
+                        <tr key={doc.id} className="hover:bg-gray-50">
+                          <td className="py-2 px-3 text-gray-900 font-medium flex items-center gap-2">
+                            <FileText className="w-3 h-3 text-gray-500" />
                             <span>{doc.name}</span>
                           </td>
                           <td className="py-2 px-3">
@@ -561,8 +561,8 @@ export function RagObservatory() {
                               .{doc.format.toUpperCase()}
                             </span>
                           </td>
-                          <td className="py-2 px-3 text-[#888888]">{doc.category}</td>
-                          <td className="py-2 px-3 text-right text-[#666666]">{doc.size_kb} KB</td>
+                          <td className="py-2 px-3 text-gray-500">{doc.category}</td>
+                          <td className="py-2 px-3 text-right text-gray-400">{doc.size_kb} KB</td>
                           <td className="py-2 px-3 text-right">
                             <button
                               type="button"
@@ -570,7 +570,7 @@ export function RagObservatory() {
                                 setConvertFile(new File([""], doc.name));
                                 window.scrollTo({ top: 0, behavior: 'smooth' });
                               }}
-                              className="px-2 py-0.5 rounded bg-[#171717] hover:bg-[#222222] border border-[#333333] text-[#ededed] text-[10px] transition-colors"
+                              className="px-2 py-0.5 rounded bg-gray-100 hover:bg-gray-200 border border-gray-200 text-gray-900 text-[10px] transition-colors"
                             >
                               Select for Convert
                             </button>

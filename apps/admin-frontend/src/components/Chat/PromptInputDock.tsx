@@ -42,7 +42,7 @@ export function PromptInputDock() {
   };
 
   return (
-    <div className="relative rounded-xl border border-[#2a2a2a] bg-[#0c0c0c]/90 shadow-2xl backdrop-blur-md p-3 transition-all focus-within:border-[#444444] focus-within:ring-1 focus-within:ring-[#444444]/40">
+    <div className="relative rounded-xl border border-gray-200 bg-white/95 shadow-2xl backdrop-blur-md p-3 transition-all focus-within:border-gray-300 focus-within:ring-1 focus-within:ring-gray-300/40">
       {/* Dynamic input area with comfortable typography */}
       <textarea
         value={currentInput}
@@ -50,23 +50,23 @@ export function PromptInputDock() {
         onKeyDown={handleKeyDown}
         placeholder="Message MRPL Sovereign AI or ask an engineering question..."
         rows={2}
-        className="w-full bg-transparent text-xs text-[#ededed] placeholder-[#666666] outline-none resize-none leading-relaxed font-sans min-h-[52px] max-h-[140px]"
+        className="w-full bg-transparent text-xs text-gray-900 placeholder-gray-400 outline-none resize-none leading-relaxed font-sans min-h-[52px] max-h-[140px]"
       />
 
       {/* Action Footer Bar */}
-      <div className="flex items-center justify-between pt-2 border-t border-[#1e1e1e] mt-1">
+      <div className="flex items-center justify-between pt-2 border-t border-gray-200 mt-1">
         <div className="flex items-center space-x-2">
           <Button 
             size="sm" 
             variant="ghost" 
-            className="min-h-[36px] h-8 px-2.5 text-[#888888] hover:text-[#ededed] hover:bg-[#1a1a1a] rounded-lg transition-all"
+            className="min-h-[36px] h-8 px-2.5 text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-all"
           >
             <Paperclip className="h-3.5 w-3.5 mr-1.5" />
             <span className="text-[11px] font-mono">Attach PDF/P&ID</span>
           </Button>
 
-          <span className="text-[10px] font-mono text-[#555555] hidden sm:inline flex items-center">
-            <Sparkles className="h-3 w-3 mr-1 text-[#0070f3]" />
+          <span className="text-[10px] font-mono text-gray-500 hidden sm:inline flex items-center">
+            <Sparkles className="h-3 w-3 mr-1 text-blue-600" />
             DeepSeek 4B Edge Compute
           </span>
         </div>
@@ -88,7 +88,7 @@ export function PromptInputDock() {
               variant="primary"
               onClick={handleSend}
               disabled={!currentInput.trim() || isSubmitting}
-              className="min-h-[36px] h-8 w-8 p-0 rounded-lg bg-[#ededed] text-[#000000] hover:bg-[#ffffff] disabled:opacity-30 disabled:hover:bg-[#ededed] transition-all flex items-center justify-center"
+              className="min-h-[36px] h-8 w-8 p-0 rounded-lg bg-gray-900 text-white hover:bg-gray-800 disabled:opacity-30 disabled:hover:bg-gray-900 transition-all flex items-center justify-center"
             >
               <ArrowUp className="h-4 w-4" />
             </Button>

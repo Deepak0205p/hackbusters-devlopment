@@ -86,9 +86,18 @@ class OllamaBackend(ComputeBackend):
             return False
 
     def generate(self, prompt: str, max_tokens: int = 512, temperature: float = 0.2, **kwargs) -> NormalizedResponse:
+        backend_type_label = "remote_node_gpu" if "127.0.0.1" not in self.base_url and "localhost" not in self.base_url else "laptop_gpu"
+        if not self.is_online():
+            return NormalizedResponse(
+                success=False,
+                content="",
+                model=kwargs.get("model", self.model_tag),
+                backend_type=backend_type_label,
+                error="Local Ollama daemon is offline or unreachable on port 11434."
+            )
+
         t0 = time.time()
         url = f"{self.base_url}/api/chat"
-        backend_type_label = "remote_node_gpu" if "127.0.0.1" not in self.base_url and "localhost" not in self.base_url else "laptop_gpu"
         payload = {
             "model": kwargs.get("model", self.model_tag),
             "messages": [{"role": "user", "content": prompt}],

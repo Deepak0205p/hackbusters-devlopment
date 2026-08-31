@@ -1,4 +1,4 @@
-﻿# Node dependencies
+# Node dependencies
 node_modules/
 **/node_modules/
 .npm
@@ -37,5 +37,16 @@ server.log
 .DS_Store
 Thumbs.db
 
+# Test scratch and screenshots
+scratch/
+test_screenshots/
+screenshots/
+*.db
+*.db-shm
+*.db-wal
+*.sqlite3
+apps/data/outputs/scripts/
+data/chroma_db/
+apps/data/chroma_db/
 
 Agent.md

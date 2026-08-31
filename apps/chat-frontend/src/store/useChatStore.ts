@@ -40,6 +40,7 @@ interface ChatState {
   activeScenario: 'furnace' | 'pump' | 'pid' | 'general';
   currentInput: string;
   activeTraceSteps: TraceStep[];
+  regeneratingMsgId: string | null;
   currentRouting: {
     domain: string;
     model_id: string;
@@ -48,9 +49,11 @@ interface ChatState {
   } | null;
   
   // Actions
-  createNewChat: () => void;
-  selectSession: (id: string) => void;
-  deleteSession: (id: string) => void;
+  fetchUserSessions: (username?: string) => Promise<void>;
+  fetchSessionById: (sessionId: string) => Promise<void>;
+  createNewChat: (username?: string) => Promise<string>;
+  selectSession: (id: string) => Promise<void>;
+  deleteSession: (id: string) => Promise<void>;
   setMessages: (messages: ChatMessage[]) => void;
   addMessage: (message: ChatMessage) => void;
   setCurrentInput: (input: string | ((prev: string) => string)) => void;
@@ -58,52 +61,182 @@ interface ChatState {
   setStreaming: (isStreaming: boolean) => void;
   handleStreamEvent: (event: any) => void;
   clearTrace: () => void;
+  regenerateMessage: (aiMsgIndex: number) => void;
+}
+
+function getApiBase(): string {
+  if (typeof window !== 'undefined') {
+    const host = window.location.hostname;
+    const port = window.location.port;
+    if (port === '8000' || port === '3000' || port === '') return 'http://127.0.0.1:8000';
+    return `http://${host}:8000`;
+  }
+  return 'http://127.0.0.1:8000';
 }
 
 export const useChatStore = create<ChatState>((set, get) => ({
   sessions: [],
-  activeSessionId: 'session-default',
+  activeSessionId: '',
   messages: [],
   isStreaming: false,
+  regeneratingMsgId: null,
   activeScenario: 'pump',
   currentInput: '',
   activeTraceSteps: [],
   currentRouting: null,
 
-  createNewChat: () => {
-    const newId = `session-${Date.now()}`;
-    const newSess: ConversationSession = {
-      id: newId,
+  fetchUserSessions: async (username = 'operator') => {
+    try {
+      const apiBase = getApiBase();
+      const res = await fetch(`${apiBase}/api/chat/sessions?username=${encodeURIComponent(username)}`);
+      const data = await res.json();
+      if (data.status === 'SUCCESS' && Array.isArray(data.sessions)) {
+        const mysqlSessions: ConversationSession[] = data.sessions.map((s: any) => ({
+          id: s.id,
+          title: s.title || 'New Chat',
+          timestamp: s.updated_at || s.created_at || 'Today',
+          messages: s.messages || []
+        }));
+
+        set({ sessions: mysqlSessions });
+
+        // If no active session set, pick the first from MySQL
+        const currentActive = get().activeSessionId;
+        if ((!currentActive || !mysqlSessions.some(s => s.id === currentActive)) && mysqlSessions.length > 0) {
+          const first = mysqlSessions[0];
+          set({
+            activeSessionId: first.id,
+            messages: first.messages || []
+          });
+        }
+      }
+    } catch (err) {
+      console.warn('[useChatStore] Fetch user sessions MySQL error:', err);
+    }
+  },
+
+  fetchSessionById: async (sessionId: string) => {
+    if (!sessionId) return;
+    try {
+      const apiBase = getApiBase();
+      const res = await fetch(`${apiBase}/api/chat/sessions/${sessionId}`);
+      const data = await res.json();
+      if (data.status === 'SUCCESS' && data.session) {
+        const sess = data.session;
+        const formattedSession: ConversationSession = {
+          id: sess.id,
+          title: sess.title || 'New Chat',
+          timestamp: sess.updated_at || sess.created_at || 'Today',
+          messages: sess.messages || []
+        };
+
+        set((state) => {
+          const exists = state.sessions.some(s => s.id === sessionId);
+          const newSessions = exists
+            ? state.sessions.map(s => (s.id === sessionId ? formattedSession : s))
+            : [formattedSession, ...state.sessions];
+
+          return {
+            sessions: newSessions,
+            activeSessionId: sessionId,
+            messages: formattedSession.messages,
+            activeTraceSteps: [],
+            isStreaming: false
+          };
+        });
+      }
+    } catch (err) {
+      console.warn('[useChatStore] Fetch session by ID MySQL error:', err);
+    }
+  },
+
+  createNewChat: async (username = 'operator') => {
+    try {
+      const apiBase = getApiBase();
+      const res = await fetch(`${apiBase}/api/chat/sessions`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, title: 'New Chat' })
+      });
+      const data = await res.json();
+      if (data.status === 'SUCCESS' && data.session) {
+        const newSess: ConversationSession = {
+          id: data.session.id, // 16-digit random hex code URL ID
+          title: 'New Chat',
+          timestamp: 'Today',
+          messages: []
+        };
+
+        set((state) => ({
+          sessions: [newSess, ...state.sessions.filter(s => s.messages.length > 0 || s.id === newSess.id)],
+          activeSessionId: newSess.id,
+          messages: [],
+          activeTraceSteps: [],
+          currentInput: '',
+          isStreaming: false
+        }));
+
+        return newSess.id;
+      }
+    } catch (err) {
+      console.warn('[useChatStore] Create session MySQL fallback:', err);
+    }
+
+    // Client-side fallback: 16-digit hex code
+    const hex16 = Array.from(crypto.getRandomValues(new Uint8Array(8)))
+      .map(b => b.toString(16).padStart(2, '0'))
+      .join('');
+
+    const fallbackSess: ConversationSession = {
+      id: hex16,
       title: 'New Chat',
       timestamp: 'Today',
       messages: []
     };
+
     set((state) => ({
-      sessions: [newSess, ...state.sessions.filter(s => s.messages.length > 0)],
-      activeSessionId: newId,
+      sessions: [fallbackSess, ...state.sessions.filter(s => s.messages.length > 0)],
+      activeSessionId: hex16,
       messages: [],
       activeTraceSteps: [],
       currentInput: '',
       isStreaming: false
     }));
+
+    return hex16;
   },
-  selectSession: (id) => {
+
+  selectSession: async (id: string) => {
     const sess = get().sessions.find((s) => s.id === id);
-    set({
-      activeSessionId: id,
-      messages: sess ? sess.messages : [],
-      activeTraceSteps: [],
-      isStreaming: false
-    });
+    if (sess && sess.messages.length > 0) {
+      set({
+        activeSessionId: id,
+        messages: sess.messages,
+        activeTraceSteps: [],
+        isStreaming: false
+      });
+    } else {
+      await get().fetchSessionById(id);
+    }
   },
-  deleteSession: (id) => {
+
+  deleteSession: async (id: string) => {
+    try {
+      const apiBase = getApiBase();
+      await fetch(`${apiBase}/api/chat/sessions/${id}`, { method: 'DELETE' });
+    } catch (err) {
+      console.warn('[useChatStore] Delete session MySQL error:', err);
+    }
+
     set((state) => {
       const newSessions = state.sessions.filter((s) => s.id !== id);
       const isActive = state.activeSessionId === id;
+      const nextActive = isActive ? (newSessions[0]?.id || '') : state.activeSessionId;
+      const nextMsgs = isActive ? (newSessions[0]?.messages || []) : state.messages;
       return {
         sessions: newSessions,
-        activeSessionId: isActive ? (newSessions[0]?.id || 'session-default') : state.activeSessionId,
-        messages: isActive ? (newSessions[0]?.messages || []) : state.messages,
+        activeSessionId: nextActive,
+        messages: nextMsgs,
       };
     });
   },
@@ -130,7 +263,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
           ? message.content.slice(0, 28) + (message.content.length > 28 ? '...' : '')
           : 'Conversation';
         const newSess: ConversationSession = {
-          id: state.activeSessionId,
+          id: state.activeSessionId || Array.from(crypto.getRandomValues(new Uint8Array(8))).map(b => b.toString(16).padStart(2, '0')).join(''),
           title: autoTitle,
           timestamp: 'Today',
           messages: newMsgs
@@ -180,8 +313,9 @@ export const useChatStore = create<ChatState>((set, get) => ({
     } else if (event.event === 'final_answer') {
       const routing = get().currentRouting;
       const deliverableIds = event.deliverable_ids || [];
+      const regenId = get().regeneratingMsgId;
       const agentMsg: ChatMessage = {
-        id: `agent-${Date.now()}`,
+        id: regenId || `agent-${Date.now()}`,
         role: 'agent',
         content: event.content || '',
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
@@ -201,32 +335,76 @@ export const useChatStore = create<ChatState>((set, get) => ({
         deliverableIds.forEach((fname: string) => {
           addDeliv(fname, `Scenario: ${currentScenario.toUpperCase()}`, currentModel);
         });
-
-        // Automatically open interactive Canvas side panel if deliverable produced (like Gemini Canvas)
-        if (deliverableIds.length > 0) {
-          const { useCanvasStore } = require('./useCanvasStore');
-          useCanvasStore.getState().openCanvas(deliverableIds[0]);
-        }
       } catch {
         // Safe require fallback
       }
 
       set((state) => {
-        const newMsgs = [...state.messages, agentMsg];
+        let newMsgs: ChatMessage[];
+        if (regenId) {
+          // Replace only the specific message in-place
+          newMsgs = state.messages.map((m) => (m.id === regenId ? agentMsg : m));
+        } else {
+          newMsgs = [...state.messages, agentMsg];
+        }
+
         const updatedSessions = state.sessions.map((s) => {
           if (s.id === state.activeSessionId) {
             return { ...s, messages: newMsgs };
           }
           return s;
         });
+
         return {
           messages: newMsgs,
           sessions: updatedSessions,
           isStreaming: false,
+          regeneratingMsgId: null,
           activeTraceSteps: [],
           currentRouting: null
         };
       });
+    }
+  },
+
+  regenerateMessage: (aiMsgIndex: number) => {
+    const state = get();
+    if (state.isStreaming || aiMsgIndex < 0 || aiMsgIndex >= state.messages.length) return;
+
+    const targetMsg = state.messages[aiMsgIndex];
+    if (!targetMsg) return;
+
+    // Find the preceding user message prompt
+    let userPrompt = '';
+    for (let i = aiMsgIndex - 1; i >= 0; i--) {
+      if (state.messages[i]?.role === 'user') {
+        userPrompt = state.messages[i].content;
+        break;
+      }
+    }
+    if (!userPrompt) return;
+
+    // Keep all messages intact! Mark targetMsg as regenerating
+    set({
+      isStreaming: true,
+      regeneratingMsgId: targetMsg.id,
+      activeTraceSteps: [],
+      currentRouting: null
+    });
+
+    // Extract last 3 messages prior to this user interaction for context
+    const historyBefore = state.messages
+      .slice(0, Math.max(0, aiMsgIndex - 1))
+      .filter(m => m.content && m.content.trim().length > 0)
+      .slice(-3)
+      .map(m => ({ role: m.role, content: m.content }));
+
+    try {
+      const { socketManager } = require('@/lib/socket');
+      socketManager.sendChatTask(userPrompt, [], undefined, true, state.activeSessionId, historyBefore);
+    } catch (err) {
+      console.error('Failed to send regenerate task:', err);
+      set({ isStreaming: false, regeneratingMsgId: null });
     }
   }
 }));

@@ -18,6 +18,7 @@ import {
   FileText, 
   MessageSquare, 
   QrCode,
+  Users,
   ArrowRight
 } from 'lucide-react';
 
@@ -70,6 +71,12 @@ const subsystemTiles = [
     icon: QrCode,
     description: 'Pair evaluator devices over closed host Wi-Fi hotspot without internet gateway.'
   },
+  {
+    title: '9. Operator & User Accounts',
+    href: '/users',
+    icon: Users,
+    description: 'Provision and manage operator logins with XAMPP MySQL and air-gapped sovereign SQLite sync.'
+  },
 ];
 
 export default function WorkbenchHomePage() {
@@ -86,7 +93,7 @@ export default function WorkbenchHomePage() {
   }, [fetchModels, fetchVRAM, fetchNetworkStatus]);
 
   return (
-    <div className="flex flex-col min-h-screen bg-[#000000] text-[#ededed] font-sans">
+    <div className="flex flex-col min-h-screen bg-white text-gray-900 font-sans">
       <Header />
 
       <main className="flex-1 max-w-7xl w-full mx-auto px-6 py-6 space-y-6">
@@ -109,10 +116,10 @@ export default function WorkbenchHomePage() {
         {/* Subsystem Navigation Grid */}
         <div className="space-y-3 pt-2">
           <div className="flex items-center justify-between">
-            <h2 className="text-xs font-semibold uppercase tracking-wider text-[#888888]">
+            <h2 className="text-xs font-semibold uppercase tracking-wider text-gray-500">
               Subsystem Observatories & Modules
             </h2>
-            <span className="text-[11px] text-[#666666] font-mono">
+            <span className="text-[11px] text-gray-400 font-mono">
               Select module to open dedicated workspace
             </span>
           </div>
@@ -124,26 +131,26 @@ export default function WorkbenchHomePage() {
                 <Link
                   key={tile.href}
                   href={tile.href}
-                  className="rounded-md bg-[#0a0a0a] border border-[#262626] p-4 hover:border-[#444444] hover:bg-[#111111] transition-all group flex flex-col justify-between space-y-3 cursor-pointer"
+                  className="rounded-md bg-gray-50 border border-gray-200 p-4 hover:border-gray-300 hover:bg-gray-100 transition-all group flex flex-col justify-between space-y-3 cursor-pointer"
                 >
                   <div className="space-y-1.5">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <Icon className="w-4 h-4 text-[#888888] group-hover:text-[#ededed] transition-colors" />
-                        <h3 className="text-xs font-medium text-[#ededed] group-hover:text-white transition-colors">
+                        <Icon className="w-4 h-4 text-gray-500 group-hover:text-gray-900 transition-colors" />
+                        <h3 className="text-xs font-medium text-gray-900 group-hover:text-gray-900 transition-colors">
                           {tile.title}
                         </h3>
                       </div>
-                      <ArrowRight className="w-3.5 h-3.5 text-[#555555] group-hover:text-[#ededed] group-hover:translate-x-0.5 transition-all" />
+                      <ArrowRight className="w-3.5 h-3.5 text-gray-400 group-hover:text-gray-900 group-hover:translate-x-0.5 transition-all" />
                     </div>
-                    <p className="text-[11px] text-[#888888] leading-relaxed">
+                    <p className="text-[11px] text-gray-500 leading-relaxed">
                       {tile.description}
                     </p>
                   </div>
 
-                  <div className="pt-2 flex items-center justify-between text-[10px] font-mono border-t border-[#1f1f1f]">
-                    <span className="text-[#666666]">Path: {tile.href}</span>
-                    <span className="px-2 py-0.5 rounded bg-[#171717] border border-[#333333] text-[#ededed]">
+                  <div className="pt-2 flex items-center justify-between text-[10px] font-mono border-t border-gray-200">
+                    <span className="text-gray-400">Path: {tile.href}</span>
+                    <span className="px-2 py-0.5 rounded bg-gray-100 border border-gray-200 text-gray-900">
                       LAUNCH
                     </span>
                   </div>

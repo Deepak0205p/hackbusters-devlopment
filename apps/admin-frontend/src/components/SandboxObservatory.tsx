@@ -60,12 +60,12 @@ print(f"Pump Efficiency: {efficiency:.2f}%")
   return (
     <div className="space-y-4">
       {/* Header Banner */}
-      <div className="rounded-md bg-[#0a0a0a] border border-[#262626] p-5 space-y-1.5">
-        <div className="flex items-center gap-2 text-[#ededed]">
-          <Box className="w-4 h-4 text-[#f5a623]" />
-          <h2 className="text-sm font-semibold text-[#ededed]">Air-Gapped Docker Code Execution Sandbox</h2>
+      <div className="rounded-md bg-gray-50 border border-gray-200 p-5 space-y-1.5">
+        <div className="flex items-center gap-2 text-gray-900">
+          <Box className="w-4 h-4 text-amber-600" />
+          <h2 className="text-sm font-semibold text-gray-900">Air-Gapped Docker Code Execution Sandbox</h2>
         </div>
-        <p className="text-xs text-[#888888]">
+        <p className="text-xs text-gray-500">
           Executes untrusted engineering scripts and mathematical simulations inside hardened, zero-egress Docker micro-containers with static AST policy filters.
         </p>
       </div>
@@ -74,13 +74,13 @@ print(f"Pump Efficiency: {efficiency:.2f}%")
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
         {/* Left: Code Editor Simulator */}
         <div className="lg:col-span-7 space-y-4">
-          <div className="rounded-md bg-[#0a0a0a] border border-[#262626] p-5 space-y-4">
+          <div className="rounded-md bg-gray-50 border border-gray-200 p-5 space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-xs font-semibold text-[#ededed] flex items-center gap-2">
-                <Terminal className="w-3.5 h-3.5 text-[#f5a623]" />
+              <h3 className="text-xs font-semibold text-gray-900 flex items-center gap-2">
+                <Terminal className="w-3.5 h-3.5 text-amber-600" />
                 Python Script Runner
               </h3>
-              <span className="text-[10px] font-mono text-[#888888] px-2 py-0.5 rounded bg-[#111111] border border-[#262626]">
+              <span className="text-[10px] font-mono text-gray-500 px-2 py-0.5 rounded bg-gray-100 border border-gray-200">
                 python:3.11-slim
               </span>
             </div>
@@ -89,7 +89,7 @@ print(f"Pump Efficiency: {efficiency:.2f}%")
               value={testScript}
               onChange={(e) => setTestScript(e.target.value)}
               rows={11}
-              className="w-full rounded bg-[#000000] border border-[#262626] p-3 text-xs text-[#00e599] font-mono focus:outline-none focus:border-[#444444] transition-colors resize-none leading-relaxed"
+              className="w-full rounded bg-white border border-gray-200 p-3 text-xs text-emerald-600 font-mono focus:outline-none focus:border-gray-400 transition-colors resize-none leading-relaxed"
             />
 
             <div className="flex items-center justify-between pt-1">
@@ -97,14 +97,14 @@ print(f"Pump Efficiency: {efficiency:.2f}%")
                 <button
                   type="button"
                   onClick={() => setTestScript(`import numpy as np\n# Standard industrial code\nprint('MRPL Refinery Unit 04 OK')`)}
-                  className="px-2.5 py-1 rounded bg-[#171717] hover:bg-[#222222] border border-[#333333] text-[11px] text-[#ededed] transition-colors"
+                  className="px-2.5 py-1 rounded bg-gray-100 hover:bg-gray-200 border border-gray-200 text-[11px] text-gray-900 transition-colors"
                 >
                   Safe Code
                 </button>
                 <button
                   type="button"
                   onClick={() => setTestScript(`import socket\n# Malicious socket egress attempt\ns = socket.socket()\ns.connect(('8.8.8.8', 53))`)}
-                  className="px-2.5 py-1 rounded bg-[#171717] hover:bg-[#222222] border border-[#333333] text-[11px] text-[#e5484d] transition-colors"
+                  className="px-2.5 py-1 rounded bg-gray-100 hover:bg-gray-200 border border-gray-200 text-[11px] text-red-600 transition-colors"
                 >
                   Test Unsafe Import
                 </button>
@@ -114,7 +114,7 @@ print(f"Pump Efficiency: {efficiency:.2f}%")
                 type="button"
                 onClick={handleExecute}
                 disabled={isRunning}
-                className="px-4 py-1.5 bg-[#f5a623] hover:bg-[#e09612] disabled:opacity-50 text-black font-semibold text-xs rounded transition-colors flex items-center gap-1.5"
+                className="px-4 py-1.5 bg-amber-500 hover:bg-amber-600 disabled:opacity-50 text-black font-semibold text-xs rounded transition-colors flex items-center gap-1.5"
               >
                 <Play className="w-3.5 h-3.5 fill-black" />
                 {isRunning ? 'Running...' : 'Run in Container'}
@@ -123,29 +123,29 @@ print(f"Pump Efficiency: {efficiency:.2f}%")
           </div>
 
           {/* Security Guardrails Strip */}
-          <div className="rounded-md bg-[#0a0a0a] border border-[#262626] p-4">
-            <h4 className="text-xs font-semibold text-[#ededed] mb-3">Hardened Isolation Guardrails</h4>
+          <div className="rounded-md bg-gray-50 border border-gray-200 p-4">
+            <h4 className="text-xs font-semibold text-gray-900 mb-3">Hardened Isolation Guardrails</h4>
             <div className="grid grid-cols-3 gap-3 text-xs">
-              <div className="p-3 rounded bg-[#111111] border border-[#262626]">
-                <div className="flex items-center gap-1.5 text-[#00e599] font-medium text-[11px]">
+              <div className="p-3 rounded bg-gray-100 border border-gray-200">
+                <div className="flex items-center gap-1.5 text-emerald-600 font-medium text-[11px]">
                   <Network className="w-3.5 h-3.5" />
                   <span>Network Egress</span>
                 </div>
-                <p className="text-[11px] text-[#888888] mt-1 font-mono">--network none</p>
+                <p className="text-[11px] text-gray-500 mt-1 font-mono">--network none</p>
               </div>
-              <div className="p-3 rounded bg-[#111111] border border-[#262626]">
-                <div className="flex items-center gap-1.5 text-[#0070f3] font-medium text-[11px]">
+              <div className="p-3 rounded bg-gray-100 border border-gray-200">
+                <div className="flex items-center gap-1.5 text-blue-600 font-medium text-[11px]">
                   <HardDrive className="w-3.5 h-3.5" />
                   <span>Memory Quota</span>
                 </div>
-                <p className="text-[11px] text-[#888888] mt-1 font-mono">512 MB Max</p>
+                <p className="text-[11px] text-gray-500 mt-1 font-mono">512 MB Max</p>
               </div>
-              <div className="p-3 rounded bg-[#111111] border border-[#262626]">
-                <div className="flex items-center gap-1.5 text-[#f5a623] font-medium text-[11px]">
+              <div className="p-3 rounded bg-gray-100 border border-gray-200">
+                <div className="flex items-center gap-1.5 text-amber-600 font-medium text-[11px]">
                   <Clock className="w-3.5 h-3.5" />
                   <span>Execution Limit</span>
                 </div>
-                <p className="text-[11px] text-[#888888] mt-1 font-mono">15.0s Timeout</p>
+                <p className="text-[11px] text-gray-500 mt-1 font-mono">15.0s Timeout</p>
               </div>
             </div>
           </div>
@@ -153,17 +153,17 @@ print(f"Pump Efficiency: {efficiency:.2f}%")
 
         {/* Right: Terminal Output & Logs */}
         <div className="lg:col-span-5 space-y-4">
-          <div className="rounded-md bg-[#0a0a0a] border border-[#262626] p-5 space-y-3">
-            <div className="flex items-center justify-between border-b border-[#262626] pb-3">
-              <h3 className="text-xs font-semibold text-[#ededed] flex items-center gap-2">
-                <Terminal className="w-3.5 h-3.5 text-[#888888]" />
+          <div className="rounded-md bg-gray-50 border border-gray-200 p-5 space-y-3">
+            <div className="flex items-center justify-between border-b border-gray-200 pb-3">
+              <h3 className="text-xs font-semibold text-gray-900 flex items-center gap-2">
+                <Terminal className="w-3.5 h-3.5 text-gray-500" />
                 Container Terminal Output
               </h3>
               {executionLog && (
                 <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-medium border ${
                   executionLog.status === 'SUCCESS'
-                    ? 'bg-[#111111] text-[#00e599] border-[#262626]'
-                    : 'bg-[#111111] text-[#e5484d] border-[#262626]'
+                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                    : 'bg-red-50 text-red-700 border-red-200'
                 }`}>
                   {executionLog.status}
                 </span>
@@ -172,31 +172,31 @@ print(f"Pump Efficiency: {efficiency:.2f}%")
 
             {executionLog ? (
               <>
-                <div className="bg-[#000000] rounded p-3 border border-[#262626] font-mono text-xs text-[#ededed] min-h-[160px] whitespace-pre-wrap leading-relaxed">
+                <div className="bg-white rounded p-3 border border-gray-200 font-mono text-xs text-gray-900 min-h-[160px] whitespace-pre-wrap leading-relaxed">
                   {executionLog.stdout && <div>{executionLog.stdout}</div>}
-                  {executionLog.stderr && <div className="text-[#e5484d]">{executionLog.stderr}</div>}
+                  {executionLog.stderr && <div className="text-red-600">{executionLog.stderr}</div>}
                 </div>
 
                 <div className="space-y-2 text-xs pt-1">
-                  <div className="flex justify-between py-1 border-b border-[#1f1f1f]">
-                    <span className="text-[#888888]">AST Policy Check</span>
-                    <span className={`font-mono text-[11px] ${executionLog.status === 'SUCCESS' ? 'text-[#00e599]' : 'text-[#e5484d]'}`}>
+                  <div className="flex justify-between py-1 border-b border-gray-100">
+                    <span className="text-gray-500">AST Policy Check</span>
+                    <span className={`font-mono text-[11px] ${executionLog.status === 'SUCCESS' ? 'text-emerald-600' : 'text-red-600'}`}>
                       {executionLog.astSecurityVerdict}
                     </span>
                   </div>
-                  <div className="flex justify-between py-1 border-b border-[#1f1f1f]">
-                    <span className="text-[#888888]">Execution Runtime</span>
-                    <span className="font-mono text-[11px] text-[#ededed]">{executionLog.runtimeMs} ms</span>
+                  <div className="flex justify-between py-1 border-b border-gray-100">
+                    <span className="text-gray-500">Execution Runtime</span>
+                    <span className="font-mono text-[11px] text-gray-900">{executionLog.runtimeMs} ms</span>
                   </div>
                   <div className="flex justify-between py-1">
-                    <span className="text-[#888888]">Sandbox ID</span>
-                    <span className="font-mono text-[11px] text-[#888888]">{executionLog.containerId}</span>
+                    <span className="text-gray-500">Sandbox ID</span>
+                    <span className="font-mono text-[11px] text-gray-500">{executionLog.containerId}</span>
                   </div>
                 </div>
               </>
             ) : (
-              <div className="p-8 text-center text-xs text-[#666666] font-mono flex flex-col items-center justify-center space-y-2">
-                <Terminal className="w-6 h-6 text-[#333333]" />
+              <div className="p-8 text-center text-xs text-gray-400 font-mono flex flex-col items-center justify-center space-y-2">
+                <Terminal className="w-6 h-6 text-gray-300" />
                 <p>No container execution initiated. Click "Run in Container" to execute Python script in sandbox.</p>
               </div>
             )}

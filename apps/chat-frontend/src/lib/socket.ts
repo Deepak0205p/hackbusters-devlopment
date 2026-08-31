@@ -102,11 +102,34 @@ class WebSocketClientManager {
   /**
    * Submits a prompt, optional attachments, and role over ws://<host>:8000/api/chat/stream
    */
-  public sendChatTask(prompt: string, attachments: any[] = [], role?: string) {
+  public sendChatTask(
+    prompt: string,
+    attachments: any[] = [],
+    role?: string,
+    force_refresh: boolean = false,
+    session_id?: string,
+    history?: { role: string; content: string }[]
+  ) {
     const wsUrl = `${this.getWsBaseUrl()}/api/chat/stream`;
 
     const chatStore = useChatStore.getState();
     chatStore.setStreaming(true);
+    const activeSessionId = session_id || chatStore.activeSessionId;
+
+    // Capture up to 3 prior messages for conversational memory context (excluding current prompt if already added)
+    const allMsgs = chatStore.messages.filter(m => m.content && m.content.trim().length > 0);
+    const priorMsgs = (allMsgs.length > 0 && allMsgs[allMsgs.length - 1].content === prompt && allMsgs[allMsgs.length - 1].role === 'user')
+      ? allMsgs.slice(0, -1)
+      : allMsgs;
+
+    const chatHistory = history ?? (
+      priorMsgs
+        .slice(-3)
+        .map(m => ({
+          role: m.role,
+          content: m.content
+        }))
+    );
 
     let wsConnected = false;
 
@@ -119,7 +142,14 @@ class WebSocketClientManager {
 
       this.chatWs.onopen = () => {
         wsConnected = true;
-        this.chatWs?.send(JSON.stringify({ prompt, attachments, role }));
+        this.chatWs?.send(JSON.stringify({
+          prompt,
+          attachments,
+          role,
+          force_refresh,
+          session_id: activeSessionId,
+          history: chatHistory
+        }));
       };
 
       this.chatWs.onmessage = (event) => {

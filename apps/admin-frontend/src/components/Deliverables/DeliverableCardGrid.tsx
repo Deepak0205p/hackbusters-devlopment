@@ -9,10 +9,10 @@ import { Button } from '@/components/ui/button';
 import { FileText, FileSpreadsheet, Presentation, Code2, Download, Eye } from 'lucide-react';
 
 const typeIconMap = {
-  docx: <FileText className="h-5 w-5 text-[#0070f3]" />,
-  xlsx: <FileSpreadsheet className="h-5 w-5 text-[#00e599]" />,
-  pptx: <Presentation className="h-5 w-5 text-[#f5a623]" />,
-  py: <Code2 className="h-5 w-5 text-[#0070f3]" />,
+  docx: <FileText className="h-5 w-5 text-blue-600" />,
+  xlsx: <FileSpreadsheet className="h-5 w-5 text-emerald-600" />,
+  pptx: <Presentation className="h-5 w-5 text-amber-600" />,
+  py: <Code2 className="h-5 w-5 text-blue-600" />,
 };
 
 export function DeliverableCardGrid() {
@@ -29,7 +29,7 @@ export function DeliverableCardGrid() {
 
   if (filtered.length === 0) {
     return (
-      <Card className="border-[#262626] bg-[#111111] p-12 text-center text-xs text-[#666666] min-h-[180px] flex items-center justify-center">
+      <Card className="border-gray-200 bg-gray-100 p-12 text-center text-xs text-gray-400 min-h-[180px] flex items-center justify-center">
         No deliverables matching current filters.
       </Card>
     );
@@ -45,18 +45,18 @@ export function DeliverableCardGrid() {
           animate={{ opacity: 1, transform: "scale(1) translateY(0px)" }}
           transition={{ type: "spring", stiffness: 120, damping: 20, delay: idx * 0.05 }}
         >
-          <Card className="border-[#262626] bg-[#111111] hover:border-[#333333] transition-colors flex flex-col justify-between h-full min-h-[260px]">
+          <Card className="border-gray-200 bg-gray-100 hover:border-gray-300 transition-colors flex flex-col justify-between h-full min-h-[260px]">
             <CardHeader className="pb-2">
               <div className="flex items-start justify-between gap-2">
                 <div className="flex items-center space-x-2.5">
-                  <div className="p-2 rounded bg-[#171717] border border-[#262626]">
+                  <div className="p-2 rounded bg-gray-200 border border-gray-200">
                     {typeIconMap[item.type]}
                   </div>
                   <div>
-                    <CardTitle className="text-xs font-semibold text-[#ededed] line-clamp-1">
+                    <CardTitle className="text-xs font-semibold text-gray-900 line-clamp-1">
                       {item.filename}
                     </CardTitle>
-                    <span className="text-[11px] font-mono text-[#888888]">
+                    <span className="text-[11px] font-mono text-gray-500">
                       {item.size_formatted} &bull; {item.generated_timestamp}
                     </span>
                   </div>
@@ -71,38 +71,38 @@ export function DeliverableCardGrid() {
                 <Badge variant="secondary" className="text-[10px]">
                   {item.source_scenario}
                 </Badge>
-                <Badge variant="outline" className="text-[10px] text-[#888888]">
+                <Badge variant="outline" className="text-[10px] text-gray-500">
                   {item.source_requirement}
                 </Badge>
               </div>
             </CardHeader>
 
             <CardContent className="py-2 text-xs space-y-2">
-              <CardDescription className="text-xs text-[#888888] line-clamp-2 min-h-[32px]">
+              <CardDescription className="text-xs text-gray-500 line-clamp-2 min-h-[32px]">
                 {item.summary}
               </CardDescription>
 
-              <div className="p-2 rounded bg-[#0a0a0a] border border-[#262626] text-[11px] font-mono space-y-1">
-                <div className="flex items-center justify-between text-[#666666]">
+              <div className="p-2 rounded bg-gray-50 border border-gray-200 text-[11px] font-mono space-y-1">
+                <div className="flex items-center justify-between text-gray-400">
                   <span>Model:</span>
-                  <span className="text-[#ededed]">{item.generating_model}</span>
+                  <span className="text-gray-900">{item.generating_model}</span>
                 </div>
-                <div className="flex items-center justify-between text-[#666666]">
+                <div className="flex items-center justify-between text-gray-400">
                   <span>SHA-256:</span>
-                  <span className="text-[#888888]" title={item.sha256_hash}>
+                  <span className="text-gray-500" title={item.sha256_hash}>
                     {item.sha256_hash.substring(0, 10)}...
                   </span>
                 </div>
               </div>
             </CardContent>
 
-            <CardFooter className="pt-2 border-t border-[#262626]/60 flex items-center justify-between mt-2 min-h-[52px]">
+            <CardFooter className="pt-2 border-t border-gray-200/60 flex items-center justify-between mt-2 min-h-[52px]">
               {/* 44px touch targets */}
               <Button
                 size="sm"
                 variant="ghost"
                 onClick={() => selectDeliverable(item.id)}
-                className="min-h-[44px] h-9 px-3 text-xs text-[#888888] hover:text-[#ededed] active:scale-[0.97] transition-transform"
+                className="min-h-[44px] h-9 px-3 text-xs text-gray-500 hover:text-gray-900 active:scale-[0.97] transition-transform"
               >
                 <Eye className="h-3.5 w-3.5 mr-1" />
                 <span>Preview</span>

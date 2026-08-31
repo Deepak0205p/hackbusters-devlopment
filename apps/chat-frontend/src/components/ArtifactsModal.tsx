@@ -165,7 +165,7 @@ export function ArtifactsModal({ isOpen, onClose }: ArtifactsModalProps) {
                         : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-[#8e918f] dark:hover:bg-[#121215] dark:hover:text-[#c4c7c5]'
                     }`}
                   >
-                    {t.toUpperCase()}
+                    {t === 'py' ? 'CODE' : t.toUpperCase()}
                   </button>
                 ))}
               </div>

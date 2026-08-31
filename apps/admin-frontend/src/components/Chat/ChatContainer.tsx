@@ -34,9 +34,9 @@ export function ChatContainer() {
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="flex items-center space-x-2 py-2 text-xs font-mono text-[#888888]"
+          className="flex items-center space-x-2 py-2 text-xs font-mono text-gray-500"
         >
-          <span className="h-2 w-2 rounded-full bg-[#0070f3] animate-pulse" />
+          <span className="h-2 w-2 rounded-full bg-blue-600 animate-pulse" />
           <span>Agent reasoning & executing tools in Docker sandbox...</span>
         </motion.div>
       )}

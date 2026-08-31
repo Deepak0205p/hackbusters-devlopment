@@ -25,8 +25,8 @@ export function DeliverableFilterToolbar() {
             onClick={() => setFilterType(btn.id)}
             className={`px-2.5 py-1 rounded text-xs font-medium transition-colors ${
               filterType === btn.id
-                ? 'bg-[#1f1f1f] text-white border border-[#333333]'
-                : 'text-[#888888] hover:text-[#ededed] hover:bg-[#141414]'
+                ? 'bg-gray-200 text-gray-900 border border-gray-300'
+                : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100'
             }`}
           >
             {btn.label}
@@ -36,13 +36,13 @@ export function DeliverableFilterToolbar() {
 
       {/* Search Input */}
       <div className="relative">
-        <Search className="h-3.5 w-3.5 absolute left-2.5 top-2 text-[#666666]" />
+        <Search className="h-3.5 w-3.5 absolute left-2.5 top-2 text-gray-400" />
         <input
           type="text"
           placeholder="Search deliverables..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="h-7 pl-8 pr-3 rounded bg-[#0a0a0a] border border-[#262626] text-[11px] text-[#ededed] placeholder:text-[#666666] focus:outline-none focus:border-[#0070f3]"
+          className="h-7 pl-8 pr-3 rounded bg-gray-50 border border-gray-200 text-[11px] text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-blue-600"
         />
       </div>
     </div>

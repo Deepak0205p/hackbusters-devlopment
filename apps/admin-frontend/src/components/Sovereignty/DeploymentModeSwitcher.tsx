@@ -31,10 +31,10 @@ export function DeploymentModeSwitcher() {
   ];
 
   return (
-    <Card className="border-[#262626] bg-[#111111]">
-      <CardHeader className="py-2.5 px-4 border-b border-[#262626]">
+    <Card className="border-gray-200 bg-gray-100">
+      <CardHeader className="py-2.5 px-4 border-b border-gray-200">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-xs font-semibold text-[#ededed]">
+          <CardTitle className="text-xs font-semibold text-gray-900">
             Deployment Mode &amp; Access Topology
           </CardTitle>
           <Badge variant="active" className="font-mono text-[10px]">
@@ -52,23 +52,23 @@ export function DeploymentModeSwitcher() {
                 key={m.id}
                 onClick={() => setDeploymentMode(m.id)}
                 /* WCAG Priority 1: High-visibility focus ring + 44px min touch height + :active scale */
-                className={`p-3.5 rounded-md border text-left transition-all flex flex-col justify-between min-h-[96px] focus-visible:ring-2 focus-visible:ring-[#0070f3] focus-visible:outline-none focus-visible:ring-offset-2 focus-visible:ring-offset-black active:scale-[0.98] ${
+                className={`p-3.5 rounded-md border text-left transition-all flex flex-col justify-between min-h-[96px] focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:outline-none focus-visible:ring-offset-2 focus-visible:ring-offset-white active:scale-[0.98] ${
                   isSelected
-                    ? 'border-[#0070f3] bg-[#0070f3]/10 text-white shadow-sm'
-                    : 'border-[#262626] bg-[#0a0a0a] text-[#888888] hover:border-[#333333] hover:text-[#ededed]'
+                    ? 'border-blue-600 bg-blue-50 text-gray-900 shadow-sm'
+                    : 'border-gray-200 bg-gray-50 text-gray-500 hover:border-gray-300 hover:text-gray-900'
                 }`}
               >
                 <div className="flex items-center space-x-2">
-                  <span className={isSelected ? 'text-[#0070f3]' : 'text-[#666666]'}>
+                  <span className={isSelected ? 'text-blue-600' : 'text-gray-400'}>
                     {m.icon}
                   </span>
-                  <span className="text-xs font-semibold text-[#ededed]">{m.title}</span>
+                  <span className="text-xs font-semibold text-gray-900">{m.title}</span>
                 </div>
-                <p className="text-[11px] text-[#888888] mt-1 leading-snug">
+                <p className="text-[11px] text-gray-500 mt-1 leading-snug">
                   {m.desc}
                 </p>
-                <div className="mt-2 pt-2 border-t border-[#262626]/60 font-mono text-[10px] text-[#666666]">
-                  Active URL: <span className="text-[#ededed]">http://{isSelected ? hostIp : '...'}:{port}</span>
+                <div className="mt-2 pt-2 border-t border-gray-200/60 font-mono text-[10px] text-gray-400">
+                  Active URL: <span className="text-gray-900">http://{isSelected ? hostIp : '...'}:{port}</span>
                 </div>
               </button>
             );

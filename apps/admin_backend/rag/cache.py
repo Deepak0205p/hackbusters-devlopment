@@ -2,15 +2,38 @@ import os
 import re
 import time
 import json
-import sqlite3
 import hashlib
 from typing import Optional, Dict, Any, List
 from pydantic import BaseModel
+import pymysql
+import pymysql.cursors
 
 BASE_DATA_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", "data"))
-CACHE_DB_PATH = os.path.join(BASE_DATA_DIR, "response_cache.db")
 MRPL_DOCS_DIR = os.path.join(BASE_DATA_DIR, "mrpl_documents")
 ONGC_POLICIES_DIR = os.path.join(BASE_DATA_DIR, "ongc_policies")
+
+# MySQL (XAMPP) Configuration
+MYSQL_HOST = os.environ.get("MYSQL_HOST", "127.0.0.1")
+MYSQL_PORT = int(os.environ.get("MYSQL_PORT", "3306"))
+MYSQL_USER = os.environ.get("MYSQL_USER", "root")
+MYSQL_PASSWORD = os.environ.get("MYSQL_PASSWORD", "")
+MYSQL_DATABASE = os.environ.get("MYSQL_DATABASE", "mrpl_reveal_auth")
+
+def get_mysql_cache_connection():
+    """Connect to XAMPP MySQL database for caching layer."""
+    conn = pymysql.connect(
+        host=MYSQL_HOST,
+        port=MYSQL_PORT,
+        user=MYSQL_USER,
+        password=MYSQL_PASSWORD,
+        charset='utf8mb4',
+        cursorclass=pymysql.cursors.DictCursor,
+        autocommit=True
+    )
+    with conn.cursor() as cursor:
+        cursor.execute(f"CREATE DATABASE IF NOT EXISTS `{MYSQL_DATABASE}` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;")
+    conn.select_db(MYSQL_DATABASE)
+    return conn
 
 class CachedResponse(BaseModel):
     model_config = {'protected_namespaces': ()}
@@ -32,41 +55,40 @@ class CachedResponse(BaseModel):
 
 class ResponseCacheLayer:
     """
-    High-performance local air-gapped Response Caching Layer using SQLite.
+    High-performance local air-gapped Response Caching Layer using MySQL (XAMPP / Prisma).
     Stores synthesized answers, citations, and metadata keyed by normalized query hashes.
     Features TTL expiration and automated source-document modification invalidation.
     """
-    def __init__(self, db_path: str = CACHE_DB_PATH, default_ttl_seconds: int = 86400):
-        self.db_path = db_path
+    def __init__(self, default_ttl_seconds: int = 86400):
         self.default_ttl = default_ttl_seconds
-        os.makedirs(os.path.dirname(self.db_path), exist_ok=True)
-        self._conn = sqlite3.connect(self.db_path, timeout=10.0, check_same_thread=False)
-        self._conn.execute("PRAGMA journal_mode=WAL;")
-        self._conn.execute("PRAGMA synchronous=NORMAL;")
-        self._conn.row_factory = sqlite3.Row
         self._init_db()
 
     def _init_db(self):
-        with self._conn:
-            self._conn.execute("""
-                CREATE TABLE IF NOT EXISTS response_cache (
-                    query_hash TEXT PRIMARY KEY,
-                    raw_query TEXT NOT NULL,
-                    normalized_query TEXT NOT NULL,
-                    final_answer TEXT NOT NULL,
-                    citations_json TEXT NOT NULL,
-                    domain TEXT NOT NULL,
-                    model_id TEXT NOT NULL,
-                    display_model TEXT NOT NULL,
-                    deliverable_ids_json TEXT NOT NULL,
-                    source_mtime REAL NOT NULL,
-                    created_at REAL NOT NULL,
-                    last_accessed_at REAL NOT NULL,
-                    hit_count INTEGER DEFAULT 1
-                );
-            """)
-            self._conn.execute("CREATE INDEX IF NOT EXISTS idx_cache_norm_query ON response_cache(normalized_query);")
-            self._conn.execute("CREATE INDEX IF NOT EXISTS idx_cache_created ON response_cache(created_at);")
+        try:
+            conn = get_mysql_cache_connection()
+            with conn.cursor() as cur:
+                cur.execute("""
+                    CREATE TABLE IF NOT EXISTS response_cache (
+                        query_hash VARCHAR(64) PRIMARY KEY,
+                        raw_query TEXT NOT NULL,
+                        normalized_query VARCHAR(512) NOT NULL,
+                        final_answer LONGTEXT NOT NULL,
+                        citations_json LONGTEXT NOT NULL,
+                        domain VARCHAR(64) NOT NULL,
+                        model_id VARCHAR(64) NOT NULL,
+                        display_model VARCHAR(128) NOT NULL,
+                        deliverable_ids_json TEXT NOT NULL,
+                        source_mtime DOUBLE NOT NULL,
+                        created_at DOUBLE NOT NULL,
+                        last_accessed_at DOUBLE NOT NULL,
+                        hit_count INT DEFAULT 1,
+                        INDEX idx_cache_norm_query (normalized_query),
+                        INDEX idx_cache_created (created_at)
+                    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+                """)
+            conn.close()
+        except Exception as e:
+            print(f"[RESPONSE_CACHE] MySQL initialization notice: {e}")
 
     def normalize_query(self, query: str) -> str:
         """Normalizes query text: lowercase, trimmed, collapsed whitespace, punctuation-trimmed."""
@@ -97,7 +119,7 @@ class ResponseCacheLayer:
 
     def get(self, raw_query: str, max_age_seconds: Optional[int] = None) -> Optional[CachedResponse]:
         """
-        Checks cache for an existing answer.
+        Checks cache for an existing answer in MySQL.
         Validates both TTL and source-document timestamp.
         """
         norm_query = self.normalize_query(raw_query)
@@ -107,29 +129,36 @@ class ResponseCacheLayer:
         now = time.time()
         current_source_mtime = self.get_source_documents_max_mtime()
 
-        with self._conn:
-            cursor = self._conn.execute("SELECT * FROM response_cache WHERE query_hash = ?", (q_hash,))
-            row = cursor.fetchone()
-            if not row:
-                return None
+        try:
+            conn = get_mysql_cache_connection()
+            with conn.cursor() as cur:
+                cur.execute("SELECT * FROM response_cache WHERE query_hash = %s", (q_hash,))
+                row = cur.fetchone()
+                if not row:
+                    conn.close()
+                    return None
 
-            # 1. TTL Invalidation Check
-            age = now - row["created_at"]
-            if age >= ttl:
-                self._conn.execute("DELETE FROM response_cache WHERE query_hash = ?", (q_hash,))
-                return None
+                # 1. TTL Invalidation Check
+                age = now - float(row["created_at"])
+                if age >= ttl:
+                    cur.execute("DELETE FROM response_cache WHERE query_hash = %s", (q_hash,))
+                    conn.close()
+                    return None
 
-            # 2. Source Document Change Invalidation Check
-            if current_source_mtime > row["source_mtime"]:
-                self._conn.execute("DELETE FROM response_cache WHERE query_hash = ?", (q_hash,))
-                return None
+                # 2. Source Document Change Invalidation Check
+                if current_source_mtime > float(row["source_mtime"]):
+                    cur.execute("DELETE FROM response_cache WHERE query_hash = %s", (q_hash,))
+                    conn.close()
+                    return None
 
-            # Update hit count and last_accessed_at
-            self._conn.execute("""
-                UPDATE response_cache
-                SET hit_count = hit_count + 1, last_accessed_at = ?
-                WHERE query_hash = ?
-            """, (now, q_hash))
+                # Update hit count and last_accessed_at
+                cur.execute("""
+                    UPDATE response_cache
+                    SET hit_count = hit_count + 1, last_accessed_at = %s
+                    WHERE query_hash = %s
+                """, (now, q_hash))
+
+            conn.close()
 
             try:
                 citations = json.loads(row["citations_json"])
@@ -151,12 +180,15 @@ class ResponseCacheLayer:
                 model_id=row["model_id"],
                 display_model=row["display_model"],
                 deliverable_ids=deliverables,
-                source_mtime=row["source_mtime"],
-                created_at=row["created_at"],
+                source_mtime=float(row["source_mtime"]),
+                created_at=float(row["created_at"]),
                 last_accessed_at=now,
-                hit_count=row["hit_count"] + 1,
+                hit_count=int(row["hit_count"]) + 1,
                 is_cached=True
             )
+        except Exception as e:
+            print(f"[RESPONSE_CACHE] MySQL get error: {e}")
+            return None
 
     def set(
         self,
@@ -175,29 +207,34 @@ class ResponseCacheLayer:
         cit_json = json.dumps(citations or [])
         deliv_json = json.dumps(deliverable_ids or [])
 
-        with self._conn:
-            self._conn.execute("""
-                INSERT INTO response_cache (
-                    query_hash, raw_query, normalized_query, final_answer,
-                    citations_json, domain, model_id, display_model,
-                    deliverable_ids_json, source_mtime, created_at, last_accessed_at, hit_count
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)
-                ON CONFLICT(query_hash) DO UPDATE SET
-                    final_answer = excluded.final_answer,
-                    citations_json = excluded.citations_json,
-                    domain = excluded.domain,
-                    model_id = excluded.model_id,
-                    display_model = excluded.display_model,
-                    deliverable_ids_json = excluded.deliverable_ids_json,
-                    source_mtime = excluded.source_mtime,
-                    created_at = excluded.created_at,
-                    last_accessed_at = excluded.last_accessed_at,
-                    hit_count = hit_count + 1
-            """, (
-                q_hash, raw_query, norm_query, final_answer,
-                cit_json, domain, model_id, display_model,
-                deliv_json, source_mtime, now, now
-            ))
+        try:
+            conn = get_mysql_cache_connection()
+            with conn.cursor() as cur:
+                cur.execute("""
+                    INSERT INTO response_cache (
+                        query_hash, raw_query, normalized_query, final_answer,
+                        citations_json, domain, model_id, display_model,
+                        deliverable_ids_json, source_mtime, created_at, last_accessed_at, hit_count
+                    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 1)
+                    ON DUPLICATE KEY UPDATE
+                        final_answer = VALUES(final_answer),
+                        citations_json = VALUES(citations_json),
+                        domain = VALUES(domain),
+                        model_id = VALUES(model_id),
+                        display_model = VALUES(display_model),
+                        deliverable_ids_json = VALUES(deliverable_ids_json),
+                        source_mtime = VALUES(source_mtime),
+                        created_at = VALUES(created_at),
+                        last_accessed_at = VALUES(last_accessed_at),
+                        hit_count = hit_count + 1;
+                """, (
+                    q_hash, raw_query, norm_query, final_answer,
+                    cit_json, domain, model_id, display_model,
+                    deliv_json, source_mtime, now, now
+                ))
+            conn.close()
+        except Exception as e:
+            print(f"[RESPONSE_CACHE] MySQL set error: {e}")
 
         return CachedResponse(
             query_hash=q_hash,
@@ -217,17 +254,33 @@ class ResponseCacheLayer:
         )
 
     def clear(self):
-        with self._conn:
-            self._conn.execute("DELETE FROM response_cache;")
+        try:
+            conn = get_mysql_cache_connection()
+            with conn.cursor() as cur:
+                cur.execute("DELETE FROM response_cache;")
+            conn.close()
+        except Exception as e:
+            print(f"[RESPONSE_CACHE] MySQL clear error: {e}")
 
     def get_stats(self) -> Dict[str, Any]:
-        with self._conn:
-            cursor = self._conn.execute("SELECT COUNT(*), SUM(hit_count) FROM response_cache;")
-            count, total_hits = cursor.fetchone()
+        try:
+            conn = get_mysql_cache_connection()
+            with conn.cursor() as cur:
+                cur.execute("SELECT COUNT(*) as cnt, SUM(hit_count) as total_hits FROM response_cache;")
+                res = cur.fetchone()
+                count = int(res['cnt']) if res and res.get('cnt') else 0
+                total_hits = int(res['total_hits']) if res and res.get('total_hits') else 0
+            conn.close()
             return {
-                "total_cached_queries": count or 0,
-                "total_cache_hits": (total_hits or 0) - (count or 0),
-                "db_path": self.db_path
+                "total_cached_queries": count,
+                "total_cache_hits": max(0, total_hits - count),
+                "database": f"MySQL (XAMPP / {MYSQL_DATABASE})"
+            }
+        except Exception as e:
+            return {
+                "total_cached_queries": 0,
+                "total_cache_hits": 0,
+                "database": f"MySQL (XAMPP / {MYSQL_DATABASE})"
             }
 
 # Global Singleton

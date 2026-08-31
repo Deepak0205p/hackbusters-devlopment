@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useChatStore } from '@/store/useChatStore';
@@ -37,7 +37,8 @@ import {
   ArrowLeft,
   Search,
   Sun,
-  Moon
+  Moon,
+  RotateCcw
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useDeliverableStore } from '@/store/useDeliverableStore';
@@ -49,6 +50,10 @@ import { useCanvasStore } from '@/store/useCanvasStore';
 import { DocumentCanvasPanel } from '@/components/canvas/DocumentCanvasPanel';
 import { AppSidebar } from '@/components/sidebar/AppSidebar';
 import { useSidebarStore } from '@/store/useSidebarStore';
+import { useAuthStore } from '@/store/useAuthStore';
+import { LoginPage } from '@/components/auth/LoginPage';
+import { MarkdownContent } from '@/components/chat/MarkdownContent';
+import { PerplexityReasoningAccordion } from '@/components/chat/PerplexityReasoningAccordion';
 
 // Ultra-Modern Fluent / Glowing Brand 3D-Style Icon Components
 function ExcelIcon({ className = "h-7 w-7" }: { className?: string }) {
@@ -427,13 +432,16 @@ function CustomTooltip({
 }
 
 export default function GeminiReplicaChatApp() {
+  const router = useRouter();
   const {
     sessions,
     activeSessionId,
     isStreaming,
+    regeneratingMsgId,
     currentInput,
     createNewChat,
     selectSession,
+    fetchUserSessions,
     setCurrentInput,
     addMessage,
     setStreaming,
@@ -445,6 +453,7 @@ export default function GeminiReplicaChatApp() {
   const [isListening, setIsListening] = useState(false);
   const recognitionRef = useRef<any>(null);
   const speechBaseTextRef = useRef<string>('');
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -453,9 +462,28 @@ export default function GeminiReplicaChatApp() {
   const messages = activeSession ? activeSession.messages : [];
   const hasMessages = messages.length > 0;
 
+  const lastUserMsgRef = useRef<HTMLDivElement>(null);
+
+  // Auto-Scroll to keep latest query & live thinking steps right in comfortable view
+  const scrollToActive = useCallback((behavior: ScrollBehavior = 'smooth') => {
+    if (isStreaming && lastUserMsgRef.current) {
+      lastUserMsgRef.current.scrollIntoView({ behavior, block: 'start' });
+    } else if (bottomRef.current) {
+      bottomRef.current.scrollIntoView({ behavior, block: 'end' });
+    }
+  }, [isStreaming]);
+
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, isStreaming, activeTraceSteps]);
+    if (hasMessages) {
+      scrollToActive('smooth');
+      const timer = setTimeout(() => scrollToActive('smooth'), 80);
+      const timer2 = setTimeout(() => scrollToActive('smooth'), 250);
+      return () => {
+        clearTimeout(timer);
+        clearTimeout(timer2);
+      };
+    }
+  }, [messages.length, isStreaming, activeTraceSteps.length, scrollToActive, hasMessages]);
 
   // Cleanup speech recognition on unmount
   useEffect(() => {
@@ -602,6 +630,8 @@ export default function GeminiReplicaChatApp() {
     });
 
     socketManager.sendChatTask(prompt, []);
+    scrollToActive('smooth');
+    setTimeout(() => scrollToActive('smooth'), 60);
   };
 
   const handleStop = () => {
@@ -621,6 +651,12 @@ export default function GeminiReplicaChatApp() {
       setCopiedId(id);
       setTimeout(() => setCopiedId(null), 2000);
     }
+  };
+
+  const handleRegenerate = (msgIndex: number) => {
+    useChatStore.getState().regenerateMessage(msgIndex);
+    scrollToActive('smooth');
+    setTimeout(() => scrollToActive('smooth'), 60);
   };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -686,9 +722,34 @@ export default function GeminiReplicaChatApp() {
     { id: 'ocr', label: 'OCR', icon: <OCRIcon className="h-6 w-6" />, color: 'text-purple-400', glow: 'shadow-purple-500/20', border: 'border-purple-400/60' },
   ];
 
+  const { user, isAuthenticated, isLoading: isAuthLoading, initialize: initAuth } = useAuthStore();
+
+  useEffect(() => {
+    initAuth();
+  }, [initAuth]);
+
+  useEffect(() => {
+    if (!isAuthLoading && !isAuthenticated) {
+      router.replace('/login');
+    }
+  }, [isAuthLoading, isAuthenticated, router]);
+
   const filteredSessions = searchQuery.trim()
     ? sessions.filter(s => s.title?.toLowerCase().includes(searchQuery.toLowerCase()) || s.messages.some(m => m.content.toLowerCase().includes(searchQuery.toLowerCase())))
     : sessions;
+
+  if (isAuthLoading || !isAuthenticated) {
+    return (
+      <div className="flex h-screen w-screen items-center justify-center bg-[#070709] text-white">
+        <div className="flex flex-col items-center space-y-3">
+          <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+          <span className="text-xs font-mono text-slate-400">
+            {isAuthLoading ? 'Initializing Sovereign Security Context...' : 'Redirecting to Operator Login (/login)...'}
+          </span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-screen h-[100dvh] w-screen overflow-hidden bg-white text-slate-900 dark:bg-[#000000] dark:text-[#e3e3e3] font-sans antialiased selection:bg-blue-500/20 dark:selection:bg-[#4285f4]/30">
@@ -993,7 +1054,10 @@ export default function GeminiReplicaChatApp() {
                   {theme === 'dark' ? <Sun className="h-4 w-4 text-amber-400" /> : <Moon className="h-4 w-4 text-blue-600" />}
                 </button>
                 <button
-                  onClick={createNewChat}
+                  onClick={async () => {
+                    const newId = await createNewChat(user?.username || 'operator');
+                    router.push(`/chat/${newId}`);
+                  }}
                   aria-label="New chat"
                   className="h-9 w-9 rounded-full bg-blue-50 hover:bg-blue-100 active:scale-95 border border-blue-200 text-blue-700 dark:bg-[#1e1f20] dark:hover:bg-[#282a2c] dark:border-[#3c4043]/40 dark:text-[#a8c7fa] flex items-center justify-center transition-all shadow-xs cursor-pointer"
                 >
@@ -1003,14 +1067,18 @@ export default function GeminiReplicaChatApp() {
             </header>
 
             {/* Conversational Scroll Area */}
-            <div className={`flex-1 min-h-0 px-3 sm:px-6 pt-2 pb-2 flex flex-col z-10 ${hasMessages ? 'overflow-y-auto' : 'overflow-hidden'}`}>
+            <div ref={scrollContainerRef} className={`flex-1 min-h-0 px-3 sm:px-6 pt-2 pb-2 flex flex-col z-10 ${hasMessages ? 'overflow-y-auto' : 'overflow-hidden'}`}>
               {hasMessages ? (
                 <div className="max-w-3xl w-full mx-auto space-y-5 sm:space-y-6 py-3 sm:py-4">
-                  {messages.map((msg) => {
+                  {messages.map((msg, idx) => {
                     const isUser = msg.role === 'user';
+                    const isLastUser = isUser && (idx === messages.length - 1 || idx === messages.length - 2);
+                    const isThisMsgRegenerating = !isUser && isStreaming && msg.id === regeneratingMsgId;
+
                     return (
                       <motion.div
                         key={msg.id}
+                        ref={isLastUser ? lastUserMsgRef : undefined}
                         initial={{ opacity: 0, y: 8 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.25, ease: [0.2, 0, 0, 1] }}
@@ -1020,112 +1088,172 @@ export default function GeminiReplicaChatApp() {
                       >
                         {!isUser && (
                           <div className="h-7 w-7 sm:h-8 sm:w-8 rounded-full bg-blue-50 border border-blue-200 dark:bg-[#1e1f20] dark:border-[#a8c7fa]/30 flex items-center justify-center shrink-0 shadow-xs mt-0.5">
-                            <RevealLogoIcon className="h-4 w-4 sm:h-4.5 sm:w-4.5" animated={false} />
+                            <RevealLogoIcon className="h-4 w-4 sm:h-4.5 sm:w-4.5" animated={isThisMsgRegenerating} />
                           </div>
                         )}
 
-                        <div className={`flex flex-col space-y-1.5 max-w-[88%] sm:max-w-3xl ${
-                          isUser ? 'items-end' : 'items-start flex-1 min-w-0'
-                        }`}>
-                          <div className="flex items-center space-x-2 text-[10px] sm:text-[11px] text-slate-500 dark:text-[#8e918f]">
-                            <span className="font-semibold text-slate-700 dark:text-[#c4c7c5]">{isUser ? 'You' : (msg.model_id ? `${msg.model_id}` : 'REVEAL 2.0')}</span>
-                            <span>&bull;</span>
-                            <span>{msg.timestamp}</span>
-                          </div>
+                        {isThisMsgRegenerating ? (
+                          <div className="flex flex-col space-y-2 max-w-[88%] sm:max-w-3xl flex-1 min-w-0">
+                            <PerplexityReasoningAccordion
+                              steps={
+                                activeTraceSteps.length > 0
+                                  ? activeTraceSteps
+                                  : [{ id: 'init-step', content: 'Reworking parameters & retrieving operational context...', type: 'thought', duration_ms: 20 }]
+                              }
+                              isStreaming={true}
+                            />
 
-                          {/* Reasoning/Thinking Accordion */}
-                          {!isUser && msg.trace_steps && msg.trace_steps.length > 0 && (
-                            <ChatThinkingAccordion steps={msg.trace_steps} />
-                          )}
+                            {/* In-Place Live Response Card */}
+                            <div className="w-full rounded-2xl sm:rounded-3xl bg-white border border-slate-200/90 shadow-[0_2px_16px_rgba(0,0,0,0.03),0_8px_32px_rgba(0,0,0,0.03)] dark:bg-[#101116] dark:border-white/[0.08] dark:shadow-[0_4px_32px_rgba(0,0,0,0.6)] p-5 sm:p-6 transition-all relative overflow-hidden space-y-3">
+                              <div className="absolute top-0 inset-x-0 h-[1.5px] bg-gradient-to-r from-transparent via-blue-500/50 to-transparent" />
+                              
+                              <div className="flex items-center space-x-2.5 text-xs text-blue-600 dark:text-blue-400 font-medium">
+                                <div className="h-2 w-2 rounded-full bg-blue-600 dark:bg-blue-400 animate-ping shrink-0" />
+                                <span>Reworking response in real-time...</span>
+                              </div>
 
-                          {/* Message Body Bubble */}
-                          <div
-                            className={`text-[14px] sm:text-[15px] leading-relaxed whitespace-pre-wrap select-text break-words overflow-hidden ${
-                              isUser
-                                ? 'px-3.5 sm:px-4 py-2.5 sm:py-3 rounded-2xl bg-slate-100 text-slate-900 border border-slate-200 shadow-xs dark:bg-[#1e1f20] dark:text-[#e3e3e3] dark:border-[#2e2f33]'
-                                : 'text-slate-800 dark:text-[#e3e3e3] w-full font-sans'
-                            }`}
-                          >
-                            {msg.content}
-                          </div>
-
-                          {/* Generated Deliverables Interactive Badges */}
-                          {msg.deliverable_ids && msg.deliverable_ids.length > 0 && (
-                            <div className="pt-2 flex flex-wrap gap-2 w-full">
-                              {msg.deliverable_ids.map((deliv) => (
-                                <div
-                                  key={deliv}
-                                  className="flex items-center space-x-2 px-3 py-2 rounded-xl bg-white hover:bg-slate-50 border border-slate-200 text-xs text-slate-900 font-medium transition-all group shadow-xs dark:bg-[#121215] dark:hover:bg-[#19191e] dark:border-[#2a2a32] dark:text-[#e3e3e3] w-full sm:w-auto"
-                                >
-                                  <button
-                                    onClick={() => openCanvas(deliv)}
-                                    className="flex items-center space-x-2 text-left truncate flex-1 hover:text-blue-600 dark:hover:text-[#a8c7fa] transition-colors cursor-pointer"
-                                    title="Open & Edit Live in Interactive Workspace"
-                                  >
-                                    <Sparkles className="h-4 w-4 text-blue-600 dark:text-[#a8c7fa] shrink-0" />
-                                    <span className="truncate max-w-[200px] font-bold">{deliv}</span>
-                                    <span className="px-1.5 py-0.5 rounded text-[9px] font-mono bg-blue-50 text-blue-700 border border-blue-200 dark:bg-[#1c2230] dark:text-[#a8c7fa] dark:border-[#2f3d5a]">
-                                      Edit Live
-                                    </span>
-                                  </button>
-                                  <a
-                                    href={`/api/files/download/${deliv}`}
-                                    download
-                                    title="Download original file"
-                                    className="p-1 rounded hover:bg-slate-100 dark:hover:bg-[#282834] text-slate-400 dark:text-[#8e918f] hover:text-slate-800 dark:hover:text-[#e3e3e3] transition-colors ml-1"
-                                  >
-                                    <Download className="h-3.5 w-3.5" />
-                                  </a>
-                                </div>
-                              ))}
+                              {/* Smooth Pulsing Placeholder Lines */}
+                              <div className="space-y-2.5 pt-1 animate-pulse opacity-60">
+                                <div className="h-3 bg-slate-200 dark:bg-white/10 rounded-full w-4/5" />
+                                <div className="h-3 bg-slate-200 dark:bg-white/10 rounded-full w-2/3" />
+                                <div className="h-3 bg-slate-200 dark:bg-white/10 rounded-full w-1/2" />
+                              </div>
                             </div>
-                          )}
+                          </div>
+                        ) : (
+                          <div className={`flex flex-col space-y-1.5 max-w-[88%] sm:max-w-3xl ${
+                            isUser ? 'items-end' : 'items-start flex-1 min-w-0'
+                          }`}>
+                            {/* Reasoning/Thinking Accordion */}
+                            {!isUser && msg.trace_steps && msg.trace_steps.length > 0 && (
+                              <PerplexityReasoningAccordion steps={msg.trace_steps} isStreaming={false} />
+                            )}
 
-                      {/* Action Bar (Copy Button - 44px touch container) */}
-                      {!isUser && msg.content && (
-                        <div className="flex items-center space-x-1 pt-1 text-slate-400 dark:text-[#8e918f]">
-                          <button
-                            onClick={() => handleCopy(msg.id, msg.content)}
-                            aria-label="Copy response"
-                            className="h-9 w-9 -ml-1.5 rounded-full hover:bg-slate-100 dark:hover:bg-[#1e1f20] active:bg-slate-200 dark:active:bg-[#282a2c] flex items-center justify-center hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer"
-                          >
-                            {copiedId === msg.id ? <Check className="h-4 w-4 text-emerald-500" /> : <Copy className="h-4 w-4" />}
-                          </button>
-                        </div>
-                      )}
-                    </div>
+                            {/* Message Body Bubble / Gemini Card Container */}
+                            {isUser ? (
+                              <div className="px-4 py-3 rounded-2xl sm:rounded-3xl bg-slate-100/90 text-slate-900 border border-slate-200/90 shadow-2xs dark:bg-[#1c1d22] dark:text-[#e5e7eb] dark:border-white/[0.08] text-[14.5px] sm:text-[15px] leading-relaxed whitespace-pre-wrap select-text break-words">
+                                {msg.content}
+                              </div>
+                            ) : (
+                              <div className="w-full rounded-2xl sm:rounded-3xl bg-white border border-slate-200/90 shadow-[0_2px_16px_rgba(0,0,0,0.03),0_8px_32px_rgba(0,0,0,0.03)] dark:bg-[#101116] dark:border-white/[0.08] dark:shadow-[0_4px_32px_rgba(0,0,0,0.6)] p-5 sm:p-6 transition-all relative overflow-hidden space-y-3">
+                                {/* Ambient Top Glow Line */}
+                                <div className="absolute top-0 inset-x-0 h-[1.5px] bg-gradient-to-r from-transparent via-blue-500/40 to-transparent" />
+                                
+                                {/* Card Content with High-Grade Formatting */}
+                                <MarkdownContent content={msg.content} />
+                              </div>
+                            )}
 
-                    {isUser && (
-                      <div className="h-7 w-7 sm:h-8 sm:w-8 rounded-full bg-slate-100 border border-slate-300 dark:bg-[#282a2c] dark:border-[#3c4043] flex items-center justify-center shrink-0 text-slate-700 dark:text-[#e3e3e3] shadow-xs mt-0.5">
-                        <User className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                            {/* Generated Deliverables Interactive Badges */}
+                            {msg.deliverable_ids && msg.deliverable_ids.length > 0 && (
+                              <div className="pt-2 flex flex-wrap gap-2 w-full">
+                                {msg.deliverable_ids.map((deliv) => (
+                                  <div
+                                    key={deliv}
+                                    className="flex items-center space-x-2 px-3 py-2 rounded-xl bg-white hover:bg-slate-50 border border-slate-200 text-xs text-slate-900 font-medium transition-all group shadow-xs dark:bg-[#121215] dark:hover:bg-[#19191e] dark:border-[#2a2a32] dark:text-[#e3e3e3] w-full sm:w-auto"
+                                  >
+                                    <button
+                                      onClick={() => openCanvas(deliv)}
+                                      className="flex items-center space-x-2 text-left truncate flex-1 hover:text-blue-600 dark:hover:text-[#a8c7fa] transition-colors cursor-pointer"
+                                      title="Open & Edit Live in Interactive Workspace"
+                                    >
+                                      <Sparkles className="h-4 w-4 text-blue-600 dark:text-[#a8c7fa] shrink-0" />
+                                      <span className="truncate max-w-[200px] font-bold">{deliv}</span>
+                                      <span className="px-1.5 py-0.5 rounded text-[9px] font-mono bg-blue-50 text-blue-700 border border-blue-200 dark:bg-[#1c2230] dark:text-[#a8c7fa] dark:border-[#2f3d5a]">
+                                        Edit Live
+                                      </span>
+                                    </button>
+                                    <a
+                                      href={`/api/files/download/${deliv}`}
+                                      download
+                                      title="Download original file"
+                                      className="p-1 rounded hover:bg-slate-100 dark:hover:bg-[#282834] text-slate-400 dark:text-[#8e918f] hover:text-slate-800 dark:hover:text-[#e3e3e3] transition-colors ml-1"
+                                    >
+                                      <Download className="h-3.5 w-3.5" />
+                                    </a>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+
+                            {/* Action Bar (Copy & Metadata Action Bar) */}
+                            {!isUser && msg.content && (
+                              <div className="flex items-center w-full pt-1 text-slate-400 dark:text-[#8e918f]">
+                                <div className="flex items-center space-x-1">
+                                  <button
+                                    onClick={() => handleCopy(msg.id, msg.content)}
+                                    aria-label="Copy response"
+                                    className="h-7 w-7 rounded-lg hover:bg-slate-100 dark:hover:bg-white/[0.06] active:bg-slate-200 dark:active:bg-white/[0.1] flex items-center justify-center text-slate-500 dark:text-[#9aa0a6] hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer"
+                                    title="Copy response"
+                                  >
+                                    {copiedId === msg.id ? <Check className="h-3.5 w-3.5 text-emerald-500" /> : <Copy className="h-3.5 w-3.5" />}
+                                  </button>
+
+                                  <button
+                                    onClick={() => handleRegenerate(idx)}
+                                    disabled={isStreaming}
+                                    aria-label="Redo / Regenerate response"
+                                    className="h-7 w-7 rounded-lg hover:bg-slate-100 dark:hover:bg-white/[0.06] active:bg-slate-200 dark:active:bg-white/[0.1] flex items-center justify-center text-slate-500 dark:text-[#9aa0a6] hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer disabled:opacity-40"
+                                    title="Redo / Regenerate response"
+                                  >
+                                    <RotateCcw className="h-3.5 w-3.5" />
+                                  </button>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        {isUser && (
+                          <div className="h-7 w-7 sm:h-8 sm:w-8 rounded-full bg-slate-100 border border-slate-300 dark:bg-[#282a2c] dark:border-[#3c4043] flex items-center justify-center shrink-0 text-slate-700 dark:text-[#e3e3e3] shadow-xs mt-0.5">
+                            <User className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                          </div>
+                        )}
+                      </motion.div>
+                    );
+                  })}
+
+                  {/* Streaming Indicator & Real-Time Thoughts (For New Messages at Bottom) */}
+                  {isStreaming && !regeneratingMsgId && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.2 }}
+                      className="w-full flex gap-2.5 sm:gap-4 justify-start"
+                    >
+                      <div className="h-7 w-7 sm:h-8 sm:w-8 rounded-full bg-blue-50 border border-blue-200 dark:bg-[#1e1f20] dark:border-[#a8c7fa]/30 flex items-center justify-center shrink-0 shadow-xs mt-0.5">
+                        <RevealLogoIcon className="h-4 w-4 sm:h-4.5 sm:w-4.5" animated={true} />
                       </div>
-                    )}
-                  </motion.div>
-                );
-              })}
 
-              {/* Streaming Indicator & Real-Time Thoughts */}
-              {isStreaming && (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  className="w-full flex gap-3 sm:gap-4 justify-start"
-                >
-                  <div className="h-8 w-8 rounded-full bg-[#1e1f20] border border-[#a8c7fa]/30 flex items-center justify-center shrink-0">
-                    <RevealLogoIcon className="h-5 w-5" animated={true} />
-                  </div>
-                  <div className="flex-1 space-y-2">
-                    <div className="text-[11px] text-[#8e918f]">REVEAL 2.0 &bull; Synthesizing response...</div>
-                    {activeTraceSteps.length > 0 && (
-                      <ChatThinkingAccordion steps={activeTraceSteps} />
-                    )}
-                    <div className="flex items-center space-x-2 text-xs font-mono text-[#a8c7fa] py-1">
-                      <div className="h-2 w-2 rounded-full bg-[#a8c7fa] animate-pulse" />
-                      <span>Synthesizing engineering directives in real-time...</span>
-                    </div>
-                  </div>
-                </motion.div>
-              )}
+                      <div className="flex flex-col space-y-2 max-w-[88%] sm:max-w-3xl flex-1 min-w-0">
+                        <PerplexityReasoningAccordion
+                          steps={
+                            activeTraceSteps.length > 0
+                              ? activeTraceSteps
+                              : [{ id: 'init-step', content: 'Analyzing parameters & retrieving operational context...', type: 'thought', duration_ms: 20 }]
+                          }
+                          isStreaming={true}
+                        />
+
+                        {/* Live In-Progress Response Card */}
+                        <div className="w-full rounded-2xl sm:rounded-3xl bg-white border border-slate-200/90 shadow-[0_2px_16px_rgba(0,0,0,0.03),0_8px_32px_rgba(0,0,0,0.03)] dark:bg-[#101116] dark:border-white/[0.08] dark:shadow-[0_4px_32px_rgba(0,0,0,0.6)] p-5 sm:p-6 transition-all relative overflow-hidden space-y-3">
+                          <div className="absolute top-0 inset-x-0 h-[1.5px] bg-gradient-to-r from-transparent via-blue-500/50 to-transparent" />
+                          
+                          <div className="flex items-center space-x-2.5 text-xs text-blue-600 dark:text-blue-400 font-medium">
+                            <div className="h-2 w-2 rounded-full bg-blue-600 dark:bg-blue-400 animate-ping shrink-0" />
+                            <span>Synthesizing response in real-time...</span>
+                          </div>
+
+                          {/* Smooth Pulsing Placeholder Lines */}
+                          <div className="space-y-2.5 pt-1 animate-pulse opacity-60">
+                            <div className="h-3 bg-slate-200 dark:bg-white/10 rounded-full w-4/5" />
+                            <div className="h-3 bg-slate-200 dark:bg-white/10 rounded-full w-2/3" />
+                            <div className="h-3 bg-slate-200 dark:bg-white/10 rounded-full w-1/2" />
+                          </div>
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
 
               <div ref={bottomRef} className="h-4" />
             </div>
@@ -1216,7 +1344,31 @@ export default function GeminiReplicaChatApp() {
           {/* Authentic Gemini/Claude Stacked Pill Container */}
           <div className="relative flex flex-col bg-white border border-slate-300 focus-within:border-blue-500 shadow-lg dark:bg-[#0d0d0e] dark:border-[#222225] dark:focus-within:border-[#38383e] dark:shadow-[0_8px_32px_rgba(0,0,0,0.8)] rounded-[24px] sm:rounded-[28px] p-2.5 sm:p-3 transition-all duration-200 z-30">
             {/* Top Tier: Growing Textarea Area */}
-            <div className="w-full px-1 pt-0.5 pb-1 sm:pb-2">
+            <div className="relative w-full px-1 pt-0.5 pb-1 sm:pb-2 flex items-center">
+              {/* Animated Voice Waves Visualizer when listening and input is empty */}
+              {isListening && !currentInput.trim() && (
+                <div className="absolute inset-y-0 left-2 flex items-center pointer-events-none space-x-1.5">
+                  <div className="flex items-center space-x-1 h-5 px-0.5">
+                    {[0.3, 0.8, 0.45, 1.0, 0.65, 0.25, 0.85, 0.5, 0.9, 0.35].map((delay, idx) => (
+                      <motion.span
+                        key={idx}
+                        animate={{
+                          scaleY: [0.2, 1.4, 0.35, 1.1, 0.2],
+                          opacity: [0.5, 1, 0.6, 1, 0.5]
+                        }}
+                        transition={{
+                          duration: 0.75 + (idx % 3) * 0.18,
+                          repeat: Infinity,
+                          ease: "easeInOut",
+                          delay: delay * 0.25
+                        }}
+                        className="w-[3px] h-4 rounded-full bg-gradient-to-t from-blue-600 via-indigo-500 to-cyan-400 dark:from-blue-500 dark:via-indigo-400 dark:to-cyan-300 origin-center"
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
+
               <textarea
                 ref={textareaRef}
                 value={currentInput}
@@ -1235,7 +1387,7 @@ export default function GeminiReplicaChatApp() {
                 rows={1}
                 placeholder={
                   isListening
-                    ? "🎙️ Listening... Speak clearly into your microphone..."
+                    ? ""
                     : `Ask ${MODEL_ROLES.find(r => r.id === activeModelRole)?.label} or query refinery operating standards...`
                 }
                 className="w-full bg-transparent text-[15px] sm:text-[15px] text-slate-900 placeholder-slate-400 dark:text-[#e3e3e3] dark:placeholder-[#8e918f] outline-none font-sans resize-none leading-relaxed overflow-y-auto block min-h-[32px] max-h-[160px] sm:max-h-[200px]"

@@ -4,6 +4,25 @@
 
 @layer base {
   :root {
+    --ds-background-100: #ffffff;
+    --ds-background-200: #f8f9fa;
+    --ds-gray-100: #f1f3f5;
+    --ds-gray-200: #e9ecef;
+    --ds-gray-300: #dee2e6;
+    --ds-gray-400: #e5e7eb;
+    --ds-gray-500: #d1d5db;
+    --ds-gray-600: #9ca3af;
+    --ds-gray-700: #6b7280;
+    --ds-gray-800: #4b5563;
+    --ds-gray-900: #111827;
+    --ds-gray-1000: #030712;
+    --ds-blue-700: #0070f3;
+    --ds-green-700: #00e599;
+    --ds-amber-700: #f5a623;
+    --ds-red-700: #e5484d;
+  }
+
+  .dark {
     --ds-background-100: #000000;
     --ds-background-200: #0a0a0a;
     --ds-gray-100: #111111;
@@ -16,10 +35,6 @@
     --ds-gray-800: #a1a1aa;
     --ds-gray-900: #ededed;
     --ds-gray-1000: #ffffff;
-    --ds-blue-700: #0070f3;
-    --ds-green-700: #00e599;
-    --ds-amber-700: #f5a623;
-    --ds-red-700: #e5484d;
   }
 
   body {
@@ -29,6 +44,7 @@
     -moz-osx-font-smoothing: grayscale;
     min-height: 100dvh;
     overflow-x: hidden;
+    transition: background-color 0.2s ease, color 0.2s ease;
   }
 
   /* Geist Subtle Scrollbar */
@@ -37,13 +53,82 @@
     height: 5px;
   }
   ::-webkit-scrollbar-track {
-    background: #000000;
+    background: var(--ds-background-200);
   }
   ::-webkit-scrollbar-thumb {
-    background: #262626;
+    background: var(--ds-gray-400);
     border-radius: 3px;
   }
   ::-webkit-scrollbar-thumb:hover {
-    background: #333333;
+    background: var(--ds-gray-600);
   }
+}
+
+/* Global Dark Mode Overrides for Entire Admin Panel */
+.dark body,
+.dark main {
+  background-color: #000000 !important;
+  color: #ededed !important;
+}
+
+.dark .bg-white {
+  background-color: #000000 !important;
+}
+
+.dark .bg-gray-50 {
+  background-color: #0a0a0a !important;
+}
+
+.dark .bg-gray-100 {
+  background-color: #111111 !important;
+}
+
+.dark .bg-gray-200 {
+  background-color: #1f1f1f !important;
+}
+
+.dark .border-gray-100,
+.dark .border-gray-200 {
+  border-color: #262626 !important;
+}
+
+.dark .border-gray-300 {
+  border-color: #333333 !important;
+}
+
+.dark .text-gray-900 {
+  color: #ededed !important;
+}
+
+.dark .text-gray-800,
+.dark .text-gray-700,
+.dark .text-gray-600,
+.dark .text-gray-500 {
+  color: #888888 !important;
+}
+
+.dark .text-gray-400,
+.dark .text-gray-300 {
+  color: #666666 !important;
+}
+
+.dark .hover\:bg-gray-50:hover {
+  background-color: #0d0d0d !important;
+}
+
+.dark .hover\:bg-gray-100:hover {
+  background-color: #171717 !important;
+}
+
+.dark .hover\:bg-gray-200:hover {
+  background-color: #222222 !important;
+}
+
+.dark .hover\:border-gray-300:hover {
+  border-color: #444444 !important;
+}
+
+.dark .divide-gray-100 > :not([hidden]) ~ :not([hidden]),
+.dark .divide-gray-200 > :not([hidden]) ~ :not([hidden]) {
+  border-color: #1f1f1f !important;
 }

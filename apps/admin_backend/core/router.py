@@ -85,55 +85,55 @@ ENTERPRISE_DEPARTMENTS: Dict[str, Dict[str, Any]] = {
     }
 }
 
-OUT_OF_SCOPE_DECLINE_MESSAGE = (
-    "🏢 **MRPL & ONGC Enterprise Sovereign AI Workbench**\n\n"
-    "Main keval **Mangalore Refinery and Petrochemicals Limited (MRPL)** aur **Oil and Natural Gas Corporation (ONGC)** "
-    "ke departments aur refinery operations se sambandhit prashnon par sahayata pradan karne ke liye trained hoon:\n\n"
-    "• **HSE & Fire/Safety**: Contractor safety, PPE rules, H2S emergency evacuation\n"
-    "• **Refinery Operations**: CDU/Furnace parameters, P&ID instrumentation, operating limits\n"
-    "• **Maintenance & Inspection**: API 610 pumps, corrosion UT sensors, asset reliability\n"
-    "• **Contracts & GeM**: GeM tendering, vendor guidelines, safety pre-qualifications\n"
-    "• **Finance & e-MB**: e-Measurement books, billing approvals, work verification\n"
-    "• **ESG & Environment**: BRSR FY25, water conservation, emissions compliance\n"
-    "• **Audit & Vigilance**: CAG audit compliance, Anti-Bribery, Whistle Blower policies\n"
-    "• **HR & Contractor Welfare**: Labour policies, human rights, workforce rules\n\n"
-    "⚠️ *Aapki query MRPL/ONGC refinery operations ya corporate compliance ke daayre se bahar hai. Kripya kisi sambandhit department se juda prashn puchen.*"
-)
+# Broad Technical & Refinery Scope Keywords
+REFINERY_TECHNICAL_KEYWORDS = [
+    "mrpl", "ongc", "refinery", "oisd", "api", "asme", "iso", "pngrb", "cvc", "peso",
+    "cdu", "vdu", "fccu", "dhds", "sop", "mop", "ptw", "loto", "lel", "h2s", "co2", "o2",
+    "pump", "furnace", "boiler", "valve", "pipe", "piping", "flange", "gasket", "turbine",
+    "compressor", "heat exchanger", "cooler", "condenser", "distillation", "column", "tower",
+    "tank", "vessel", "reactor", "flare", "naphtha", "diesel", "petrol", "kerosene", "atf",
+    "lpg", "bitumen", "sulphur", "crude", "hydrocarbon", "sludge", "effluent", "zld",
+    "calculate", "compute", "formula", "python", "script", "code", "equation", "efficiency",
+    "flow", "head", "pressure", "temperature", "viscosity", "density", "velocity", "reynolds",
+    "docx", "xlsx", "pptx", "pdf", "csv", "document", "spreadsheet", "presentation", "report",
+    "indent", "tender", "contract", "billing", "emb", "e-mb", "audit", "compliance", "inspection",
+    "hello", "hi", "hey", "greetings", "good morning", "good afternoon", "who are you"
+]
 
-
-def detect_mrpl_ongc_department(prompt: str) -> Tuple[bool, Optional[Dict[str, Any]]]:
+def detect_mrpl_ongc_department(prompt: str, has_attachments: bool = False) -> Tuple[bool, Optional[Dict[str, Any]]]:
     """
-    Evaluates whether a prompt falls within MRPL/ONGC enterprise departments.
-    Returns (is_in_scope, matched_department_info).
+    Strict Scope Detection:
+    Returns (is_in_scope, best_dept)
+    Evaluates whether a prompt is within MRPL/ONGC refinery domain, technical engineering,
+    uploaded documents, or casual greetings.
+    Returns is_in_scope=False for out-of-scope general trivia (e.g. 'what is word', 'what is hindi').
     """
     p_lower = prompt.lower().strip()
-    
-    # Direct brand/entity mentions with word boundaries
-    brand_keywords = ["mrpl", "ongc", "mangalore refinery", "refinery", "refineries", "sop", "cdu", "vdu"]
-    has_explicit_brand = any(re.search(r'\b' + re.escape(bk) + r'\b', p_lower) for bk in brand_keywords)
+    if not p_lower and not has_attachments:
+        return True, None
+
+    if has_attachments:
+        return True, None
 
     best_dept = None
     max_matches = 0
 
+    # 1. Match specific MRPL/ONGC Enterprise Department taxonomy
     for dept_key, dept_data in ENTERPRISE_DEPARTMENTS.items():
         matches = sum(1 for kw in dept_data["keywords"] if re.search(r'\b' + re.escape(kw) + r'\b', p_lower))
         if matches > max_matches:
             max_matches = matches
             best_dept = dept_data
 
-    # Scope verdict: Needs either at least 1 strong department keyword match OR brand mention with operational context
-    if max_matches >= 1:
+    if max_matches > 0:
         return True, best_dept
-    
-    if has_explicit_brand and len(p_lower.split()) >= 2:
-        # Fallback to general HSE or Ops if refinery mentioned
-        return True, ENTERPRISE_DEPARTMENTS["HSE_SAFETY"]
 
-    # Greetings or capability queries are permitted as introductory interactions
-    greetings = ["hello", "hi", "hey", "namaste", "good morning", "good evening", "who are you", "help", "capabilities"]
-    if any(p_lower == g or p_lower.startswith(g + " ") for g in greetings):
+    # 2. Match broader technical, engineering, document, and operational keywords
+    tech_matched = any(re.search(r'\b' + re.escape(kw) + r'\b', p_lower) for kw in REFINERY_TECHNICAL_KEYWORDS)
+    if tech_matched:
         return True, None
 
+    # Out of scope query detected
     return False, None
 
 
@@ -286,8 +286,8 @@ class IntelligentRouter:
         # 1. Sanitize input text bounds to protect downstream processors
         clean_prompt = prompt.strip()[:self.MAX_PROMPT_LENGTH]
 
-        # 2. Check MRPL & ONGC Enterprise Department Scope
-        is_in_scope, matched_dept = detect_mrpl_ongc_department(clean_prompt)
+        # 2. Check MRPL & ONGC Enterprise Department Scope & Guardrail
+        is_in_scope, matched_dept = detect_mrpl_ongc_department(clean_prompt, has_attachments=has_attachments)
 
         if not clean_prompt and not has_attachments:
             return {

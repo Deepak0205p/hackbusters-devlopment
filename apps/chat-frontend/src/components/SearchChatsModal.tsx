@@ -80,9 +80,9 @@ export function SearchChatsModal({ isOpen, onClose }: SearchChatsModalProps) {
       category: 'actions',
       desc: 'Start a fresh sovereign reasoning thread',
       icon: <Plus className="h-4 w-4 text-blue-600 dark:text-[#a8c7fa]" />,
-      action: () => {
-        createNewChat();
-        if (pathname !== '/' && pathname !== '/chat') router.push('/chat');
+      action: async () => {
+        const newId = await createNewChat();
+        router.push(`/chat/${newId}`);
         onClose();
       }
     },
@@ -168,9 +168,7 @@ export function SearchChatsModal({ isOpen, onClose }: SearchChatsModalProps) {
 
   const handleSelectSession = (sessionId: string) => {
     selectSession(sessionId);
-    if (pathname !== '/' && pathname !== '/chat') {
-      router.push('/chat');
-    }
+    router.push(`/chat/${sessionId}`);
     onClose();
   };
 

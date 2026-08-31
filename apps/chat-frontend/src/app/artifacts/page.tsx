@@ -148,7 +148,7 @@ const CATEGORIES = [
   { id: 'docx', label: 'Docs' },
   { id: 'xlsx', label: 'Sheets' },
   { id: 'pptx', label: 'Slides' },
-  { id: 'py', label: 'Python' }
+  { id: 'py', label: 'Code' }
 ];
 
 export default function ArtifactsPage() {
@@ -167,8 +167,8 @@ export default function ArtifactsPage() {
   const { openCanvas } = useCanvasStore();
 
   React.useEffect(() => {
-    fetchDiskDeliverables();
-  }, [fetchDiskDeliverables]);
+    // Artifacts list starts completely empty until deliverables are generated during chat sessions!
+  }, []);
 
   const [copiedHash, setCopiedHash] = useState<string | null>(null);
   const [showSearchModal, setShowSearchModal] = useState(false);
@@ -242,7 +242,7 @@ export default function ArtifactsPage() {
               </svg>
             </button>
             <span className="text-sm font-bold text-slate-900 dark:text-[#e3e3e3]">
-              Artifacts <span className="text-slate-400 dark:text-[#6e7175] font-medium">({deliverables.length})</span>
+              Artifacts
             </span>
           </div>
 

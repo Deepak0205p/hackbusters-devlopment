@@ -1,5 +1,17 @@
 {
+  "name": "mrpl-sovereign-workbench",
+  "version": "1.0.0",
+  "description": "On-premise air-gapped agentic AI workbench with XAMPP MySQL & Prisma",
+  "scripts": {
+    "prisma:generate": "prisma generate",
+    "prisma:push": "prisma db push",
+    "prisma:studio": "prisma studio"
+  },
+  "dependencies": {
+    "@prisma/client": "^5.19.1"
+  },
   "devDependencies": {
+    "prisma": "^5.19.1",
     "playwright": "^1.62.1"
   }
 }

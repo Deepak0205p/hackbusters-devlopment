@@ -13,12 +13,12 @@ export function ConnectedClientsCard() {
   const isConnected = metrics.lan_hotspot_sockets > 0;
 
   return (
-    <Card className="border-[#262626] bg-[#111111] min-h-[220px] flex flex-col justify-between">
-      <CardHeader className="py-3 px-4 border-b border-[#262626]">
+    <Card className="border-gray-200 bg-gray-100 min-h-[220px] flex flex-col justify-between">
+      <CardHeader className="py-3 px-4 border-b border-gray-200">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
-            <Smartphone className="h-4 w-4 text-[#00e599]" />
-            <CardTitle className="text-xs font-semibold text-[#ededed]">
+            <Smartphone className="h-4 w-4 text-emerald-600" />
+            <CardTitle className="text-xs font-semibold text-gray-900">
               Active Evaluator Sessions
             </CardTitle>
           </div>
@@ -36,30 +36,30 @@ export function ConnectedClientsCard() {
                 key={metrics.lan_hotspot_sockets}
                 initial={{ scale: 1.2, opacity: 0.5 }}
                 animate={{ scale: 1, opacity: 1 }}
-                className="text-3xl font-black font-mono text-[#ededed]"
+                className="text-3xl font-black font-mono text-gray-900"
               >
                 {metrics.lan_hotspot_sockets}
               </motion.span>
-              <span className="text-xs text-[#888888]">Connected Remote Client(s)</span>
+              <span className="text-xs text-gray-500">Connected Remote Client(s)</span>
             </div>
-            <p className="text-[11px] font-mono text-[#666666] mt-0.5">
+            <p className="text-[11px] font-mono text-gray-400 mt-0.5">
               Multi-Device Real-Time Synchronization via WebSocket
             </p>
           </div>
 
-          <div className="p-3 rounded-full bg-[#171717] border border-[#262626]">
-            <Activity className="h-5 w-5 text-[#0070f3]" />
+          <div className="p-3 rounded-full bg-gray-100 border border-gray-200">
+            <Activity className="h-5 w-5 text-blue-600" />
           </div>
         </div>
 
-        <div className="p-2.5 rounded bg-[#0a0a0a] border border-[#262626] space-y-1.5 font-mono text-[11px]">
-          <div className="flex items-center justify-between text-[#888888]">
+        <div className="p-2.5 rounded bg-gray-50 border border-gray-200 space-y-1.5 font-mono text-[11px]">
+          <div className="flex items-center justify-between text-gray-500">
             <span>Latency (LAN/Hotspot):</span>
-            <span className="text-[#00e599] font-medium">&lt; 15 ms</span>
+            <span className="text-emerald-600 font-medium">&lt; 15 ms</span>
           </div>
-          <div className="flex items-center justify-between text-[#888888]">
+          <div className="flex items-center justify-between text-gray-500">
             <span>External Internet Egress:</span>
-            <span className="text-[#00e599] font-semibold flex items-center">
+            <span className="text-emerald-600 font-semibold flex items-center">
               <ShieldCheck className="h-3 w-3 mr-1" />
               0 Packets (Sovereign)
             </span>

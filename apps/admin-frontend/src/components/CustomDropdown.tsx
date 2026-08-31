@@ -97,8 +97,8 @@ export function CustomDropdown<T extends string | number = string>({
           sizeStyles.btn
         } ${
           isOpen
-            ? 'bg-[#1a1a1a] border-[#0070f3] text-[#ededed] shadow-sm'
-            : 'bg-[#111111] hover:bg-[#181818] border-[#262626] text-[#ededed]'
+            ? 'bg-white border-blue-500 text-gray-900 shadow-sm'
+            : 'bg-gray-50 hover:bg-gray-100 border-gray-200 text-gray-900'
         } disabled:opacity-50 disabled:cursor-not-allowed ${buttonClassName}`}
       >
         <span className="flex items-center gap-2 truncate">
@@ -106,8 +106,8 @@ export function CustomDropdown<T extends string | number = string>({
           <span className="truncate">{selectedOption ? selectedOption.label : placeholder}</span>
         </span>
         <ChevronDown
-          className={`${sizeStyles.icon} text-[#888888] transition-transform duration-200 shrink-0 ${
-            isOpen ? 'rotate-180 text-[#0070f3]' : ''
+          className={`${sizeStyles.icon} text-gray-400 transition-transform duration-200 shrink-0 ${
+            isOpen ? 'rotate-180 text-blue-600' : ''
           }`}
         />
       </button>
@@ -119,7 +119,7 @@ export function CustomDropdown<T extends string | number = string>({
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -4, scale: 0.96 }}
             transition={{ duration: 0.14, ease: [0.2, 0, 0, 1] }}
-            className={`absolute z-[100] mt-1.5 w-full min-w-[200px] max-h-64 overflow-y-auto bg-[#111111]/95 border border-[#262626] rounded-xl shadow-2xl backdrop-blur-xl scrollbar-thin ${
+            className={`absolute z-[100] mt-1.5 w-full min-w-[200px] max-h-64 overflow-y-auto bg-white border border-gray-200 rounded-xl shadow-2xl backdrop-blur-xl scrollbar-thin ${
               align === 'right' ? 'right-0' : 'left-0'
             } ${sizeStyles.menu} ${menuClassName}`}
           >
@@ -137,8 +137,8 @@ export function CustomDropdown<T extends string | number = string>({
                     sizeStyles.item
                   } ${
                     isSelected
-                      ? 'bg-[#0070f3] text-white font-semibold shadow-xs'
-                      : 'text-[#888888] hover:bg-[#1e1e1e] hover:text-[#ededed]'
+                      ? 'bg-blue-600 text-white font-semibold shadow-xs'
+                      : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
                   }`}
                 >
                   <div className="flex items-center gap-2 truncate">
@@ -146,7 +146,7 @@ export function CustomDropdown<T extends string | number = string>({
                     <div className="truncate">
                       <div>{opt.label}</div>
                       {opt.description && (
-                        <div className={`text-[10px] ${isSelected ? 'text-blue-100' : 'text-[#666666]'}`}>
+                        <div className={`text-[10px] ${isSelected ? 'text-blue-100' : 'text-gray-400'}`}>
                           {opt.description}
                         </div>
                       )}
