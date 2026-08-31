@@ -1,29 +1,19 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-type ThemeMode = 'dark' | 'light' | 'system';
-
 interface ThemeState {
-  theme: ThemeMode;
+  theme: 'dark' | 'light';
   toggleTheme: () => void;
-  setTheme: (theme: ThemeMode) => void;
-  getResolvedTheme: () => 'dark' | 'light';
+  setTheme: (theme: 'dark' | 'light') => void;
 }
 
-function applyTheme(mode: ThemeMode) {
+function applyTheme(mode: 'dark' | 'light') {
   if (typeof document === 'undefined') return;
-  let resolved: 'dark' | 'light';
-  if (mode === 'system') {
-    resolved = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-  } else {
-    resolved = mode;
-  }
-  if (resolved === 'dark') {
+  if (mode === 'dark') {
     document.documentElement.classList.add('dark');
   } else {
     document.documentElement.classList.remove('dark');
   }
-  return resolved;
 }
 
 export const useThemeStore = create<ThemeState>()(
@@ -31,25 +21,13 @@ export const useThemeStore = create<ThemeState>()(
     (set, get) => ({
       theme: 'light',
       toggleTheme: () => {
-        const order: ThemeMode[] = ['light', 'dark', 'system'];
-        const current = get().theme;
-        const next = order[(order.indexOf(current) + 1) % order.length];
+        const next = get().theme === 'dark' ? 'light' : 'dark';
         applyTheme(next);
         set({ theme: next });
       },
       setTheme: (theme) => {
         applyTheme(theme);
         set({ theme });
-      },
-      getResolvedTheme: () => {
-        const mode = get().theme;
-        if (mode === 'system') {
-          if (typeof window !== 'undefined') {
-            return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-          }
-          return 'light';
-        }
-        return mode;
       },
     }),
     {

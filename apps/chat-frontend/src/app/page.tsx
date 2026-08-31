@@ -539,12 +539,8 @@ export default function GeminiReplicaChatApp() {
   const [activeView, setActiveView] = useState<'chat' | 'artifacts'>('chat');
   const [artifactSearchQuery, setArtifactSearchQuery] = useState('');
   const [copiedHash, setCopiedHash] = useState(false);
-  const { theme, setTheme } = useThemeStore();
-  const cycleTheme = () => {
-    const order: Array<'light' | 'dark' | 'system'> = ['light', 'dark', 'system'];
-    const idx = order.indexOf(theme as any);
-    setTheme(order[(idx + 1) % order.length] as any);
-  };
+  const { theme, toggleTheme } = useThemeStore();
+  const cycleTheme = toggleTheme;
 
   const {
     deliverables,
@@ -866,13 +862,6 @@ export default function GeminiReplicaChatApp() {
               </div>
               <div className="flex items-center space-x-1">
                 <button
-                  onClick={() => setShowSearchModal(true)}
-                  aria-label="Search"
-                  className="h-9 w-9 rounded-full hover:bg-slate-100 dark:hover:bg-[#1e1f20] active:bg-slate-200 text-slate-600 hover:text-slate-900 dark:text-[#c4c7c5] dark:hover:text-white flex items-center justify-center transition-colors cursor-pointer"
-                >
-                  <Search className="h-4 w-4" />
-                </button>
-                <button
                   onClick={cycleTheme}
                   aria-label="Toggle theme"
                   className="h-9 w-9 rounded-full hover:bg-slate-100 dark:hover:bg-[#1e1f20] active:bg-slate-200 text-slate-600 dark:text-[#c4c7c5] flex items-center justify-center transition-colors cursor-pointer"
@@ -1035,7 +1024,7 @@ export default function GeminiReplicaChatApp() {
         </div>
 
         {/* 3. Authentic Single-Line Gemini Pill Input Dock with Integrated Model Board */}
-        <div className="max-w-4xl mx-auto w-full px-3 sm:px-4 pt-1 z-20 shrink-0 pb-20 sm:pb-5 relative">
+        <div className="max-w-4xl mx-auto w-full px-3 sm:px-4 pt-1 z-20 shrink-0 pb-6 sm:pb-5 relative">
           <input
             type="file"
             ref={fileInputRef}
@@ -1060,8 +1049,8 @@ export default function GeminiReplicaChatApp() {
                   transition={{ duration: 0.18, ease: [0.2, 0, 0, 1] }}
                   className="absolute bottom-full left-0 right-0 mb-2 max-w-2xl mx-auto px-2 sm:px-3 py-2 bg-white/95 dark:bg-[#0c0c0e]/95 border border-slate-200 dark:border-[#1e1e22] rounded-[22px] shadow-2xl z-50 backdrop-blur-xl"
                 >
-                  {/* 7-Engine Role Grid (Horizontally Scrollable on Mobile, Distributed on Desktop) */}
-                  <div className="flex items-center justify-start sm:justify-between gap-1 sm:gap-1.5 px-1 overflow-x-auto scrollbar-none py-0.5">
+                  {/* 7-Engine Role Grid — vertical on mobile, horizontal on desktop */}
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-1.5 px-1 py-0.5 max-h-[60vh] sm:max-h-none overflow-y-auto sm:overflow-x-auto sm:scrollbar-none">
                     {MODEL_ROLES.map((role) => {
                       const isSelected = activeModelRole === role.id;
                       return (
@@ -1072,21 +1061,21 @@ export default function GeminiReplicaChatApp() {
                             setActiveModelRole(role.id as any);
                             setShowModelBoard(false);
                           }}
-                          className={`group relative flex flex-col items-center justify-center py-2 px-3 sm:py-1.5 sm:px-2.5 rounded-xl transition-all duration-200 shrink-0 min-h-[44px] cursor-pointer ${
+                          className={`group relative flex items-center space-x-3 sm:flex-col sm:items-center sm:space-x-0 py-2 px-3 sm:py-1.5 sm:px-2.5 rounded-xl transition-all duration-200 shrink-0 min-h-[44px] cursor-pointer ${
                             isSelected
                               ? 'bg-blue-50 border border-blue-200 text-blue-700 shadow-xs dark:bg-white/[0.08] dark:border-white/15 dark:text-white'
                               : 'hover:bg-slate-100 dark:hover:bg-white/[0.03] active:bg-slate-200 dark:active:bg-white/[0.06] border border-transparent opacity-80 hover:opacity-100 hover:scale-105 active:scale-95'
                           }`}
                         >
                           {/* Glowing 3D Logo */}
-                          <div className="relative mb-1 transition-transform duration-200 group-hover:scale-110 filter drop-shadow">
+                          <div className="relative mb-0 sm:mb-1 transition-transform duration-200 group-hover:scale-110 filter drop-shadow">
                             <div className="scale-90 origin-center">
                               {role.icon}
                             </div>
                           </div>
 
                           {/* Role Title */}
-                          <div className={`text-[11px] tracking-tight whitespace-nowrap transition-colors ${
+                          <div className={`text-xs sm:text-[11px] tracking-tight whitespace-nowrap transition-colors ${
                             isSelected ? 'font-bold text-blue-700 dark:text-white' : 'font-medium text-slate-600 dark:text-[#8e918f] group-hover:text-slate-900 dark:group-hover:text-[#e3e3e3]'
                           }`}>
                             {role.label}

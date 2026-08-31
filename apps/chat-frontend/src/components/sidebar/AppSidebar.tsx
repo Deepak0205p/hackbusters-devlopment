@@ -105,7 +105,7 @@ export function AppSidebar({ onOpenSearchModal, activePage = 'chat' }: AppSideba
   const pathname = usePathname();
   const { sessions, activeSessionId, selectSession, createNewChat } = useChatStore();
   const { deliverables } = useDeliverableStore();
-  const { theme, toggleTheme, setTheme } = useThemeStore();
+  const { theme, toggleTheme } = useThemeStore();
   const { isOpen: isSidebarOpen, toggle: toggleSidebar, close: closeSidebar } = useSidebarStore();
 
   const [chatSearch, setChatSearch] = useState('');
@@ -159,11 +159,8 @@ export function AppSidebar({ onOpenSearchModal, activePage = 'chat' }: AppSideba
   );
 
   const cycleTheme = useCallback(() => {
-    const order: Array<'light' | 'dark' | 'system'> = ['light', 'dark', 'system'];
-    const idx = order.indexOf(theme as any);
-    const next = order[(idx + 1) % order.length];
-    setTheme(next as any);
-  }, [theme, setTheme]);
+    toggleTheme();
+  }, [toggleTheme]);
 
   const themeIcon = theme === 'dark' ? <Sun className="h-4 w-4 text-amber-400" /> : theme === 'light' ? <Moon className="h-4 w-4 text-blue-600" /> : <Monitor className="h-4 w-4 text-slate-500" />;
 
