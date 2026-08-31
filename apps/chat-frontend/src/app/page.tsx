@@ -51,8 +51,6 @@ import { DocumentCanvasPanel } from '@/components/canvas/DocumentCanvasPanel';
 import { AppSidebar } from '@/components/sidebar/AppSidebar';
 import { useSidebarStore } from '@/store/useSidebarStore';
 import { useAuthStore } from '@/store/useAuthStore';
-import { LoginPage } from '@/components/auth/LoginPage';
-import { MarkdownContent } from '@/components/chat/MarkdownContent';
 import { PerplexityReasoningAccordion } from '@/components/chat/PerplexityReasoningAccordion';
 
 // Ultra-Modern Fluent / Glowing Brand 3D-Style Icon Components
