@@ -1119,25 +1119,23 @@ export default function GeminiReplicaChatApp() {
             <div className="flex items-center justify-between pt-1 border-t border-transparent">
               {/* Left Toolbar Actions */}
               <div className="relative flex items-center">
-                <CustomTooltip text="Add files & tools" position="top">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (!showAttachMenu) {
-                        setShowModelBoard(false);
-                      }
-                      setShowAttachMenu(!showAttachMenu);
-                    }}
-                    aria-label="Add files"
-                    className={`h-10 w-10 sm:h-9 sm:w-9 rounded-full flex items-center justify-center transition-all duration-200 cursor-pointer ${
-                      showAttachMenu
-                        ? 'bg-slate-100 text-blue-600 dark:bg-[#1a1a1c] dark:text-[#a8c7fa] rotate-45'
-                        : 'hover:bg-slate-100 active:bg-slate-200 text-slate-600 hover:text-slate-900 dark:hover:bg-[#1a1a1c] dark:active:bg-[#282a2c] dark:text-[#c4c7c5] dark:hover:text-white'
-                    }`}
-                  >
-                    <Plus className="h-[19px] w-[19px] sm:h-[18px] sm:w-[18px] stroke-[2.2] transition-transform duration-200" />
-                  </button>
-                </CustomTooltip>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!showAttachMenu) {
+                      setShowModelBoard(false);
+                    }
+                    setShowAttachMenu(!showAttachMenu);
+                  }}
+                  aria-label="Add files"
+                  className={`h-10 w-10 sm:h-9 sm:w-9 rounded-full flex items-center justify-center transition-all duration-200 cursor-pointer ${
+                    showAttachMenu
+                      ? 'bg-slate-100 text-blue-600 dark:bg-[#1a1a1c] dark:text-[#a8c7fa] rotate-45'
+                      : 'hover:bg-slate-100 active:bg-slate-200 text-slate-600 hover:text-slate-900 dark:hover:bg-[#1a1a1c] dark:active:bg-[#282a2c] dark:text-[#c4c7c5] dark:hover:text-white'
+                  }`}
+                >
+                  <Plus className="h-[19px] w-[19px] sm:h-[18px] sm:w-[18px] stroke-[2.2] transition-transform duration-200" />
+                </button>
 
                 {/* Gemini Style Attachment Popover Menu */}
                 <AnimatePresence>
