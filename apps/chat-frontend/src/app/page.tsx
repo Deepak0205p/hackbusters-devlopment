@@ -26,6 +26,7 @@ import {
   Calculator,
   Binary,
   Mic,
+  MicOff,
   Volume2,
   Layers,
   Code,
@@ -441,6 +442,8 @@ export default function GeminiReplicaChatApp() {
   const { toggle: toggleSidebar } = useSidebarStore();
 
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [isListening, setIsListening] = useState(false);
+  const recognitionRef = useRef<any>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -452,6 +455,80 @@ export default function GeminiReplicaChatApp() {
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isStreaming, activeTraceSteps]);
+
+  // Cleanup speech recognition on unmount
+  useEffect(() => {
+    return () => {
+      if (recognitionRef.current) {
+        try {
+          recognitionRef.current.stop();
+        } catch {}
+      }
+    };
+  }, []);
+
+  // Web Speech Recognition Audio Transcription Handler
+  const toggleSpeechRecognition = () => {
+    if (typeof window === 'undefined') return;
+
+    const SpeechRecognition =
+      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+
+    if (!SpeechRecognition) {
+      alert('Speech recognition is not supported in this browser. Please use Google Chrome, Microsoft Edge, or Safari.');
+      return;
+    }
+
+    if (isListening) {
+      if (recognitionRef.current) {
+        try {
+          recognitionRef.current.stop();
+        } catch {}
+      }
+      setIsListening(false);
+      return;
+    }
+
+    try {
+      const recognition = new SpeechRecognition();
+      recognition.continuous = true;
+      recognition.interimResults = true;
+      recognition.lang = 'en-US';
+
+      recognition.onstart = () => {
+        setIsListening(true);
+      };
+
+      recognition.onresult = (event: any) => {
+        let transcript = '';
+        for (let i = event.resultIndex; i < event.results.length; ++i) {
+          if (event.results[i].isFinal) {
+            transcript += event.results[i][0].transcript;
+          }
+        }
+        if (transcript) {
+          setCurrentInput((prev) => (prev ? `${prev.trim()} ${transcript.trim()}` : transcript.trim()));
+        }
+      };
+
+      recognition.onerror = (event: any) => {
+        console.warn('Speech recognition status:', event.error);
+        if (event.error !== 'no-speech') {
+          setIsListening(false);
+        }
+      };
+
+      recognition.onend = () => {
+        setIsListening(false);
+      };
+
+      recognitionRef.current = recognition;
+      recognition.start();
+    } catch (err) {
+      console.error('Failed to start speech recognition:', err);
+      setIsListening(false);
+    }
+  };
 
   // Dynamic auto-growing textarea logic (Gemini / Claude pattern)
   useEffect(() => {
@@ -1109,7 +1186,11 @@ export default function GeminiReplicaChatApp() {
                   }
                 }}
                 rows={1}
-                placeholder={`Ask ${MODEL_ROLES.find(r => r.id === activeModelRole)?.label} or query refinery operating standards...`}
+                placeholder={
+                  isListening
+                    ? "🎙️ Listening... Speak clearly into your microphone..."
+                    : `Ask ${MODEL_ROLES.find(r => r.id === activeModelRole)?.label} or query refinery operating standards...`
+                }
                 className="w-full bg-transparent text-[15px] sm:text-[15px] text-slate-900 placeholder-slate-400 dark:text-[#e3e3e3] dark:placeholder-[#8e918f] outline-none font-sans resize-none leading-relaxed overflow-y-auto block min-h-[32px] max-h-[160px] sm:max-h-[200px]"
                 style={{ height: '32px' }}
               />
@@ -1231,16 +1312,23 @@ export default function GeminiReplicaChatApp() {
                   <ChevronDown className={`h-3 w-3 text-slate-500 dark:text-[#8e918f] transition-transform duration-200 ${showModelBoard ? 'rotate-180' : ''}`} />
                 </button>
 
-                {/* Mic Icon */}
-                <CustomTooltip text="Use microphone" position="top">
-                  <button
-                    type="button"
-                    aria-label="Use microphone"
-                    className="h-10 w-10 sm:h-9 sm:w-9 rounded-full hover:bg-slate-100 dark:hover:bg-[#1a1a1c] active:bg-slate-200 dark:active:bg-[#282a2c] flex items-center justify-center text-slate-600 hover:text-slate-900 dark:text-[#c4c7c5] dark:hover:text-white transition-all duration-200 cursor-pointer"
-                  >
+                {/* Speech Recognition Mic Button (No hover tooltip) */}
+                <button
+                  type="button"
+                  onClick={toggleSpeechRecognition}
+                  aria-label={isListening ? "Stop microphone" : "Use microphone"}
+                  className={`h-10 w-10 sm:h-9 sm:w-9 rounded-full flex items-center justify-center transition-all duration-200 cursor-pointer ${
+                    isListening
+                      ? 'bg-rose-600 text-white animate-pulse shadow-md shadow-rose-600/40 ring-2 ring-rose-400'
+                      : 'hover:bg-slate-100 dark:hover:bg-[#1a1a1c] active:bg-slate-200 dark:active:bg-[#282a2c] text-slate-600 hover:text-slate-900 dark:text-[#c4c7c5] dark:hover:text-white'
+                  }`}
+                >
+                  {isListening ? (
+                    <MicOff className="h-[19px] w-[19px] sm:h-[18px] sm:w-[18px] text-white" />
+                  ) : (
                     <Mic className="h-[19px] w-[19px] sm:h-[18px] sm:w-[18px] text-slate-600 dark:text-[#c4c7c5]" />
-                  </button>
-                </CustomTooltip>
+                  )}
+                </button>
 
                 {/* Submit / Stop Button */}
                 {isStreaming ? (
