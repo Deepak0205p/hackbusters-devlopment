@@ -4,7 +4,7 @@ import type { Metadata, Viewport } from 'next';
 import { ThemeProvider } from '@/components/ThemeProvider';
 
 export const metadata: Metadata = {
-  title: 'REVEAL 2.0 - Sovereign AI Intelligence Platform',
+  title: 'REVEAL 2.0',
   description: 'On-premise air-gapped sovereign agentic AI workbench with multi-model orchestrator.',
 };
 
