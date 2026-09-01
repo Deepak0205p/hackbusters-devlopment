@@ -1,86 +1,116 @@
 import os
+import io
 import re
 import time
-from typing import List, Dict, Any, Optional
+import hashlib
+from typing import List, Dict, Any, Optional, Union
 from pypdf import PdfReader
 
 from apps.admin_backend.rag.embeddings import get_embedder
-
-try:
-    import chromadb
-    from chromadb.config import Settings
-    _CHROMADB_AVAILABLE = True
-except Exception:
-    _CHROMADB_AVAILABLE = False
+from apps.admin_backend.rag.session_store import session_store
+from apps.admin_backend.rag.vector_store import chroma_store, MASTER_COLLECTION, PRIMARY_COLLECTION
 
 BASE_DATA_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", "data"))
 CHROMA_PERSIST_DIR = os.path.join(BASE_DATA_DIR, "chroma_db")
 MRPL_DOCS_DIR = os.path.join(BASE_DATA_DIR, "mrpl_documents")
 ONGC_POLICIES_DIR = os.path.join(BASE_DATA_DIR, "ongc_policies")
 
-COLLECTION_NAME = "mrpl_ongc_compliance_kb"
-
 class DocumentIngestor:
     """
-    Parses and chunks real MRPL SOPs and ONGC compliance policies,
-    extracts clause/section metadata, and generates genuine BAAI/bge-small-en-v1.5 embeddings.
+    Parses and chunks real MRPL SOPs, ONGC compliance policies, and ephemeral session uploads.
+    Supports PDF, DOCX, XLSX, and TXT files with local BGE-M3 embeddings.
     """
-    def __init__(self, chunk_size_chars: int = 600, overlap_chars: int = 100):
+    def __init__(self, chunk_size_chars: int = 512, overlap_chars: int = 64):
         self.chunk_size = chunk_size_chars
         self.overlap = overlap_chars
         self.embedder = get_embedder()
 
-    def parse_pdf(self, file_path: str) -> List[Dict[str, Any]]:
+    def parse_pdf(self, source: Union[str, bytes]) -> List[Dict[str, Any]]:
         pages_content = []
         try:
-            reader = PdfReader(file_path)
+            stream = io.BytesIO(source) if isinstance(source, bytes) else open(source, "rb")
+            reader = PdfReader(stream)
             for page_idx, page in enumerate(reader.pages):
                 try:
                     text = page.extract_text()
                     if text and text.strip():
-                        # Clean excessive whitespaces and non-printable characters
                         cleaned = re.sub(r'[ \t]+', ' ', text)
                         cleaned = re.sub(r'\n{3,}', '\n\n', cleaned).strip()
                         pages_content.append({"page_number": page_idx + 1, "text": cleaned})
                 except Exception as e:
-                    print(f"  [PDF Page Parse Error] {file_path} p{page_idx+1}: {e}")
+                    print(f"  [PDF Page Parse Warning] p{page_idx+1}: {e}")
+            if isinstance(source, str):
+                stream.close()
         except Exception as e:
-            print(f"[PDF Read Error] {file_path}: {e}")
+            print(f"[PDF Read Error]: {e}")
         return pages_content
 
-    def parse_docx(self, file_path: str) -> List[Dict[str, Any]]:
+    def parse_docx(self, source: Union[str, bytes]) -> List[Dict[str, Any]]:
         try:
             from docx import Document
-            doc = Document(file_path)
+            stream = io.BytesIO(source) if isinstance(source, bytes) else source
+            doc = Document(stream)
             full_text = "\n".join([p.text for p in doc.paragraphs if p.text.strip()])
             return [{"page_number": 1, "text": full_text}]
         except Exception as e:
-            print(f"[DOCX Read Error] {file_path}: {e}")
+            print(f"[DOCX Read Error]: {e}")
             return []
 
-    def parse_txt(self, file_path: str) -> List[Dict[str, Any]]:
+    def parse_xlsx(self, source: Union[str, bytes]) -> List[Dict[str, Any]]:
         try:
-            with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
-                content = f.read()
+            import openpyxl
+            stream = io.BytesIO(source) if isinstance(source, bytes) else open(source, "rb")
+            wb = openpyxl.load_workbook(stream, data_only=True)
+            pages_content = []
+
+            for sheet_idx, sheetname in enumerate(wb.sheetnames):
+                sheet = wb[sheetname]
+                rows_text = []
+                for row in sheet.iter_rows(values_only=True):
+                    row_vals = [str(v).strip() for v in row if v is not None and str(v).strip()]
+                    if row_vals:
+                        rows_text.append(" | ".join(row_vals))
+
+                if rows_text:
+                    sheet_text = f"Sheet: {sheetname}\n" + "\n".join(rows_text)
+                    pages_content.append({"page_number": sheet_idx + 1, "text": sheet_text})
+
+            if isinstance(source, str):
+                stream.close()
+            return pages_content
+        except Exception as e:
+            print(f"[XLSX Read Error]: {e}")
+            return []
+
+    def parse_txt(self, source: Union[str, bytes]) -> List[Dict[str, Any]]:
+        try:
+            if isinstance(source, bytes):
+                content = source.decode("utf-8", errors="ignore")
+            else:
+                with open(source, "r", encoding="utf-8", errors="ignore") as f:
+                    content = f.read()
             return [{"page_number": 1, "text": content}]
         except Exception as e:
-            print(f"[TXT Read Error] {file_path}: {e}")
+            print(f"[TXT Read Error]: {e}")
             return []
 
-    def parse_document(self, file_path: str) -> List[Dict[str, Any]]:
-        ext = os.path.splitext(file_path)[1].lower()
+    def parse_document(self, source: Union[str, bytes], filename: str = "") -> List[Dict[str, Any]]:
+        ext = os.path.splitext(filename)[1].lower() if filename else ""
+        if isinstance(source, str) and not ext:
+            ext = os.path.splitext(source)[1].lower()
+
         if ext == ".pdf":
-            return self.parse_pdf(file_path)
+            return self.parse_pdf(source)
         elif ext in [".docx", ".doc"]:
-            return self.parse_docx(file_path)
-        elif ext in [".txt", ".md"]:
-            return self.parse_txt(file_path)
-        return []
+            return self.parse_docx(source)
+        elif ext in [".xlsx", ".xls", ".csv"]:
+            return self.parse_xlsx(source)
+        elif ext in [".txt", ".md", ".log"]:
+            return self.parse_txt(source)
+        # Default fallback to plain text parser
+        return self.parse_txt(source)
 
     def extract_clause_metadata(self, text: str) -> str:
-        """
-        Detects SOP clause, section, rule, or chapter patterns from text excerpt.
-        """
         patterns = [
             r'(?:Clause|Section|Article|Rule|Chapter|Item|Paragraph|Para)\s*[\.:]?\s*([0-9]+(?:\.[0-9]+)*)',
             r'([0-9]+\.[0-9]+(?:\.[0-9]+)*)\s+[A-Z][a-zA-Z\s]{3,30}',
@@ -98,139 +128,162 @@ class DocumentIngestor:
         name = name.replace('_', ' ').replace('-', ' ').strip()
         return name
 
-    def chunk_document(self, file_path: str, source_category: str) -> List[Dict[str, Any]]:
-        filename = os.path.basename(file_path)
-        doc_title = self.clean_title_from_filename(filename)
-        pages = self.parse_document(file_path)
-        chunks = []
-        chunk_counter = 0
+    def chunk_text(
+        self,
+        text: str,
+        page_number: int = 1,
+        default_section: str = "General"
+    ) -> List[Dict[str, Any]]:
+        """
+        Splits raw text into sliding token-sized chunks with clause metadata.
+        """
+        chunks: List[Dict[str, Any]] = []
+        if not text or not text.strip():
+            return chunks
 
-        for page in pages:
-            page_text = page["text"]
-            page_num = page["page_number"]
-            start = 0
+        paragraphs = [p.strip() for p in text.split('\n\n') if p.strip()]
+        current_chunk = ""
+        current_section = default_section
 
-            while start < len(page_text):
-                end = min(start + self.chunk_size, len(page_text))
-                # Look for sentence or paragraph end near cut point
-                if end < len(page_text):
-                    boundary = page_text.rfind('\n', start, end)
-                    if boundary != -1 and boundary > start + (self.chunk_size // 2):
-                        end = boundary
-                    else:
-                        sentence_end = max(page_text.rfind('. ', start, end), page_text.rfind('; ', start, end))
-                        if sentence_end != -1 and sentence_end > start + (self.chunk_size // 2):
-                            end = sentence_end + 1
+        for para in paragraphs:
+            # Check for section or clause header in paragraph
+            clause = self.extract_clause_metadata(para[:120])
+            if clause != "General Section":
+                current_section = clause
 
-                chunk_text = page_text[start:end].strip()
-
-                if len(chunk_text) >= 40:
-                    chunk_counter += 1
-                    clause = self.extract_clause_metadata(chunk_text)
-                    doc_id_prefix = re.sub(r'[^a-zA-Z0-9]', '_', filename)[:20]
-                    chunk_id = f"{source_category}_{doc_id_prefix}_p{page_num}_c{chunk_counter}"
-
+            if len(current_chunk) + len(para) <= self.chunk_size:
+                current_chunk += ("\n\n" + para if current_chunk else para)
+            else:
+                if current_chunk:
                     chunks.append({
-                        "id": chunk_id,
-                        "text": chunk_text,
-                        "metadata": {
-                            "source_folder": source_category,
-                            "filename": filename,
-                            "document_title": doc_title,
-                            "page_number": page_num,
-                            "chunk_index": chunk_counter,
-                            "clause": clause,
-                            "sop_id": f"{source_category.upper()}-{doc_title.upper()[:15].strip().replace(' ', '-')}"
-                        }
+                        "text": current_chunk,
+                        "page_number": page_number,
+                        "section": current_section
                     })
+                # If paragraph itself is longer than chunk size, slice it
+                if len(para) > self.chunk_size:
+                    start = 0
+                    while start < len(para):
+                        end = start + self.chunk_size
+                        sub_slice = para[start:end]
+                        chunks.append({
+                            "text": sub_slice,
+                            "page_number": page_number,
+                            "section": current_section
+                        })
+                        start += (self.chunk_size - self.overlap)
+                    current_chunk = ""
+                else:
+                    current_chunk = para
 
-                if end >= len(page_text):
-                    break
-                start = end - self.overlap
+        if current_chunk:
+            chunks.append({
+                "text": current_chunk,
+                "page_number": page_number,
+                "section": current_section
+            })
 
         return chunks
 
-    def ingest_all_folders(self, persist_dir: str = CHROMA_PERSIST_DIR) -> Dict[str, Any]:
+    def ingest_session_document(
+        self,
+        file_bytes: bytes,
+        filename: str,
+        session_id: str,
+        user_id: str = "operator"
+    ) -> Dict[str, Any]:
         """
-        Scans both MRPL documents and ONGC policies, extracts chunks,
-        computes BGE dense embeddings, and stores into persistent ChromaDB.
+        Fast async-compatible ingestion pipeline for session-scoped ephemeral documents.
         """
-        if not _CHROMADB_AVAILABLE:
-            raise RuntimeError("ChromaDB is not installed or available.")
+        if not file_bytes or len(file_bytes) == 0:
+            raise ValueError(f"Uploaded file '{filename}' is empty.")
 
-        os.environ["ANONYMIZED_TELEMETRY"] = "False"
-        os.environ["CHROMA_TELEMETRY"] = "False"
+        sha256 = hashlib.sha256(file_bytes).hexdigest()
+        pages = self.parse_document(file_bytes, filename=filename)
+        if not pages:
+            raise ValueError(f"No readable text or tables could be extracted from '{filename}'.")
 
-        settings = Settings(
-            anonymized_telemetry=False,
-            is_persistent=True,
-            persist_directory=persist_dir
+        all_chunks: List[Dict[str, Any]] = []
+        for page_data in pages:
+            page_num = page_data.get("page_number", 1)
+            raw_text = page_data.get("text", "")
+            page_chunks = self.chunk_text(raw_text, page_number=page_num)
+            all_chunks.extend(page_chunks)
+
+        if not all_chunks:
+            raise ValueError(f"Unable to generate valid text chunks for '{filename}'.")
+
+        # Ingest directly into session vector store
+        receipt = session_store.ingest_session_chunks(
+            session_id=session_id,
+            user_id=user_id,
+            file_name=filename,
+            chunks=all_chunks,
+            file_size_bytes=len(file_bytes),
+            sha256_hash=sha256
         )
-        client = chromadb.PersistentClient(path=persist_dir, settings=settings)
-        collection = client.get_or_create_collection(
-            name=COLLECTION_NAME,
-            metadata={"description": "MRPL and ONGC Compliance, Safety & Operating Procedures"}
-        )
 
-        all_chunks = []
-        folder_stats = {}
+        receipt["pages_extracted"] = len(pages)
+        receipt["sha256_checksum"] = sha256
+        return receipt
 
-        folders = [
-            ("mrpl_documents", MRPL_DOCS_DIR),
-            ("ongc_policies", ONGC_POLICIES_DIR)
-        ]
+    def ingest_master_sop_file(
+        self,
+        file_path: str,
+        user_id: str = "admin"
+    ) -> Dict[str, Any]:
+        """
+        Ingests a permanent master standard into Tier 1 Global Knowledge Base.
+        """
+        if not os.path.exists(file_path):
+            raise FileNotFoundError(f"Master file not found at '{file_path}'")
 
-        for category, folder_path in folders:
-            if not os.path.exists(folder_path):
-                print(f"[Ingest] Folder not found: {folder_path}")
-                continue
-            files = [f for f in os.listdir(folder_path) if os.path.isfile(os.path.join(folder_path, f))]
-            folder_stats[category] = {"file_count": len(files), "chunks": 0}
-            print(f"[Ingest] Scanning {category}: {len(files)} files found at {folder_path}...")
-            
-            for fname in sorted(files):
-                fpath = os.path.join(folder_path, fname)
-                doc_chunks = self.chunk_document(fpath, category)
-                folder_stats[category]["chunks"] += len(doc_chunks)
-                all_chunks.extend(doc_chunks)
+        filename = os.path.basename(file_path)
+        pages = self.parse_document(file_path, filename=filename)
+        title = self.clean_title_from_filename(filename)
 
-        total_chunks = len(all_chunks)
-        print(f"[Ingest] Total extracted chunks: {total_chunks} across {sum(s['file_count'] for s in folder_stats.values())} documents.")
+        all_chunks: List[Dict[str, Any]] = []
+        for page_data in pages:
+            page_num = page_data.get("page_number", 1)
+            raw_text = page_data.get("text", "")
+            page_chunks = self.chunk_text(raw_text, page_number=page_num)
+            all_chunks.extend(page_chunks)
 
-        if total_chunks == 0:
-            return {"status": "NO_DOCUMENTS", "total_chunks": 0, "folder_stats": folder_stats}
+        if not all_chunks:
+            return {"success": False, "detail": "No chunks extracted"}
 
-        # Embed and Upsert in batches of 64
-        batch_size = 64
-        t0 = time.time()
-        for i in range(0, total_chunks, batch_size):
-            batch = all_chunks[i:i+batch_size]
-            b_ids = [c["id"] for c in batch]
-            b_docs = [c["text"] for c in batch]
-            b_metas = [c["metadata"] for c in batch]
-            b_embeddings = self.embedder.embed_batch(b_docs, batch_size=batch_size)
+        ids = []
+        docs = []
+        metadatas = []
+        for idx, ch in enumerate(all_chunks):
+            cid = f"master_{title.replace(' ', '_')}_{idx+1}"
+            ids.append(cid)
+            docs.append(ch["text"])
+            metadatas.append({
+                "sop_id": title,
+                "title": title,
+                "clause": ch.get("section", "Section 1.0"),
+                "page_number": ch.get("page_number", 1),
+                "source_folder": "master_standards",
+                "filename": filename
+            })
 
-            collection.upsert(
-                ids=b_ids,
-                documents=b_docs,
-                embeddings=b_embeddings,
-                metadatas=b_metas
+        embeddings = self.embedder.embed_batch(docs)
+        if chroma_store.master_collection:
+            chroma_store.master_collection.upsert(
+                ids=ids,
+                documents=docs,
+                embeddings=embeddings,
+                metadatas=metadatas
             )
-            if (i // batch_size + 1) % 5 == 0 or (i + batch_size) >= total_chunks:
-                print(f"  Ingested batch {i//batch_size + 1}/{(total_chunks + batch_size - 1)//batch_size} ({len(batch)} chunks)...")
-
-        duration_sec = round(time.time() - t0, 2)
-        total_in_collection = collection.count()
 
         return {
-            "status": "SUCCESS",
-            "total_chunks_indexed": total_chunks,
-            "total_in_chromadb": total_in_collection,
-            "duration_seconds": duration_sec,
-            "folder_stats": folder_stats
+            "success": True,
+            "filename": filename,
+            "title": title,
+            "chunks_indexed": len(ids),
+            "pages_parsed": len(pages)
         }
 
-if __name__ == "__main__":
-    ingestor = DocumentIngestor()
-    result = ingestor.ingest_all_folders()
-    print("Ingestion Result:", result)
+# Global Ingestor Singleton
+document_ingestor = DocumentIngestor()

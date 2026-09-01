@@ -404,3 +404,4 @@ class ModelLifecycleManager:
         return True
 
 model_manager = ModelLifecycleManager()
+ModelManager = ModelLifecycleManager

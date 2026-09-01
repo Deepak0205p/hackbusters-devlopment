@@ -2,9 +2,10 @@ import os
 import math
 import hashlib
 from typing import List, Dict, Any, Optional
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from apps.admin_backend.rag.embeddings import get_embedder
+from apps.admin_backend.rag.session_store import session_store, SessionRetrievalResult
 
 # Ensure ChromaDB telemetry is completely disabled before import for strict air-gap compliance
 os.environ["ANONYMIZED_TELEMETRY"] = "False"
@@ -22,8 +23,12 @@ BASE_DATA_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".
 CHROMA_PERSIST_DIR = os.path.join(BASE_DATA_DIR, "chroma_db")
 
 PRIMARY_COLLECTION = "mrpl_ongc_compliance_kb"
+MASTER_COLLECTION = "mrpl_master_knowledge"
 LEGACY_COLLECTION = "mrpl_refinery_sops"
 
+# ==============================================================================
+# DATA MODELS
+# ==============================================================================
 class SOPChunk(BaseModel):
     id: str
     sop_id: str
@@ -31,7 +36,7 @@ class SOPChunk(BaseModel):
     clause: str
     page_number: int
     content: str
-    metadata: Dict[str, Any]
+    metadata: Dict[str, Any] = Field(default_factory=dict)
 
 class SOPRetrievalResult(BaseModel):
     sop_id: str
@@ -43,9 +48,17 @@ class SOPRetrievalResult(BaseModel):
     compliance_action: str
     source_folder: Optional[str] = "mrpl_documents"
     filename: Optional[str] = None
+    citation: Optional[str] = None
 
-# Seed SOPs — populated dynamically from real documents in data/mrpl_documents and data/ongc_policies
-# No hardcoded equipment-specific demo data. Vector store loads actual PDFs at startup.
+class MergedRetrievalResponse(BaseModel):
+    query: str
+    session_id: Optional[str] = None
+    master_results: List[SOPRetrievalResult] = Field(default_factory=list)
+    session_results: List[SessionRetrievalResult] = Field(default_factory=list)
+    combined_grounding_text: str = ""
+    total_hits: int = 0
+
+# Seed SOPs — loaded dynamically or populated during initialization
 SEED_SOPS: List[SOPChunk] = []
 
 def generate_local_dense_embedding(text: str, dim: int = 384) -> List[float]:
@@ -73,19 +86,25 @@ def generate_local_dense_embedding(text: str, dim: int = 384) -> List[float]:
     norm = math.sqrt(sum(x * x for x in vector)) or 1.0
     return [round(x / norm, 6) for x in vector]
 
+# ==============================================================================
+# DUAL-TIER CHROMA VECTOR STORE
+# ==============================================================================
 class ChromaVectorStore:
     """
-    Embedded ChromaDB Vector Store for MRPL and ONGC compliance documents.
-    Configured with persistent storage, zero telemetry, and BAAI/bge-small-en-v1.5 dense embeddings.
+    Dual-Tier Vector Store for MRPL:
+    - Tier 1: Global Master Knowledge Base (Read-only for operators; OISD, API, Plant SOPs).
+    - Tier 2: Isolated Session-Scoped Ephemeral Store (Bound to active session_id, zero bleed).
     """
     def __init__(self, persist_dir: str = CHROMA_PERSIST_DIR):
         self.persist_dir = os.path.abspath(persist_dir)
         os.makedirs(self.persist_dir, exist_ok=True)
         self.chroma_client = None
         self.primary_collection = None
+        self.master_collection = None
         self.legacy_collection = None
         self.is_chroma_ready = False
         self.embedder = get_embedder()
+        self.session_manager = session_store
         self._initialize_database()
 
     def _initialize_database(self):
@@ -104,6 +123,11 @@ class ChromaVectorStore:
                 self.primary_collection = self.chroma_client.get_or_create_collection(
                     name=PRIMARY_COLLECTION,
                     metadata={"description": "MRPL and ONGC Compliance, Safety & Operating Procedures"}
+                )
+                # Master Knowledge collection
+                self.master_collection = self.chroma_client.get_or_create_collection(
+                    name=MASTER_COLLECTION,
+                    metadata={"description": "MRPL Master Knowledge Base for Industrial RAG"}
                 )
                 # Legacy SOP collection for backward compatibility
                 self.legacy_collection = self.chroma_client.get_or_create_collection(
@@ -134,15 +158,22 @@ class ChromaVectorStore:
             } for chunk in SEED_SOPS]
             embeddings = self.embedder.embed_batch(docs)
 
-            if self.legacy_collection:
+            if self.legacy_collection and ids:
                 self.legacy_collection.upsert(
                     ids=ids,
                     documents=docs,
                     embeddings=embeddings,
                     metadatas=metadatas
                 )
-            if self.primary_collection:
+            if self.primary_collection and ids:
                 self.primary_collection.upsert(
+                    ids=ids,
+                    documents=docs,
+                    embeddings=embeddings,
+                    metadatas=metadatas
+                )
+            if self.master_collection and ids:
+                self.master_collection.upsert(
                     ids=ids,
                     documents=docs,
                     embeddings=embeddings,
@@ -151,22 +182,34 @@ class ChromaVectorStore:
         except Exception as e:
             print(f"[ChromaVectorStore] Seed error: {e}")
 
-    def query_sop(self, query_text: str, top_k: int = 2) -> List[SOPRetrievalResult]:
+    def query_sop(
+        self,
+        query_text: str,
+        top_k: int = 2,
+        session_id: Optional[str] = None
+    ) -> List[SOPRetrievalResult]:
         """
-        Executes semantic vector similarity search against ChromaDB collections.
-        Queries real MRPL & ONGC documents first, falling back to legacy collection or memory.
+        Executes semantic vector similarity search against Tier 1 Master Knowledge Base.
         """
         query_vec = generate_local_dense_embedding(query_text)
         results: List[SOPRetrievalResult] = []
 
         if self.is_chroma_ready:
-            # First try the real compliance collection
             try:
-                target_col = self.primary_collection if (self.primary_collection and self.primary_collection.count() > 0) else self.legacy_collection
-                if target_col:
+                target_col = (
+                    self.master_collection
+                    if (self.master_collection and self.master_collection.count() > 0)
+                    else (
+                        self.primary_collection
+                        if (self.primary_collection and self.primary_collection.count() > 0)
+                        else self.legacy_collection
+                    )
+                )
+
+                if target_col and target_col.count() > 0:
                     chroma_res = target_col.query(
                         query_embeddings=[query_vec],
-                        n_results=top_k,
+                        n_results=min(top_k, target_col.count()),
                         include=["documents", "metadatas", "distances"]
                     )
 
@@ -179,10 +222,11 @@ class ChromaVectorStore:
 
                             sop_id = meta.get("sop_id") or meta.get("filename") or "DOC-COMPLIANCE"
                             clause = meta.get("clause") or "Section 1.0"
-                            title = meta.get("document_title") or meta.get("title") or "Compliance Document"
+                            title = meta.get("document_title") or meta.get("title") or "Master SOP Standard"
                             page_num = meta.get("page_number", 1)
                             source_folder = meta.get("source_folder", "mrpl_documents")
                             filename = meta.get("filename", "")
+                            citation = f"[SOURCE: MASTER_SOP | Document: {title} | Clause: {clause} | Page: {page_num}]"
 
                             results.append(SOPRetrievalResult(
                                 sop_id=sop_id,
@@ -193,14 +237,15 @@ class ChromaVectorStore:
                                 similarity_score=round(sim, 3),
                                 compliance_action=f"Mandated by {title} ({clause}, Page {page_num})",
                                 source_folder=source_folder,
-                                filename=filename
+                                filename=filename,
+                                citation=citation
                             ))
                         if results:
                             return results
             except Exception as e:
                 print(f"[ChromaVectorStore] Query error: {e}")
 
-        # Robust In-Memory Vector Similarity Fallback
+        # In-Memory Vector Similarity Fallback
         scored = []
         for chunk in SEED_SOPS:
             chunk_vec = generate_local_dense_embedding(chunk.content)
@@ -209,6 +254,7 @@ class ChromaVectorStore:
 
         scored.sort(key=lambda x: x[0], reverse=True)
         for score, chunk in scored[:top_k]:
+            citation = f"[SOURCE: MASTER_SOP | Document: {chunk.title} | Clause: {chunk.clause} | Page: {chunk.page_number}]"
             results.append(SOPRetrievalResult(
                 sop_id=chunk.sop_id,
                 title=chunk.title,
@@ -218,13 +264,63 @@ class ChromaVectorStore:
                 similarity_score=round(max(0.75, score), 3),
                 compliance_action=f"Triggered by {chunk.sop_id} Clause {chunk.clause}",
                 source_folder="mrpl_documents",
-                filename="SOP_MRPL_Refinery_Standards.pdf"
+                filename="SOP_MRPL_Refinery_Standards.pdf",
+                citation=citation
             ))
 
         return results
 
+    def similarity_search_merged(
+        self,
+        query: str,
+        session_id: Optional[str] = None,
+        top_k_master: int = 3,
+        top_k_session: int = 4
+    ) -> MergedRetrievalResponse:
+        """
+        Dual-Tier Merged Retrieval Engine:
+        1. Queries Tier 1 (Master Knowledge Base).
+        2. Queries Tier 2 (Session Ephemeral Store if session_id is active).
+        3. Formats combined grounding text with strict provenance tags.
+        """
+        master_hits = self.query_sop(query, top_k=top_k_master)
+        session_hits = []
+
+        if session_id and session_id.strip():
+            session_hits = self.session_manager.query_session(
+                session_id=session_id.strip(),
+                query_text=query,
+                top_k=top_k_session
+            )
+
+        grounding_blocks: List[str] = []
+
+        # Grounding headers for Master Knowledge
+        if master_hits:
+            grounding_blocks.append("=== PLANT MASTER STANDARDS (TIER 1 GLOBAL) ===")
+            for hit in master_hits:
+                citation = hit.citation or f"[SOURCE: MASTER_SOP | Document: {hit.title} | Clause: {hit.clause} | Page: {hit.page_number}]"
+                grounding_blocks.append(f"{citation}\n{hit.matched_text}")
+
+        # Grounding headers for User Session Uploads
+        if session_hits:
+            grounding_blocks.append("\n=== SESSION ATTACHMENTS & AD-HOC LOGS (TIER 2 EPHEMERAL) ===")
+            for s_hit in session_hits:
+                grounding_blocks.append(f"{s_hit.citation}\n{s_hit.matched_text}")
+
+        combined_text = "\n\n".join(grounding_blocks)
+
+        return MergedRetrievalResponse(
+            query=query,
+            session_id=session_id,
+            master_results=master_hits,
+            session_results=session_hits,
+            combined_grounding_text=combined_text,
+            total_hits=len(master_hits) + len(session_hits)
+        )
+
 # Global Singleton
 chroma_store = ChromaVectorStore()
 
-def get_vector_store():
+def get_vector_store() -> ChromaVectorStore:
     return chroma_store

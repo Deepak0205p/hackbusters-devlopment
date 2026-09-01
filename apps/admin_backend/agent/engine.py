@@ -28,7 +28,8 @@ class ReActAgentEngine:
         attachments: Optional[List[Dict[str, Any]]] = None,
         role: Optional[str] = None,
         force_refresh: bool = False,
-        history: Optional[List[Dict[str, str]]] = None
+        history: Optional[List[Dict[str, str]]] = None,
+        session_id: Optional[str] = None
     ) -> AsyncGenerator[Dict[str, Any], None]:
         has_attachments = bool(attachments and len(attachments) > 0)
         has_history = bool(history and len(history) > 0)
@@ -480,8 +481,11 @@ class ReActAgentEngine:
 
         elif domain == "reasoning":
             from apps.admin_backend.rag.vector_store import chroma_store
-            sop_hits = chroma_store.query_sop(prompt, top_k=2)
-            sop_context = "\n".join([f"- {h.title} ({h.clause}, Page {h.page_number}): {h.matched_text}" for h in sop_hits])
+            merged_rag = chroma_store.similarity_search_merged(prompt, session_id=session_id, top_k_master=2, top_k_session=3)
+            sop_hits = merged_rag.master_results
+            session_hits = merged_rag.session_results
+            sop_context = merged_rag.combined_grounding_text
+
             citations_for_cache = [
                 {
                     "title": h.title,
@@ -489,19 +493,32 @@ class ReActAgentEngine:
                     "page_number": h.page_number,
                     "source_folder": h.source_folder,
                     "filename": h.filename,
-                    "similarity_score": h.similarity_score
+                    "similarity_score": h.similarity_score,
+                    "source_type": "MASTER_SOP"
                 }
                 for h in sop_hits
+            ] + [
+                {
+                    "title": sh.file_name,
+                    "clause": sh.section,
+                    "page_number": sh.page_number,
+                    "source_folder": "session_uploads",
+                    "filename": sh.file_name,
+                    "similarity_score": sh.similarity_score,
+                    "source_type": "SESSION_FILE"
+                }
+                for sh in session_hits
             ]
 
+            total_hits = len(sop_hits) + len(session_hits)
             yield {
                 "event": "step",
                 "step_number": step_num,
                 "step_type": "action",
-                "content": f"Querying local ChromaDB compliance repository:\nMatched {len(sop_hits)} relevant source chunks with BAAI/bge-small-en-v1.5 embeddings.",
-                "tool_name": "chroma_sop_search",
-                "tool_input": json.dumps({"query": prompt[:80]}),
-                "tool_output": sop_context[:220] + "..." if sop_context else "No direct clause matches found.",
+                "content": f"Querying Dual-Tier Sovereign Vector Store:\nMatched {len(sop_hits)} Master Standard chunks and {len(session_hits)} Session Upload chunks with BAAI/bge-small-en-v1.5 embeddings.",
+                "tool_name": "chroma_dual_tier_search",
+                "tool_input": json.dumps({"query": prompt[:80], "session_id": session_id or "NONE"}),
+                "tool_output": sop_context[:240] + "..." if sop_context else "No direct clause matches found.",
                 "duration_ms": 35,
                 "ram_mb": 28
             }
@@ -511,9 +528,10 @@ class ReActAgentEngine:
                 f"You are the MRPL & ONGC Sovereign Intelligence & Compliance Engine. "
                 f"You are built to answer any question related to any field or department in MRPL & ONGC (HSE & Fire Safety, Operations, Maintenance & Reliability, Materials & GeM, Finance & e-MB, ESG & Sustainability, CAG Audit, HR & Admin, Vigilance & Ethics).\n\n"
                 f"{history_context}"
-                f"Context from Real MRPL/ONGC Compliance Documents:\n{sop_context}\n\n"
+                f"Context from Real MRPL/ONGC Compliance Documents & Session Attachments:\n{sop_context}\n\n"
                 f"User Request: {prompt}\n\n"
-                "Synthesize a formal engineering response referencing specific SOP clauses and mandatory operational actions for the user's field."
+                "Synthesize a formal engineering response referencing specific SOP clauses and mandatory operational actions for the user's field. "
+                "Explicitly cite source provenance ([SOURCE: MASTER_SOP] or [SOURCE: SESSION_FILE]) for all retrieved facts."
             )
             llm_res = backend.generate(prompt=augmented_prompt, max_tokens=384, temperature=0.2)
             

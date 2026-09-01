@@ -516,8 +516,20 @@ class ComputeBackendRegistry:
         self.vllm = VLLMBackend()
         self.llama_cpp = LlamaCppBackend()
 
+    def list_registered_backends(self) -> List[str]:
+        return ["ollama", "laptop_gpu", "vllm", "vllm_cluster", "llama_cpp", "workstation_gpu"]
+
+    def get_backend_class(self, backend_type: str):
+        if backend_type in ["vllm", "vllm_cluster"]:
+            return VLLMClusterBackend
+        elif backend_type in ["ollama", "laptop_gpu", "workstation_gpu"]:
+            return OllamaBackend
+        elif backend_type == "llama_cpp":
+            return LlamaCppBackend
+        return OllamaBackend
+
     def get_backend(self, backend_type: str = "ollama", endpoint_url: Optional[str] = None) -> BaseComputeBackend:
-        if backend_type == "vllm" or (endpoint_url and ":8000" in endpoint_url):
+        if backend_type in ["vllm", "vllm_cluster"] or (endpoint_url and ":8000" in endpoint_url):
             return VLLMBackend(base_url=endpoint_url) if endpoint_url else self.vllm
         elif backend_type in ["ollama", "laptop_gpu", "workstation_gpu"]:
             return OllamaBackend(base_url=endpoint_url) if endpoint_url else self.ollama
@@ -525,7 +537,13 @@ class ComputeBackendRegistry:
             return self.llama_cpp
         return self.ollama
 
+VLLMClusterBackend = VLLMBackend
+
 backend_registry = ComputeBackendRegistry()
+compute_backend_registry = backend_registry
+
+def get_compute_backend(backend_type: str = "ollama", endpoint_url: Optional[str] = None) -> BaseComputeBackend:
+    return backend_registry.get_backend(backend_type, endpoint_url=endpoint_url)
 
 def get_backend_for_model(model_id: str, endpoint_override: Optional[str] = None) -> Tuple[BaseComputeBackend, Dict[str, Any]]:
     """Resolves the preferred compute backend and metadata for a given model ID."""
