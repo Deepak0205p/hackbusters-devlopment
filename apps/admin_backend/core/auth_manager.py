@@ -25,6 +25,14 @@ from cryptography.exceptions import InvalidSignature
 import ldap3
 from ldap3 import Server, Connection, ALL, SUBTREE
 
+# Argon2id for Sovereign Local Password Hashing & Offline Fallback
+try:
+    from argon2 import PasswordHasher
+    from argon2.exceptions import VerifyMismatchError
+    _ph = PasswordHasher()
+except ImportError:
+    _ph = None
+
 # Tamper-Evident SHA-256 Audit Log integration
 from apps.admin_backend.sovereignty.tamper_log import audit_log
 
@@ -32,7 +40,7 @@ from apps.admin_backend.sovereignty.tamper_log import audit_log
 # 1. CONFIGURATION & PATH SETUP
 # ==============================================================================
 CONFIG_FILE = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "config", "auth_config.yaml"))
-DB_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "data", "users_auth.db"))
+DB_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", "data", "users_auth.db"))
 CERTS_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "config", "certs"))
 
 def load_auth_config() -> Dict[str, Any]:
@@ -40,10 +48,12 @@ def load_auth_config() -> Dict[str, Any]:
     default_config = {
         "pki": {
             "enabled": True,
+            "ca_cert_path": os.path.join(CERTS_DIR, "mrpl_root_ca.crt"),
             "root_ca_path": os.path.join(CERTS_DIR, "mrpl_root_ca.crt"),
             "crl_path": os.path.join(CERTS_DIR, "mrpl_crl.pem"),
             "enforce_expiration": True,
             "enforce_crl": True,
+            "client_cert_header": "X-SSL-Client-Cert",
             "auto_generate_plant_ca_if_missing": True,
             "allowed_organizations": ["MRPL", "ONGC", "Mangalore Refinery and Petrochemicals Limited"]
         },
@@ -51,24 +61,24 @@ def load_auth_config() -> Dict[str, Any]:
             "enabled": True,
             "server_uri": "ldap://127.0.0.1:389",
             "connect_timeout_sec": 2.0,
-            "bind_dn": "CN=SvcWorkbench,OU=ServiceAccounts,DC=mrpl,DC=co,DC=in",
+            "bind_dn": "CN=SvcWorkbench,OU=ServiceAccounts,DC=mrpl,DC=internal",
             "bind_password": "SovereignPlantServicePass2026!",
-            "base_dn": "DC=mrpl,DC=co,DC=in",
-            "user_search_filter": "(&(objectClass=user)(|(sAMAccountName={username})(userPrincipalName={username})))",
+            "base_dn": "dc=mrpl,dc=internal",
+            "user_search_filter": "(&(objectClass=user)(sAMAccountName={username}))",
             "group_role_mapping": {
-                "CN=MRPL_SEC_ADMINS": "SUPER_ADMIN",
+                "CN=MRPL_SEC_ADMINS,OU=Groups,DC=mrpl,DC=internal": "SUPER_ADMIN",
+                "CN=MRPL_PROCESS_LEADS,OU=Groups,DC=mrpl,DC=internal": "PROCESS_LEAD",
+                "CN=MRPL_HSE_AUDITORS,OU=Groups,DC=mrpl,DC=internal": "HSE_AUDITOR",
+                "CN=MRPL_OPERATORS,OU=Groups,DC=mrpl,DC=internal": "FIELD_OPERATOR",
                 "CN=MRPL_PLANT_SECURITY": "PLANT_SECURITY_OFFICER",
-                "CN=MRPL_PROCESS_LEADS": "PROCESS_LEAD",
-                "CN=MRPL_HSE_AUDITORS": "HSE_AUDITOR",
-                "CN=MRPL_MAINTENANCE": "MAINTENANCE_ENG",
-                "CN=MRPL_OPERATORS": "FIELD_OPERATOR",
-                "CN=MRPL_READONLY": "READONLY_OPERATOR"
+                "CN=MRPL_MAINTENANCE": "MAINTENANCE_ENG"
             },
             "fallback_to_local_db": True
         },
         "jwt": {
             "algorithm": "HS256",
             "secret_key": "sovereign-mrpl-industrial-pki-hmac-sha256-secret-key-airgap-2026",
+            "token_expiry_minutes": 480,
             "token_expiry_seconds": 28800, # 8 hours
             "issuer": "MRPL_SOVEREIGN_AUTH_ENGINE",
             "audience": "MRPL_SOVEREIGN_WORKBENCH"
@@ -129,6 +139,27 @@ def get_db():
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     return conn
+
+def hash_password(password: str) -> str:
+    """Hashes password using Argon2id with SHA-256 fallback."""
+    if _ph:
+        try:
+            return _ph.hash(password)
+        except Exception:
+            pass
+    return hashlib.sha256(password.encode("utf-8")).hexdigest()
+
+def verify_password(plain_password: str, hashed_password: str) -> bool:
+    """Verifies plain password against stored Argon2id hash or legacy SHA-256 hash."""
+    if hashed_password.startswith("$argon2"):
+        if _ph:
+            try:
+                return _ph.verify(hashed_password, plain_password)
+            except Exception:
+                return False
+        return False
+    # SHA-256 comparison
+    return hashlib.sha256(plain_password.encode("utf-8")).hexdigest() == hashed_password
 
 def init_auth_db():
     conn = get_db()
@@ -200,7 +231,7 @@ def init_auth_db():
     # Seed default sovereign operator user if not exists
     cursor.execute("SELECT id FROM users WHERE username = 'operator'")
     if not cursor.fetchone():
-        pwd_hash = hashlib.sha256("reveal2026".encode()).hexdigest()
+        pwd_hash = hash_password("reveal2026")
         cursor.execute(
             "INSERT INTO users (username, password_hash, role, full_name, department, created_at) VALUES (?, ?, ?, ?, ?, ?)",
             ("operator", pwd_hash, "FIELD_OPERATOR", "Lead Process Operator", "Refinery Operations", time.time())
@@ -209,7 +240,7 @@ def init_auth_db():
     # Seed default sovereign admin user if not exists
     cursor.execute("SELECT id FROM users WHERE username = 'admin'")
     if not cursor.fetchone():
-        pwd_hash = hashlib.sha256("admin2026".encode()).hexdigest()
+        pwd_hash = hash_password("admin2026")
         cursor.execute(
             "INSERT INTO users (username, password_hash, role, full_name, department, created_at) VALUES (?, ?, ?, ?, ?, ?)",
             ("admin", pwd_hash, "SUPER_ADMIN", "Refinery Compliance Chief", "Executive HSE & Audit", time.time())
@@ -322,9 +353,8 @@ class RBACEngine:
         matched_roles: List[str] = []
 
         for grp in ad_groups:
-            # Check exact match or substring in DN
             for dn_key, target_role in mapping.items():
-                if dn_key.lower() in grp.lower():
+                if dn_key.lower() in grp.lower() or grp.lower() in dn_key.lower():
                     matched_roles.append(target_role)
 
         if not matched_roles:
@@ -370,7 +400,7 @@ class X509PKIValidator:
 
     def _initialize_root_ca(self):
         """Loads or auto-generates the local Plant Root CA certificate."""
-        ca_path = self.pki_cfg.get("root_ca_path")
+        ca_path = self.pki_cfg.get("ca_cert_path") or self.pki_cfg.get("root_ca_path")
         if ca_path and not os.path.isabs(ca_path):
             project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
             ca_path = os.path.abspath(os.path.join(project_root, ca_path))
@@ -453,7 +483,6 @@ class X509PKIValidator:
     def parse_certificate(self, raw_cert_data: Union[str, bytes]) -> x509.Certificate:
         """Parses X.509 certificate from PEM string, URL-encoded header, or DER bytes."""
         if isinstance(raw_cert_data, bytes):
-            # Try PEM first, then DER
             try:
                 return x509.load_pem_x509_certificate(raw_cert_data)
             except Exception:
@@ -498,7 +527,7 @@ class X509PKIValidator:
         serial_hex = hex(cert.serial_number)[2:].upper()
         fingerprint = hashlib.sha256(cert.public_bytes(serialization.Encoding.DER)).hexdigest().upper()
 
-        # Subject Alternative Names (SAN)
+        # Subject Alternative Names (SAN - UPN / Email / DNS)
         san_list = []
         try:
             san_ext = cert.extensions.get_extension_for_oid(ExtensionOID.SUBJECT_ALTERNATIVE_NAME)
@@ -586,8 +615,8 @@ class X509PKIValidator:
         """
         Full Cryptographic X.509 Validation:
         1. Expiration validity check
-        2. Root CA cryptographic signature verification
-        3. CRL Revocation check
+        2. CRL Revocation check
+        3. Root CA cryptographic signature verification
         """
         identity = self.extract_identity(cert)
         serial_hex = identity["serial_number"]
@@ -664,7 +693,7 @@ class LDAPDirectoryConnector:
             raise LDAPAuthFailedException("Enterprise LDAP authentication is disabled in configuration.")
 
         server_uri = self.ldap_cfg.get("server_uri", "ldap://127.0.0.1:389")
-        base_dn = self.ldap_cfg.get("base_dn", "DC=mrpl,DC=co,DC=in")
+        base_dn = self.ldap_cfg.get("base_dn", "dc=mrpl,dc=internal")
         timeout = float(self.ldap_cfg.get("connect_timeout_sec", 2.0))
         filter_tpl = self.ldap_cfg.get("user_search_filter", "(&(objectClass=user)(sAMAccountName={username}))")
         search_filter = filter_tpl.format(username=username)
@@ -743,7 +772,7 @@ class EnterpriseAuthManager:
         self.jwt_cfg = self.config.get("jwt", {})
         self.secret_key = self.jwt_cfg.get("secret_key", "sovereign-default-secret-key-2026")
         self.algorithm = self.jwt_cfg.get("algorithm", "HS256")
-        self.expiry_sec = int(self.jwt_cfg.get("token_expiry_seconds", 28800))
+        self.expiry_sec = int(self.jwt_cfg.get("token_expiry_seconds", self.jwt_cfg.get("token_expiry_minutes", 480) * 60))
         self.issuer = self.jwt_cfg.get("issuer", "MRPL_SOVEREIGN_AUTH_ENGINE")
         self.audience = self.jwt_cfg.get("audience", "MRPL_SOVEREIGN_WORKBENCH")
 
@@ -842,14 +871,26 @@ class EnterpriseAuthManager:
                 "permissions": rbac_engine.get_permissions(identity["role"])
             }
 
-        except (InvalidCertificateException, CertificateRevokedException) as e:
-            status_tag = "REVOKED_CERT" if isinstance(e, CertificateRevokedException) else "INVALID_CERT"
+        except CertificateRevokedException as e:
             audit_log.append_event(
                 event_type="PKI_AUTH_FAILURE",
                 details=json.dumps({
                     "reason": str(e),
                     "auth_method": "PKI_SMARTCARD",
-                    "status": status_tag,
+                    "status": "REVOKED_CERT",
+                    "client_ip": client_ip,
+                    "timestamp": time.strftime("%Y-%m-%d %H:%M:%S UTC", time.gmtime())
+                })
+            )
+            # 403 Forbidden for revoked certificate as per security spec
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
+        except InvalidCertificateException as e:
+            audit_log.append_event(
+                event_type="PKI_AUTH_FAILURE",
+                details=json.dumps({
+                    "reason": str(e),
+                    "auth_method": "PKI_SMARTCARD",
+                    "status": "INVALID_CERT",
                     "client_ip": client_ip,
                     "timestamp": time.strftime("%Y-%m-%d %H:%M:%S UTC", time.gmtime())
                 })
@@ -1039,18 +1080,25 @@ def get_user_by_username(username: str) -> Optional[Dict[str, Any]]:
 def authenticate_user(username: str, password: str) -> Optional[Dict[str, Any]]:
     conn = get_db()
     cursor = conn.cursor()
-    pwd_hash = hashlib.sha256(password.encode()).hexdigest()
-    cursor.execute("SELECT id, username, role, full_name, department FROM users WHERE username = ? AND password_hash = ?", (username, pwd_hash))
+    cursor.execute("SELECT id, username, password_hash, role, full_name, department FROM users WHERE username = ?", (username,))
     row = cursor.fetchone()
     conn.close()
     if row:
-        return dict(row)
+        user_dict = dict(row)
+        if verify_password(password, user_dict["password_hash"]):
+            return {
+                "id": user_dict["id"],
+                "username": user_dict["username"],
+                "role": user_dict["role"],
+                "full_name": user_dict["full_name"],
+                "department": user_dict["department"]
+            }
     return None
 
 def register_user(username: str, password: str, role: str = "FIELD_OPERATOR", full_name: Optional[str] = None, department: Optional[str] = None) -> Dict[str, Any]:
     conn = get_db()
     cursor = conn.cursor()
-    pwd_hash = hashlib.sha256(password.encode()).hexdigest()
+    pwd_hash = hash_password(password)
     cursor.execute(
         "INSERT INTO users (username, password_hash, role, full_name, department, created_at) VALUES (?, ?, ?, ?, ?, ?)",
         (username, pwd_hash, role, full_name or username.title(), department or "Refinery Operations", time.time())
@@ -1059,7 +1107,6 @@ def register_user(username: str, password: str, role: str = "FIELD_OPERATOR", fu
     conn.commit()
     conn.close()
 
-    # Log user registration to tamper audit
     audit_log.append_event(
         event_type="USER_REGISTERED",
         details=json.dumps({

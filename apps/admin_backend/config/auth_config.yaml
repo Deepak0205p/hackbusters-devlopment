@@ -5,11 +5,12 @@ security_level: "DEFENSE_AIRGAP_RESTRICTED"
 
 pki:
   enabled: true
+  ca_cert_path: "apps/admin_backend/config/certs/mrpl_root_ca.crt"
   root_ca_path: "apps/admin_backend/config/certs/mrpl_root_ca.crt"
-  intermediate_ca_path: "apps/admin_backend/config/certs/mrpl_intermediate_ca.crt"
   crl_path: "apps/admin_backend/config/certs/mrpl_crl.pem"
   enforce_expiration: true
   enforce_crl: true
+  client_cert_header: "X-SSL-Client-Cert"
   allowed_issuers:
     - "MRPL Plant Root CA"
     - "MRPL Sovereign Security Sub-CA"
@@ -26,25 +27,25 @@ ldap:
   use_ssl: false
   start_tls: false
   connect_timeout_sec: 2.0
-  bind_dn: "CN=SvcWorkbench,OU=ServiceAccounts,DC=mrpl,DC=co,DC=in"
+  bind_dn: "CN=SvcWorkbench,OU=ServiceAccounts,DC=mrpl,DC=internal"
   bind_password: "SovereignPlantServicePass2026!"
-  base_dn: "DC=mrpl,DC=co,DC=in"
-  user_search_filter: "(&(objectClass=user)(|(sAMAccountName={username})(userPrincipalName={username})))"
-  group_search_base: "OU=Security Groups,DC=mrpl,DC=co,DC=in"
+  base_dn: "dc=mrpl,dc=internal"
+  user_search_filter: "(&(objectClass=user)(sAMAccountName={username}))"
+  group_search_base: "OU=Groups,DC=mrpl,DC=internal"
   group_role_mapping:
-    "CN=MRPL_SEC_ADMINS": "SUPER_ADMIN"
+    "CN=MRPL_SEC_ADMINS,OU=Groups,DC=mrpl,DC=internal": "SUPER_ADMIN"
+    "CN=MRPL_PROCESS_LEADS,OU=Groups,DC=mrpl,DC=internal": "PROCESS_LEAD"
+    "CN=MRPL_HSE_AUDITORS,OU=Groups,DC=mrpl,DC=internal": "HSE_AUDITOR"
+    "CN=MRPL_OPERATORS,OU=Groups,DC=mrpl,DC=internal": "FIELD_OPERATOR"
     "CN=MRPL_PLANT_SECURITY": "PLANT_SECURITY_OFFICER"
-    "CN=MRPL_PROCESS_LEADS": "PROCESS_LEAD"
-    "CN=MRPL_HSE_AUDITORS": "HSE_AUDITOR"
     "CN=MRPL_MAINTENANCE": "MAINTENANCE_ENG"
-    "CN=MRPL_OPERATORS": "FIELD_OPERATOR"
-    "CN=MRPL_READONLY": "READONLY_OPERATOR"
   fallback_to_local_db: true
 
 jwt:
   algorithm: "HS256"
   secret_key: "sovereign-mrpl-industrial-pki-hmac-sha256-secret-key-airgap-2026"
-  token_expiry_seconds: 28800 # 8 hours (standard refinery shift duration)
+  token_expiry_minutes: 480 # 8-hour shift duration
+  token_expiry_seconds: 28800
   issuer: "MRPL_SOVEREIGN_AUTH_ENGINE"
   audience: "MRPL_SOVEREIGN_WORKBENCH"
 
@@ -78,18 +79,17 @@ rbac:
       - "rag:query"
       - "deliverables:export"
       - "models:swap_engine"
-    MAINTENANCE_ENG:
-      - "rag:query"
-      - "deliverables:export"
     HSE_AUDITOR:
       - "rag:query"
       - "deliverables:export"
       - "sovereignty:tamper_read"
+    MAINTENANCE_ENG:
+      - "rag:query"
+      - "deliverables:export"
     FIELD_OPERATOR:
       - "rag:query"
     READONLY_OPERATOR:
       - "rag:query"
-    # Legacy alias support
     admin:
       - "rag:query"
       - "rag:reindex_global"

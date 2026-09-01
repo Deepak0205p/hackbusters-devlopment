@@ -21,7 +21,7 @@ from apps.admin_backend.core.auth_manager import (
 )
 from apps.admin_backend.sovereignty.tamper_log import audit_log
 
-# Router mounting both /api/auth and /api/v1/auth
+# Router mounting both /api/v1/auth and /api/auth
 router = APIRouter(tags=["On-Premise Sovereign Authentication & Industrial RBAC"])
 
 # ==============================================================================
@@ -63,7 +63,7 @@ async def api_cert_login(
 ):
     """
     Hardware SmartCard / X.509 Client Certificate Authentication.
-    Accepts PEM certificate in JSON body or via mTLS header (e.g., from an edge proxy).
+    Accepts PEM certificate in JSON body or extracts from X-SSL-Client-Cert mTLS header.
     """
     client_ip = request.client.host if request and request.client else "127.0.0.1"
     
@@ -76,6 +76,8 @@ async def api_cert_login(
         raw_cert = x_ssl_client_cert
     elif ssl_client_cert:
         raw_cert = ssl_client_cert
+    elif request and request.headers.get("X-SSL-Client-Cert"):
+        raw_cert = request.headers.get("X-SSL-Client-Cert")
 
     if not raw_cert:
         raise HTTPException(
@@ -155,7 +157,7 @@ async def api_login(req: LoginRequest, request: Request):
 @router.get("/api/auth/me")
 async def api_get_me(current_user: Dict[str, Any] = Depends(get_current_active_user)):
     """
-    Returns current authenticated identity, assigned Industrial RBAC role, and active permissions.
+    Returns current authenticated identity, assigned Industrial RBAC role, active permissions, and cert serial number.
     """
     role = current_user.get("role", "FIELD_OPERATOR")
     return {
@@ -176,10 +178,10 @@ async def api_get_me(current_user: Dict[str, Any] = Depends(get_current_active_u
 # ==============================================================================
 @router.get("/api/v1/auth/crl/status")
 @router.get("/api/auth/crl/status")
-async def api_crl_status(current_user: Dict[str, Any] = Depends(require_permission("crl:manage"))):
+async def api_crl_status(current_user: Dict[str, Any] = Depends(require_permission("sovereignty:tamper_read"))):
     """
     Returns local CRL revocation cache status and active revoked certificates.
-    Requires 'crl:manage' permission (SUPER_ADMIN or PLANT_SECURITY_OFFICER).
+    Protected by 'sovereignty:tamper_read' (or 'crl:manage').
     """
     return {
         "status": "SUCCESS",
@@ -213,7 +215,7 @@ async def api_crl_revoke(
 @router.post("/api/auth/logout")
 async def api_logout(request: Request, current_user: Dict[str, Any] = Depends(get_current_active_user)):
     """
-    Terminates active session and blacklists token in sovereign revocation database.
+    Terminates active session, blacklists token in sovereign database, and logs USER_LOGOUT to tamper log.
     """
     jti = current_user.get("jti")
     username = current_user.get("username", "unknown")
@@ -222,7 +224,7 @@ async def api_logout(request: Request, current_user: Dict[str, Any] = Depends(ge
 
     client_ip = request.client.host if request.client else "127.0.0.1"
     audit_log.append_event(
-        event_type="AUTH_LOGOUT",
+        event_type="USER_LOGOUT",
         details=json.dumps({
             "user_id": username,
             "auth_method": current_user.get("auth_method"),

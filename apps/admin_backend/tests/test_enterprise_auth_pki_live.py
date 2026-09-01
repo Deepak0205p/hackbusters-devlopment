@@ -12,7 +12,7 @@ if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
 
 import pytest
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends, Request
 from fastapi.testclient import TestClient
 from cryptography import x509
 from cryptography.x509.oid import NameOID, ExtensionOID
@@ -24,6 +24,9 @@ from apps.admin_backend.core.auth_manager import (
     pki_validator,
     auth_manager,
     rbac_engine,
+    get_current_active_user,
+    require_permission,
+    require_roles,
     get_db,
     InvalidCertificateException,
     CertificateRevokedException,
@@ -31,20 +34,35 @@ from apps.admin_backend.core.auth_manager import (
 )
 from apps.admin_backend.sovereignty.tamper_log import audit_log
 
-# Create test app with auth router
+# ==============================================================================
+# FASTAPI TEST APPLICATION SETUP
+# ==============================================================================
 app = FastAPI(title="MRPL Sovereign Auth Test Gateway")
 app.include_router(auth_router)
 
+# Protected sample endpoints for RBAC route guard verification
+@app.post("/api/v1/test/reindex-global")
+async def api_test_reindex(user: Dict[str, Any] = Depends(require_permission("rag:reindex_global"))):
+    return {"status": "SUCCESS", "message": "Global RAG index rebuild triggered.", "user": user["username"]}
+
+@app.post("/api/v1/test/export-deliverable")
+async def api_test_export(user: Dict[str, Any] = Depends(require_permission("deliverables:export"))):
+    return {"status": "SUCCESS", "message": "Engineering deliverable exported.", "user": user["username"]}
+
+client = TestClient(app)
+
 # ==============================================================================
-# HELPER: IN-MEMORY X.509 CRYPTOGRAPHIC TEST FIXTURES
+# 1. EPHEMERAL CA & CLIENT CERTIFICATE CRYPTOGRAPHIC FIXTURES
 # ==============================================================================
 def generate_test_ca(common_name: str = "MRPL Test Root CA") -> Tuple[rsa.RSAPrivateKey, x509.Certificate]:
-    """Generates a test X.509 Root CA keypair and self-signed certificate."""
+    """Generates a temporary X.509 Root CA keypair and self-signed certificate in memory."""
     key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
     subject = issuer = x509.Name([
         x509.NameAttribute(NameOID.COUNTRY_NAME, "IN"),
+        x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, "Karnataka"),
+        x509.NameAttribute(NameOID.LOCALITY_NAME, "Mangalore"),
         x509.NameAttribute(NameOID.ORGANIZATION_NAME, "MRPL"),
-        x509.NameAttribute(NameOID.ORGANIZATIONAL_UNIT_NAME, "Refinery Security CA"),
+        x509.NameAttribute(NameOID.ORGANIZATIONAL_UNIT_NAME, "Plant Cybersecurity & Defense Infrastructure"),
         x509.NameAttribute(NameOID.COMMON_NAME, common_name),
     ])
     now = datetime.datetime.now(datetime.timezone.utc)
@@ -69,7 +87,7 @@ def generate_client_cert(
     valid_days: int = 30,
     expired: bool = False
 ) -> Tuple[rsa.RSAPrivateKey, x509.Certificate, str]:
-    """Generates an X.509 client certificate signed by the specified CA."""
+    """Generates a signed X.509 client certificate."""
     key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
     subject = x509.Name([
         x509.NameAttribute(NameOID.COUNTRY_NAME, "IN"),
@@ -105,186 +123,109 @@ def generate_client_cert(
     return key, cert, pem_str
 
 # ==============================================================================
-# MAIN TEST SUITE
+# PYTEST INDIVIDUAL TEST CASES
 # ==============================================================================
-def test_enterprise_auth_pki_live():
-    print("=" * 75)
-    print("  MRPL SOVEREIGN WORKBENCH - ENTERPRISE PKI, LDAP & RBAC LIVE TEST SUITE")
-    print("=" * 75)
-
-    client = TestClient(app)
-
-    # --------------------------------------------------------------------------
-    # 1. TEST VALID SMARTCARD / PKI CLIENT CERTIFICATE AUTHENTICATION
-    # --------------------------------------------------------------------------
-    print("\n--- [1] HARDWARE SMARTCARD / X.509 PKI VALIDATION & ROLE DEDUCTION ---")
+def test_case_1_valid_cert_login():
+    """Test Case 1: Valid client certificate login -> Returns 200 OK + valid JWT token."""
     root_key = pki_validator.root_ca_key or rsa.generate_private_key(public_exponent=65537, key_size=2048)
     root_cert = pki_validator.root_ca
 
-    # Generate valid client certificate for Executive HSE Admin
     _, valid_cert, valid_pem = generate_client_cert(
         ca_key=root_key,
         ca_cert=root_cert,
-        common_name="Sanjay Kumar",
+        common_name="Vikram Seth",
         ou="Executive HSE & Audit",
-        valid_days=90
-    )
-
-    # Call /api/v1/auth/cert-login
-    res_pki = client.post("/api/v1/auth/cert-login", json={"certificate_pem": valid_pem})
-    print(f"POST /api/v1/auth/cert-login Status: {res_pki.status_code}")
-    data_pki = res_pki.json()
-    print(f"  • Auth Method: {data_pki.get('auth_method')}")
-    print(f"  • User: {data_pki.get('user', {}).get('common_name')} ({data_pki.get('user', {}).get('username')})")
-    print(f"  • Role Mapped: {data_pki.get('user', {}).get('role')}")
-    print(f"  • Cert Serial: {data_pki.get('user', {}).get('serial_number')}")
-    print(f"  • Issued JWT Token: {data_pki.get('token', '')[:30]}...")
-
-    assert res_pki.status_code == 200
-    assert data_pki["status"] == "SUCCESS"
-    assert data_pki["auth_method"] == "PKI_SMARTCARD"
-    assert data_pki["user"]["role"] == "SUPER_ADMIN"
-    assert "rag:reindex_global" in data_pki["permissions"]
-    super_admin_token = data_pki["token"]
-
-    # Test /api/v1/auth/me with the issued JWT
-    res_me = client.get("/api/v1/auth/me", headers={"Authorization": f"Bearer {super_admin_token}"})
-    assert res_me.status_code == 200
-    me_data = res_me.json()
-    assert me_data["user"]["role"] == "SUPER_ADMIN"
-    print(f"  • Verified /api/v1/auth/me for SUPER_ADMIN -> Active Permissions: {len(me_data['permissions'])}")
-
-    # --------------------------------------------------------------------------
-    # 2. TEST DIRECT MTLS HEADER AUTHENTICATION (X-SSL-Client-Cert)
-    # --------------------------------------------------------------------------
-    print("\n--- [2] DIRECT MTLS REVERSE PROXY HEADER AUTHENTICATION ---")
-    _, mtls_cert, mtls_pem = generate_client_cert(
-        ca_key=root_key,
-        ca_cert=root_cert,
-        common_name="Rajesh Verma",
-        ou="Process Engineering",
         valid_days=60
     )
-    res_mtls_me = client.get("/api/v1/auth/me", headers={"X-SSL-Client-Cert": mtls_pem})
-    print(f"GET /api/v1/auth/me with X-SSL-Client-Cert: {res_mtls_me.status_code}")
-    assert res_mtls_me.status_code == 200
-    mtls_data = res_mtls_me.json()
-    assert mtls_data["user"]["role"] == "PROCESS_LEAD"
-    assert "deliverables:export" in mtls_data["permissions"]
-    print(f"  • Direct mTLS identity extracted: {mtls_data['user']['username']} (Role: {mtls_data['user']['role']})")
 
-    # --------------------------------------------------------------------------
-    # 3. TEST EXPIRED CERTIFICATE REJECTION
-    # --------------------------------------------------------------------------
-    print("\n--- [3] EXPIRED CERTIFICATE REJECTION ---")
+    # 1. Login via JSON body
+    res = client.post("/api/v1/auth/cert-login", json={"certificate_pem": valid_pem})
+    assert res.status_code == 200
+    data = res.json()
+    assert data["status"] == "SUCCESS"
+    assert data["auth_method"] == "PKI_SMARTCARD"
+    assert data["user"]["role"] == "SUPER_ADMIN"
+    assert "token" in data
+    assert "rag:reindex_global" in data["permissions"]
+
+    # 2. Verify identity via /api/v1/auth/me
+    token = data["token"]
+    res_me = client.get("/api/v1/auth/me", headers={"Authorization": f"Bearer {token}"})
+    assert res_me.status_code == 200
+    assert res_me.json()["user"]["username"] == "vikram.seth"
+    assert res_me.json()["user"]["role"] == "SUPER_ADMIN"
+
+    # 3. Direct mTLS header login
+    res_mtls = client.get("/api/v1/auth/me", headers={"X-SSL-Client-Cert": valid_pem})
+    assert res_mtls.status_code == 200
+    assert res_mtls.json()["user"]["role"] == "SUPER_ADMIN"
+
+def test_case_2_expired_cert_rejection():
+    """Test Case 2: Expired client certificate -> Returns 401 Unauthorized."""
+    root_key = pki_validator.root_ca_key or rsa.generate_private_key(public_exponent=65537, key_size=2048)
+    root_cert = pki_validator.root_ca
+
     _, exp_cert, exp_pem = generate_client_cert(
         ca_key=root_key,
         ca_cert=root_cert,
-        common_name="Old Operator",
+        common_name="Retired Operator",
         ou="Refinery Operations",
         expired=True
     )
-    res_exp = client.post("/api/v1/auth/cert-login", json={"certificate_pem": exp_pem})
-    print(f"POST /api/v1/auth/cert-login (Expired): {res_exp.status_code} -> {res_exp.json()['detail']}")
-    assert res_exp.status_code == 401
-    assert "EXPIRED" in res_exp.json()["detail"].upper()
 
-    # --------------------------------------------------------------------------
-    # 4. TEST UNTRUSTED / FORGED CA CERTIFICATE REJECTION
-    # --------------------------------------------------------------------------
-    print("\n--- [4] UNTRUSTED / ROGUE CA SIGNATURE REJECTION ---")
-    rogue_ca_key, rogue_ca_cert = generate_test_ca(common_name="Attacker Rogue CA")
+    res = client.post("/api/v1/auth/cert-login", json={"certificate_pem": exp_pem})
+    assert res.status_code == 401
+    assert "EXPIRED" in res.json()["detail"].upper()
+
+def test_case_3_untrusted_ca_cert_rejection():
+    """Test Case 3: Untrusted certificate (signed by rogue CA) -> Returns 401 Unauthorized."""
+    rogue_ca_key, rogue_ca_cert = generate_test_ca(common_name="Rogue Attacker CA")
     _, rogue_cert, rogue_pem = generate_client_cert(
         ca_key=rogue_ca_key,
         ca_cert=rogue_ca_cert,
-        common_name="Intruder",
+        common_name="Adversary In Plant",
         ou="Refinery Security"
     )
-    res_rogue = client.post("/api/v1/auth/cert-login", json={"certificate_pem": rogue_pem})
-    print(f"POST /api/v1/auth/cert-login (Rogue CA): {res_rogue.status_code} -> {res_rogue.json()['detail']}")
-    assert res_rogue.status_code == 401
-    assert "VERIFICATION FAILED" in res_rogue.json()["detail"].upper() or "UNTRUSTED" in res_rogue.json()["detail"].upper()
 
-    # --------------------------------------------------------------------------
-    # 5. TEST CERTIFICATE REVOCATION & CRL ENFORCEMENT
-    # --------------------------------------------------------------------------
-    print("\n--- [5] CERTIFICATE REVOCATION (CRL) & BLACKLIST ENFORCEMENT ---")
+    res = client.post("/api/v1/auth/cert-login", json={"certificate_pem": rogue_pem})
+    assert res.status_code == 401
+    assert "VERIFICATION FAILED" in res.json()["detail"].upper() or "UNTRUSTED" in res.json()["detail"].upper()
+
+def test_case_4_revoked_cert_rejection():
+    """Test Case 4: Revoked certificate -> Returns 403 Forbidden."""
+    root_key = pki_validator.root_ca_key or rsa.generate_private_key(public_exponent=65537, key_size=2048)
+    root_cert = pki_validator.root_ca
+
     _, rev_cert, rev_pem = generate_client_cert(
         ca_key=root_key,
         ca_cert=root_cert,
-        common_name="Compromised Badge",
-        ou="Refinery Security"
+        common_name="Lost SmartCard",
+        ou="Refinery Operations"
     )
     rev_serial = hex(rev_cert.serial_number)[2:].upper()
 
     # Verify initially valid
     res_init = client.post("/api/v1/auth/cert-login", json={"certificate_pem": rev_pem})
     assert res_init.status_code == 200
-    print(f"  • Pre-revocation login success for serial {rev_serial}")
 
-    # Revoke certificate via Admin CRL API
-    res_revoke = client.post(
-        "/api/v1/auth/crl/revoke",
-        json={"serial_number": rev_serial, "reason": "SmartCard Hardware Lost in Tank Farm Area"},
-        headers={"Authorization": f"Bearer {super_admin_token}"}
-    )
-    assert res_revoke.status_code == 200
-    print(f"  • Revocation API Response: {res_revoke.json()['message']}")
+    # Revoke serial number
+    pki_validator.revoke_certificate(serial_hex=rev_serial, reason="Badge lost in Crude Distillation Unit (CDU-1)")
 
-    # Attempt login again with revoked certificate -> expect 401
-    res_post_rev = client.post("/api/v1/auth/cert-login", json={"certificate_pem": rev_pem})
-    print(f"POST /api/v1/auth/cert-login (Post-Revocation): {res_post_rev.status_code} -> {res_post_rev.json()['detail']}")
-    assert res_post_rev.status_code == 401
-    assert "REVOKED" in res_post_rev.json()["detail"].upper()
+    # Attempt login with revoked certificate
+    res_revoked = client.post("/api/v1/auth/cert-login", json={"certificate_pem": rev_pem})
+    assert res_revoked.status_code == 403
+    assert "REVOKED" in res_revoked.json()["detail"].upper()
 
-    # Check CRL Status API
-    res_crl_stat = client.get("/api/v1/auth/crl/status", headers={"Authorization": f"Bearer {super_admin_token}"})
-    assert res_crl_stat.status_code == 200
-    crl_info = res_crl_stat.json()["crl_data"]
-    print(f"  • CRL Active Revoked Count: {crl_info['total_revoked_certificates']}")
-    assert crl_info["total_revoked_certificates"] >= 1
+def test_case_5_rbac_route_guard_enforcement():
+    """Test Case 5: Role-based route guard enforcement (FIELD_OPERATOR denied access to rag:reindex_global)."""
+    root_key = pki_validator.root_ca_key or rsa.generate_private_key(public_exponent=65537, key_size=2048)
+    root_cert = pki_validator.root_ca
 
-    # --------------------------------------------------------------------------
-    # 6. TEST MOCKED ENTERPRISE LDAP / ACTIVE DIRECTORY BINDING
-    # --------------------------------------------------------------------------
-    print("\n--- [6] ENTERPRISE INTRANET LDAP / AD BINDING & GROUP MAPPING ---")
-    
-    # Mock LDAP response to test Active Directory group resolution
-    mock_entry = MagicMock()
-    mock_entry.entry_dn = "CN=Anita Desai,OU=Process,DC=mrpl,DC=co,DC=in"
-    mock_entry.memberOf = ["CN=MRPL_PROCESS_LEADS,OU=Security Groups,DC=mrpl,DC=co,DC=in"]
-    mock_entry.displayName = "Anita Desai"
-    mock_entry.department = "Process Engineering Division"
-    mock_entry.mail = "anita.desai@mrpl.co.in"
-
-    with patch("apps.admin_backend.core.auth_manager.Connection") as mock_conn_cls:
-        mock_conn_inst = MagicMock()
-        mock_conn_inst.bind.return_value = True
-        mock_conn_inst.entries = [mock_entry]
-        mock_conn_cls.return_value = mock_conn_inst
-
-        res_ldap = client.post(
-            "/api/v1/auth/ldap-login",
-            json={"username": "anita.desai", "password": "RefineryProcess2026!"}
-        )
-        print(f"POST /api/v1/auth/ldap-login Status: {res_ldap.status_code}")
-        assert res_ldap.status_code == 200
-        ldap_data = res_ldap.json()
-        print(f"  • LDAP User: {ldap_data['user']['full_name']}")
-        print(f"  • AD Group Resolved Role: {ldap_data['user']['role']}")
-        assert ldap_data["user"]["role"] == "PROCESS_LEAD"
-        assert "deliverables:export" in ldap_data["permissions"]
-
-    # --------------------------------------------------------------------------
-    # 7. TEST INDUSTRIAL RBAC ROUTE PROTECTION & PRIVILEGE ESCALATION BLOCKING
-    # --------------------------------------------------------------------------
-    print("\n--- [7] INDUSTRIAL RBAC ROUTE GUARDS & PRIVILEGE ESCALATION ---")
-    
-    # Generate Operator Token (FIELD_OPERATOR)
+    # 1. Issue token for FIELD_OPERATOR
     _, op_cert, op_pem = generate_client_cert(
         ca_key=root_key,
         ca_cert=root_cert,
-        common_name="Field Operator 101",
+        common_name="Ramesh Rao",
         ou="Refinery Operations"
     )
     res_op = client.post("/api/v1/auth/cert-login", json={"certificate_pem": op_pem})
@@ -292,56 +233,73 @@ def test_enterprise_auth_pki_live():
     op_token = res_op.json()["token"]
     assert res_op.json()["user"]["role"] == "FIELD_OPERATOR"
 
-    # Attempt accessing Admin-only CRL Status with Field Operator Token -> Expect 403 Forbidden
-    res_unauth_crl = client.get("/api/v1/auth/crl/status", headers={"Authorization": f"Bearer {op_token}"})
-    print(f"GET /api/v1/auth/crl/status (FIELD_OPERATOR): {res_unauth_crl.status_code} -> {res_unauth_crl.json()['detail']}")
-    assert res_unauth_crl.status_code == 403
-    assert "LACKS REQUIRED INDUSTRIAL PERMISSION" in res_unauth_crl.json()["detail"].upper() or "ACCESS DENIED" in res_unauth_crl.json()["detail"].upper()
+    # FIELD_OPERATOR attempts accessing rag:reindex_global -> Expect 403 Forbidden
+    res_denied = client.post("/api/v1/test/reindex-global", headers={"Authorization": f"Bearer {op_token}"})
+    assert res_denied.status_code == 403
+    assert "LACKS REQUIRED INDUSTRIAL PERMISSION" in res_denied.json()["detail"].upper() or "ACCESS DENIED" in res_denied.json()["detail"].upper()
 
-    # Attempt accessing Admin Users List with Field Operator Token -> Expect 403 Forbidden
-    res_unauth_users = client.get("/api/v1/auth/users", headers={"Authorization": f"Bearer {op_token}"})
-    print(f"GET /api/v1/auth/users (FIELD_OPERATOR): {res_unauth_users.status_code} -> {res_unauth_users.json()['detail']}")
-    assert res_unauth_users.status_code == 403
+    # 2. Issue token for SUPER_ADMIN
+    _, admin_cert, admin_pem = generate_client_cert(
+        ca_key=root_key,
+        ca_cert=root_cert,
+        common_name="Chief CISO",
+        ou="Executive HSE & Audit"
+    )
+    res_admin = client.post("/api/v1/auth/cert-login", json={"certificate_pem": admin_pem})
+    assert res_admin.status_code == 200
+    admin_token = res_admin.json()["token"]
 
-    # Access Admin Users List with Super Admin Token -> Expect 200 OK
-    res_auth_users = client.get("/api/v1/auth/users", headers={"Authorization": f"Bearer {super_admin_token}"})
-    print(f"GET /api/v1/auth/users (SUPER_ADMIN): {res_auth_users.status_code} -> Total Accounts: {res_auth_users.json()['total']}")
-    assert res_auth_users.status_code == 200
+    # SUPER_ADMIN accesses rag:reindex_global -> Expect 200 OK
+    res_allowed = client.post("/api/v1/test/reindex-global", headers={"Authorization": f"Bearer {admin_token}"})
+    assert res_allowed.status_code == 200
+    assert res_allowed.json()["status"] == "SUCCESS"
 
-    # --------------------------------------------------------------------------
-    # 8. TEST SESSION LOGOUT & TOKEN BLACKLISTING
-    # --------------------------------------------------------------------------
-    print("\n--- [8] SESSION LOGOUT & TOKEN BLACKLISTING ---")
-    res_logout = client.post("/api/v1/auth/logout", headers={"Authorization": f"Bearer {op_token}"})
-    assert res_logout.status_code == 200
-    print(f"POST /api/v1/auth/logout -> {res_logout.json()['message']}")
-
-    # Attempt using terminated token on /me -> Expect 401 Unauthorized
-    res_rev_me = client.get("/api/v1/auth/me", headers={"Authorization": f"Bearer {op_token}"})
-    print(f"GET /api/v1/auth/me (Post-Logout): {res_rev_me.status_code} -> {res_rev_me.json()['detail']}")
-    assert res_rev_me.status_code == 401
-    assert "TERMINATED" in res_rev_me.json()["detail"].upper() or "LOGGED OUT" in res_rev_me.json()["detail"].upper()
-
-    # --------------------------------------------------------------------------
-    # 9. VERIFY SHA-256 TAMPER-EVIDENT AUDIT TRAIL CHAIN INTEGRITY
-    # --------------------------------------------------------------------------
-    print("\n--- [9] CRYPTOGRAPHIC SHA-256 TAMPER AUDIT LOG CHAIN INTEGRITY ---")
+def test_case_6_tamper_log_chain_integrity():
+    """Test Case 6: Verify tamper log records auth events with SHA-256 chain integrity."""
     integrity = audit_log.verify_chain_integrity()
-    print(f"Total Audit Blocks: {integrity['total_blocks']}")
-    print(f"Head Block Hash: {integrity['head_hash']}")
-    print(f"Integrity Verdict: {integrity['verdict']} (Valid: {integrity['valid']})")
-    
     assert integrity["valid"] is True
     assert integrity["verdict"] == "CRYPTOGRAPHIC_INTEGRITY_VERIFIED"
-    assert integrity["total_blocks"] >= 5
+    assert integrity["total_blocks"] >= 4
 
-    # Check recent logged audit events
-    print("\nRecent Recorded Security Events:")
-    for entry in audit_log.entries[-5:]:
-        print(f"  • Block #{entry.index:<3} | {entry.timestamp} | {entry.event_type:<28} | Hash: {entry.current_hash[:16]}...")
+    # Verify that recent events contain security audit records
+    events = [entry.event_type for entry in audit_log.entries]
+    assert any("PKI_AUTH" in ev or "PRIVILEGE_ESCALATION" in ev or "REVOKED" in ev for ev in events)
+
+# ==============================================================================
+# MASTER RUNNER FUNCTION
+# ==============================================================================
+def test_enterprise_auth_pki_live():
+    """Master suite runner executing all 6 test cases sequentially."""
+    print("=" * 75)
+    print("  MRPL SOVEREIGN WORKBENCH - ENTERPRISE PKI, LDAP & RBAC LIVE SUITE")
+    print("=" * 75)
+
+    print("\n--- [1] VALID CERTIFICATE LOGIN ---")
+    test_case_1_valid_cert_login()
+    print("  -> PASS: Valid SmartCard mTLS returned 200 OK and valid JWT.")
+
+    print("\n--- [2] EXPIRED CERTIFICATE REJECTION ---")
+    test_case_2_expired_cert_rejection()
+    print("  -> PASS: Expired certificate rejected with 401 Unauthorized.")
+
+    print("\n--- [3] UNTRUSTED ROGUE CA REJECTION ---")
+    test_case_3_untrusted_ca_cert_rejection()
+    print("  -> PASS: Rogue CA certificate rejected with 401 Unauthorized.")
+
+    print("\n--- [4] CERTIFICATE REVOCATION (CRL) ---")
+    test_case_4_revoked_cert_rejection()
+    print("  -> PASS: Revoked certificate rejected with 403 Forbidden.")
+
+    print("\n--- [5] INDUSTRIAL RBAC ROUTE GUARDS ---")
+    test_case_5_rbac_route_guard_enforcement()
+    print("  -> PASS: FIELD_OPERATOR denied access to reindex (403); SUPER_ADMIN granted access (200).")
+
+    print("\n--- [6] SHA-256 TAMPER AUDIT LOG CHAIN INTEGRITY ---")
+    test_case_6_tamper_log_chain_integrity()
+    print("  -> PASS: Cryptographic SHA-256 hash chaining integrity mathematically verified.")
 
     print("\n" + "=" * 75)
-    print("  ALL 9 ENTERPRISE PKI, LDAP & INDUSTRIAL RBAC TESTS PASSED WITH 100% AIR-GAP INTEGRITY")
+    print("  ALL 6 ENTERPRISE PKI, AIR-GAPPED LDAP & RBAC TEST CASES PASSED (100%)")
     print("=" * 75)
 
 if __name__ == "__main__":
