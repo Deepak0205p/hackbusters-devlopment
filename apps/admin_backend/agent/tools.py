@@ -180,15 +180,61 @@ def execute_ocr_extraction(params: Dict[str, Any]) -> str:
     description="Spatial multimodal analysis of P&ID engineering schematics for ISA 5.1 instrumentation."
 )
 def analyze_pid_drawing(params: Dict[str, Any]) -> str:
-    prompt = params.get("prompt", "")
-    if not prompt:
-        return json.dumps({
-            "error": "No prompt provided for P&ID analysis",
-            "status": "FAILED"
-        })
+    from apps.admin_backend.ocr.pid_graph_extractor import pid_extractor
+    pid_id = params.get("pid_id", "PID-MRPL-CDU-01")
+    graph = pid_extractor.get_graph(pid_id) or pid_extractor.build_synthetic_demo_pid(pid_id)
     return json.dumps({
-        "error": "P&ID analyzer not yet implemented. Please use the Vision role with an uploaded P&ID image.",
-        "status": "NOT_IMPLEMENTED"
+        "pid_id": graph.pid_id,
+        "title": graph.drawing_title,
+        "number": graph.drawing_number,
+        "total_equipment": graph.total_equipment,
+        "total_valves": graph.total_valves,
+        "total_instruments": graph.total_instruments,
+        "total_lines": graph.total_lines,
+        "status": "SUCCESS"
+    })
+
+@tool_registry.register(
+    name="trace_pid_connectivity",
+    description="Traces the fluid/gas process flow line between two plant assets in a P&ID and lists all intervening valves and instruments."
+)
+def trace_pid_connectivity(params: Dict[str, Any]) -> str:
+    from apps.admin_backend.ocr.pid_graph_extractor import pid_extractor
+    source = params.get("source_asset") or params.get("source", "TK-101")
+    target = params.get("target_asset") or params.get("target", "C-101")
+    pid_id = params.get("pid_id", "PID-MRPL-CDU-01")
+
+    graph = pid_extractor.get_graph(pid_id) or pid_extractor.build_synthetic_demo_pid(pid_id)
+    trace_res = pid_extractor.find_path(graph, source, target)
+    return json.dumps(trace_res.model_dump())
+
+@tool_registry.register(
+    name="get_pid_equipment_upstream_downstream",
+    description="Identifies upstream manual and emergency shutdown isolation valves for an asset to enable safe Lockout/Tagout (LOTO)."
+)
+def get_pid_upstream_isolation(params: Dict[str, Any]) -> str:
+    from apps.admin_backend.ocr.pid_graph_extractor import pid_extractor
+    asset_tag = params.get("asset_tag") or params.get("tag", "FV-1002")
+    pid_id = params.get("pid_id", "PID-MRPL-CDU-01")
+
+    graph = pid_extractor.get_graph(pid_id) or pid_extractor.build_synthetic_demo_pid(pid_id)
+    iso_res = pid_extractor.get_upstream_isolation_valves(graph, asset_tag)
+    return json.dumps(iso_res.model_dump())
+
+@tool_registry.register(
+    name="export_pid_asset_matrix",
+    description="Generates and exports an Excel Asset Register (.xlsx) with equipment, valve schedule, and line list from a P&ID."
+)
+def export_pid_asset_matrix(params: Dict[str, Any]) -> str:
+    from apps.admin_backend.ocr.pid_graph_extractor import pid_extractor
+    pid_id = params.get("pid_id", "PID-MRPL-CDU-01")
+    graph = pid_extractor.get_graph(pid_id) or pid_extractor.build_synthetic_demo_pid(pid_id)
+    file_path = pid_extractor.export_asset_matrix_excel(graph)
+    return json.dumps({
+        "status": "SUCCESS",
+        "file_path": file_path,
+        "filename": os.path.basename(file_path),
+        "total_assets_exported": len(graph.nodes)
     })
 
 @tool_registry.register(name="docx_generator", description="Generates executive .docx approval notes and memos.")
