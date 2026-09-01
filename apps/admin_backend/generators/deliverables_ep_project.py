@@ -456,9 +456,9 @@ class ExtendedGenerators_EpProject:
         for c, h in enumerate(headers, 1):
             cell = ws.cell(row=1, column=c, value=h); cell.font = hf; cell.fill = hrf; cell.alignment = Alignment(horizontal="center", wrap_text=True)
         a_data = [
-            ["PL-A-001", "CFG-PPE-001", "F-101", "Missing PSV on 10in header", "Piping", "Eng. Prasad", "05-Apr-2026", "OPEN", "Vendor delay"],
+            ["PL-A-001", "CFG-PPE-001", "Equipment-001", "Missing PSV on header", "Piping", "Eng. Prasad", "05-Apr-2026", "OPEN", "Vendor delay"],
             ["PL-A-002", "CFG-ELD-001", "S-02", "Incomplete earthing at MCC", "Electrical", "Eng. Mehta", "01-Apr-2026", "OPEN", "In progress"],
-            ["PL-A-003", "CFG-INS-001", "Control Room", "ESD trip not verified Pump P-101", "Instrument", "Eng. Desai", "10-Apr-2026", "CLOSED", "Verified"],
+            ["PL-A-003", "CFG-INS-001", "Control Room", "ESD trip not verified Pump", "Instrument", "Eng. Desai", "10-Apr-2026", "CLOSED", "Verified"],
             ["PL-A-004", "CFG-STR-001", "PR-01", "Missing fireproofing", "Structural", "Eng. Singh", "15-Mar-2026", "CLOSED", "Completed"],
         ]
         for ri, rd in enumerate(a_data, 2):
@@ -469,7 +469,7 @@ class ExtendedGenerators_EpProject:
         for c, h in enumerate(headers, 1):
             cell = ws2.cell(row=1, column=c, value=h); cell.font = hf; cell.fill = hbf; cell.alignment = Alignment(horizontal="center", wrap_text=True)
         b_data = [
-            ["PL-B-001", "CFG-CIV-001", "F-101", "Surface cracks on foundation", "Civil", "Eng. Prasad", "15-Apr-2026", "OPEN", "Monitoring"],
+            ["PL-B-001", "CFG-CIV-001", "Equipment-001", "Surface cracks on foundation", "Civil", "Eng. Prasad", "15-Apr-2026", "OPEN", "Monitoring"],
             ["PL-B-002", "CFG-PPE-002", "Inj Line", "Pipe labels missing 3 locations", "Piping", "Eng. Mehta", "05-Apr-2026", "OPEN", "Ordered"],
             ["PL-B-003", "CFG-ELD-001", "L-03", "Missing cable gland 2 cables", "Electrical", "Eng. Mehta", "01-Apr-2026", "OPEN", "Scheduled"],
             ["PL-B-004", "CFG-COR-001", "KM 5.2", "Coating damage", "Corrosion", "Eng. Singh", "10-Apr-2026", "OPEN", "Repair scheduled"],

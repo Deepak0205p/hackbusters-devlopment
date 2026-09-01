@@ -14,7 +14,7 @@ def test_agent_engine_live():
 
     # 1. Test Scenario 2: Pump Calculation with Autonomous Self-Correction Loop
     print("\n--- [1] LIVE WEBSOCKET TEST: PUMP EFFICIENCY & SELF-CORRECTION LOOP ---")
-    prompt_s2 = "Write a Python script to calculate centrifugal pump hydraulic efficiency for Crude Charge Pump P-101A with Flow = 450 m3/h, Head = 125 m, Density = 850 kg/m3, Power In = 160 kW. Execute in sandbox."
+    prompt_s2 = "Write a Python script to calculate centrifugal pump hydraulic efficiency for charge pump with Flow = 450 m3/h, Head = 125 m, Density = 850 kg/m3, Power In = 160 kW. Execute in sandbox."
 
     with client.websocket_connect("/api/chat/stream") as ws:
         ws.send_json({"prompt": prompt_s2, "attachments": []})
@@ -52,7 +52,7 @@ def test_agent_engine_live():
 
     # 2. Test Scenario 1: Furnace SOP Compliance & Memo Drafting
     print("\n--- [2] LIVE WEBSOCKET TEST: FURNACE SOP COMPLIANCE (REASONING) ---")
-    prompt_s1 = "Draft an urgent executive approval note for Crude Distillation Unit furnace F-101 based on inspection report and verify compliance against MRPL SOPs."
+    prompt_s1 = "Draft an urgent executive approval note for Crude Distillation Unit furnace based on inspection report and verify compliance against MRPL SOPs."
 
     with client.websocket_connect("/api/chat/stream") as ws:
         ws.send_json({"prompt": prompt_s1, "attachments": []})

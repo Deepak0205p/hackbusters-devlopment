@@ -330,7 +330,7 @@ class ExtendedGenerators_HseOps:
         fp = os.path.join(OUTPUT_DIR, "docx", fn)
         d = Document()
         self._h(d, "Fire Safety Manual", 0)
-        self._m(d, {"Document No": "MRPL/HSE/FSM/2026-003", "Unit": "CDU-III / VDU-II Complex",
+        self._m(d, {"Document No": "MRPL/HSE/FSM/2026-003", "Unit": "Unit Complex",
                      "Revision": "Rev 5", "Date": datetime.now().strftime("%d-%b-%Y")})
         self._h(d, "1. Fire Detection Systems", 1)
         self._t(d, 6, 3, [["System", "Coverage", "Status"], ["Flame Detector (UV/IR)", "Process area, 48 nos", "Operational"],
@@ -359,11 +359,11 @@ class ExtendedGenerators_HseOps:
         d.save(fp)
         return fp
 
-    def generate_mock_drill_report_docx(self, filename=None):
-        fn = filename or f"Mock_Drill_Report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.docx"
+    def generate_drill_report_docx(self, filename=None):
+        fn = filename or f"Drill_Report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.docx"
         fp = os.path.join(OUTPUT_DIR, "docx", fn)
         d = Document()
-        self._h(d, "Mock Drill Report", 0)
+        self._h(d, "Emergency Drill Report", 0)
         self._m(d, {"Drill No": "MRPL/MD/2026/0006", "Scenario": "Major Fire in CDU-III Heat Exchanger Area",
                      "Date": datetime.now().strftime("%d-%b-%Y"), "Duration": "42 minutes (07:00 - 07:42)",
                      "Participants": "124 personnel (all on shift)"})
@@ -601,8 +601,8 @@ class ExtendedGenerators_HseOps:
             ["PTW-2026/0563", "Confined Space", "V-4201 Tank", "Internal inspection", "Shri S.K. Mane", "09:00", "15:00", "ACTIVE", "Shri S.V. Patil"],
             ["PTW-2026/0564", "Excavation", "Utility Corridor", "Trench digging", "Shri A.V. Kulkarni", "07:00", "17:00", "COMPLETED", "Shri K.R. Nair"],
             ["PTW-2026/0565", "Electrical", "MCC Room", "Panel modification", "Shri T.K. Verma", "10:00", "14:00", "ACTIVE", "Shri P.V. Rao"],
-            ["PTW-2026/0558", "Cold Work", "VDU-II Level 3", "Flange gasket change", "Shri R.M. Gupta", "08:00", "12:00", "CLOSED", "Shri K.R. Nair"],
-            ["PTW-2026/0559", "Hot Work", "VDU-II Pipe Rack", "Support welding", "Shri A.V. Kulkarni", "08:00", "16:00", "CLOSED", "Shri K.R. Nair"],
+            ["PTW-2026/0558", "Cold Work", "Unit Level 3", "Flange gasket change", "Shri R.M. Gupta", "08:00", "12:00", "CLOSED", "Shri K.R. Nair"],
+            ["PTW-2026/0559", "Hot Work", "Unit Pipe Rack", "Support welding", "Shri A.V. Kulkarni", "08:00", "16:00", "CLOSED", "Shri K.R. Nair"],
         ]
         for ri, rd in enumerate(data, 2):
             for ci, v in enumerate(rd, 1):
@@ -626,7 +626,7 @@ class ExtendedGenerators_HseOps:
         prs.slide_height = PptxInches(7.5)
         sl = prs.slides.add_slide(prs.slide_layouts[0])
         sl.shapes.title.text = "HSE Composite Permit Review"
-        sl.placeholders[1].text = f"CDU-III / VDU-II Complex\nDaily Permit Review Meeting\n{datetime.now().strftime('%d %B %Y')}"
+        sl.placeholders[1].text = f"Unit Complex\nDaily Permit Review Meeting\n{datetime.now().strftime('%d %B %Y')}"
         sl2 = prs.slides.add_slide(prs.slide_layouts[1])
         sl2.shapes.title.text = "Agenda"
         tf = sl2.placeholders[1].text_frame
@@ -1007,7 +1007,7 @@ class ExtendedGenerators_HseOps:
         prs.slide_width = PptxInches(13.333)
         prs.slide_height = PptxInches(7.5)
         sl = prs.slides.add_slide(prs.slide_layouts[0])
-        sl.shapes.title.text = "Operations Review - CDU-III / VDU-II"
+        sl.shapes.title.text = "Operations Review - Unit Operations"
         sl.placeholders[1].text = f"Q1 2026 Performance Review\nMRPL Refinery Operations\n{datetime.now().strftime('%d %B %Y')}"
         sl2 = prs.slides.add_slide(prs.slide_layouts[1])
         sl2.shapes.title.text = "Agenda"

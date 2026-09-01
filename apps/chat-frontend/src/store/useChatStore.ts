@@ -61,7 +61,7 @@ interface ChatState {
   setStreaming: (isStreaming: boolean) => void;
   handleStreamEvent: (event: any) => void;
   clearTrace: () => void;
-  regenerateMessage: (aiMsgIndex: number) => void;
+  regenerateMessage: (aiMsgIndex: number, role?: string) => void;
 }
 
 function getApiBase(): string {
@@ -367,7 +367,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
     }
   },
 
-  regenerateMessage: (aiMsgIndex: number) => {
+  regenerateMessage: (aiMsgIndex: number, role?: string) => {
     const state = get();
     if (state.isStreaming || aiMsgIndex < 0 || aiMsgIndex >= state.messages.length) return;
 
@@ -401,7 +401,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
     try {
       const { socketManager } = require('@/lib/socket');
-      socketManager.sendChatTask(userPrompt, [], undefined, true, state.activeSessionId, historyBefore);
+      socketManager.sendChatTask(userPrompt, [], role, true, state.activeSessionId, historyBefore);
     } catch (err) {
       console.error('Failed to send regenerate task:', err);
       set({ isStreaming: false, regeneratingMsgId: null });

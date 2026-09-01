@@ -68,11 +68,11 @@ ORDER BY p.operating_temp_c DESC;
   }>({
     headers: ['UNIT_ID', 'UNIT_NAME', 'OPERATING_TEMP_C', 'PRESSURE_BAR', 'LEL_PCT', 'O2_PCT', 'H2S_PPM', 'OISD_VERDICT'],
     rows: [
-      ['CDU-1', 'Atmospheric Distillation Unit 1', 365.2, 1.84, '0.0%', '20.8%', '0.0 ppm', 'SAFE_AUTHORIZED'],
-      ['VDU-2', 'Vacuum Distillation Column 2', 410.0, 0.08, '0.0%', '20.9%', '0.0 ppm', 'SAFE_AUTHORIZED'],
-      ['FCCU-1', 'Fluidized Catalytic Cracking', 525.0, 2.45, '0.0%', '20.8%', '0.0 ppm', 'SAFE_AUTHORIZED'],
-      ['DHDS-1', 'Diesel Hydro-Desulfurization', 340.5, 45.0, '0.0%', '20.8%', '0.0 ppm', 'SAFE_AUTHORIZED'],
-      ['HCU-2', 'Hydrocracker Complex Unit', 380.0, 142.0, '0.0%', '20.8%', '0.0 ppm', 'SAFE_AUTHORIZED'],
+      ['Unit-001', 'Sample Distillation Unit', 365.2, 1.84, '0.0%', '20.8%', '0.0 ppm', 'SAFE_AUTHORIZED'],
+      ['Unit-002', 'Sample Processing Column', 410.0, 0.08, '0.0%', '20.9%', '0.0 ppm', 'SAFE_AUTHORIZED'],
+      ['Unit-003', 'Sample Cracking Unit', 525.0, 2.45, '0.0%', '20.8%', '0.0 ppm', 'SAFE_AUTHORIZED'],
+      ['Unit-004', 'Sample Hydrotreating Unit', 340.5, 45.0, '0.0%', '20.8%', '0.0 ppm', 'SAFE_AUTHORIZED'],
+      ['Unit-005', 'Sample Hydrocracker Unit', 380.0, 142.0, '0.0%', '20.8%', '0.0 ppm', 'SAFE_AUTHORIZED'],
     ],
   });
 

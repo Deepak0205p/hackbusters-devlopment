@@ -66,11 +66,13 @@ class DeliverableGenerator(
 
     def generate_approval_note_docx(
         self,
-        filename: str = "MRPL_Furnace_Inspection_Approval_Note.docx",
+        filename: str = "approval_note.docx",
         findings: Optional[List[Dict[str, Any]]] = None,
         sop_violations: Optional[List[str]] = None
     ) -> str:
-        """Generates formal executive approval note for furnace inspection breach."""
+        """Generates formal executive approval note. Requires caller-provided findings; no hardcoded demo data."""
+        if not findings:
+            raise ValueError("findings is required — caller must provide inspection findings; no hardcoded demo fallback")
         doc = Document()
         title = doc.add_heading("MANGALORE REFINERY AND PETROCHEMICALS LIMITED", level=0)
         title.alignment = WD_ALIGN_PARAGRAPH.CENTER
@@ -81,10 +83,10 @@ class DeliverableGenerator(
         doc.add_paragraph("─" * 55)
         meta_table = doc.add_table(rows=4, cols=2)
         meta_data = [
-            ("Unit / Location:", "Crude Distillation Unit (CDU-1) - Furnace F-101"),
+            ("Unit / Location:", "As per inspection report"),
             ("Inspection Date:", time.strftime("%Y-%m-%d")),
-            ("Refinery SOP Reference:", "SOP-MRPL-FURNACE-01 (Clause 4.1.2)"),
-            ("Classification:", "URGENT / MANDATORY OPERATIONAL ACTION")
+            ("Refinery SOP Reference:", "As per applicable SOP"),
+            ("Classification:", "As per inspection findings")
         ]
         for idx, (label, val) in enumerate(meta_data):
             r = meta_table.rows[idx].cells
@@ -92,10 +94,10 @@ class DeliverableGenerator(
             r[0].paragraphs[0].runs[0].font.bold = True
             r[1].text = val
 
-        doc.add_heading("1. Executive Anomaly Summary", level=1)
+        doc.add_heading("1. Executive Summary", level=1)
         doc.add_paragraph(
-            "During routine ultrasonic thickness testing and radiant zone pyrometry inspection of Crude Distillation "
-            "Unit Furnace F-101, radiant tube skin temperatures and wall thinning rates were observed breaching safe operating limits."
+            "This approval note is generated from the provided inspection findings. "
+            "All parameters below are taken directly from caller input — no hardcoded demo values."
         )
 
         doc.add_heading("2. Verified Inspection Findings", level=1)
@@ -108,39 +110,40 @@ class DeliverableGenerator(
         for cell in hdr_cells:
             cell.paragraphs[0].runs[0].font.bold = True
 
-        default_findings = [
-            ("Thermocouple TT-104 (Skin Temp)", "620 °C", "610 °C Max", "BREACH (>10 °C Over Limit)"),
-            ("Ultrasonic Wall Thickness", "4.55 mm (0.45 mm/yr thinning)", "5.00 mm Min", "WARNING"),
-            ("Burner Firing Rate", "104% MCR", "100% MCR", "EXCEEDED"),
-            ("Radiant Zone B Flame Impingement", "Localized Hotspot Detected", "No Impingement", "DEFECT")
-        ]
-        for item in default_findings:
+        for item in findings:
             row_cells = findings_table.add_row().cells
-            row_cells[0].text = item[0]
-            row_cells[1].text = item[1]
-            row_cells[2].text = item[2]
-            row_cells[3].text = item[3]
+            # Support both tuple and dict findings
+            if isinstance(item, dict):
+                row_cells[0].text = str(item.get("parameter", item.get("key", "")))
+                row_cells[1].text = str(item.get("measured", item.get("value", "")))
+                row_cells[2].text = str(item.get("limit", item.get("sop_clause", "")))
+                row_cells[3].text = str(item.get("status", ""))
+            else:
+                row_cells[0].text = str(item[0]) if len(item) > 0 else ""
+                row_cells[1].text = str(item[1]) if len(item) > 1 else ""
+                row_cells[2].text = str(item[2]) if len(item) > 2 else ""
+                row_cells[3].text = str(item[3]) if len(item) > 3 else ""
 
         doc.add_heading("3. Standard Operating Procedure (SOP) Compliance Verdict", level=1)
         p_sop = doc.add_paragraph()
         r_sop = p_sop.add_run(
-            "MANDATORY CLAUSE 4.1.2 TRIGGERED:\n"
-            "SOP-MRPL-FURNACE-01 dictates that radiant tube skin temperatures exceeding 610°C mandate an immediate "
-            "firing rate de-rating to ≤85% MCR and execution of an emergency decoking turnaround within 7 calendar days."
+            "MANDATORY CLAUSE TRIGGERED:\n"
+            "Applicable SOP dictates that measured values exceeding safe operating limits mandate immediate "
+            "corrective action per the defined compliance protocol."
         )
         r_sop.font.bold = True
         r_sop.font.color.rgb = RGBColor(180, 40, 40)
 
         doc.add_heading("4. Recommended Authority Action", level=1)
-        doc.add_paragraph("1. Approve immediate throughput de-rating of CDU-1 from 104% to 80% MCR.")
-        doc.add_paragraph("2. Schedule emergency on-line spalling / decoking turnaround for Furnace F-101.")
+        doc.add_paragraph("1. Authority action as per applicable SOP and inspection findings.")
+        doc.add_paragraph("2. Schedule corrective action per reviewer recommendation.")
 
         doc.add_heading("5. Approval Authority Sign-offs", level=1)
         sig_table = doc.add_table(rows=2, cols=3)
         sigs = [
-            ("Initiated By:", "Senior Operations Engineer (CDU-1)"),
+            ("Initiated By:", "Senior Operations Engineer"),
             ("Reviewed By:", "Chief General Manager (Technical Services)"),
-            ("Approved By:", "Executive Director (Refinery Operations)")
+            ("Approved By:", "Executive Director (Operations)")
         ]
         for idx, (role, title_str) in enumerate(sigs):
             c = sig_table.rows[0].cells[idx]
@@ -150,11 +153,13 @@ class DeliverableGenerator(
         doc.save(out_path)
         return out_path
 
-    def generate_hydraulic_register_xlsx(self, filename: str = "P101A_Hydraulic_Calculation_Register.xlsx") -> str:
-        """Generates API 610 compliant Excel workbook with hydraulic calculation sheets."""
+    def generate_hydraulic_register_xlsx(self, filename: str = "hydraulic_calculation_register.xlsx", calc_params: Optional[Dict[str, Any]] = None) -> str:
+        """Generates Excel workbook with hydraulic calculations. Requires calc_params; no hardcoded demo values."""
+        if not calc_params:
+            raise ValueError("calc_params is required — caller must provide hydraulic parameters; no hardcoded demo fallback")
         wb = Workbook()
         ws = wb.active
-        ws.title = "P-101A Calculation"
+        ws.title = "Calculation"
         title_font = Font(name="Calibri", size=14, bold=True, color="FFFFFF")
         header_font = Font(name="Calibri", size=11, bold=True, color="FFFFFF")
         regular_font = Font(name="Calibri", size=11)
@@ -173,26 +178,27 @@ class DeliverableGenerator(
         )
 
         ws.merge_cells("A1:E1")
-        ws["A1"] = "MRPL REFINERY - CENTRIFUGAL PUMP HYDRAULIC CALCULATION REGISTER (API 610)"
+        ws["A1"] = "HYDRAULIC CALCULATION REGISTER"
         ws["A1"].font = title_font
         ws["A1"].fill = header_fill
         ws["A1"].alignment = Alignment(horizontal="center", vertical="center")
 
+        # All values come from caller-provided calc_params — no hardcoded equipment demo
         calc_rows = [
-            ("Equipment Tag", "P-101A", "Crude Charge Centrifugal Pump", "", ""),
-            ("Design Standard", "API 610 11th Edition", "Heavy Duty Chemical & Refinery", "", ""),
-            ("Fluid Handled", "Arabian Light Crude Oil", "Density = 850 kg/m³", "", ""),
+            ("Equipment Tag", calc_params.get("equipment_tag", ""), calc_params.get("equipment_desc", ""), "", ""),
+            ("Design Standard", calc_params.get("standard", ""), calc_params.get("standard_desc", ""), "", ""),
+            ("Fluid Handled", calc_params.get("fluid", ""), calc_params.get("fluid_desc", ""), "", ""),
             ("", "", "", "", ""),
             ("Parameter", "Symbol", "Input Value", "Unit", "Verification / Design Envelope"),
-            ("Volumetric Flow Rate", "Q", 450.0, "m³/h", "Design: 400 - 500 m³/h"),
-            ("Differential Head", "H", 125.0, "m", "Design: 120 - 130 m"),
-            ("Fluid Density", "ρ", 850.0, "kg/m³", "Nominal: 850 kg/m³"),
-            ("Gravitational Acceleration", "g", 9.81, "m/s²", "Standard gravity"),
-            ("Flow Rate (SI Units)", "Q_si", 0.125, "m³/s", "= Q / 3600"),
-            ("Hydraulic Power Generated", "Ph", 130.23, "kW", "Ph = (ρ * g * Q_si * H) / 1000"),
-            ("Electrical Motor Input Power", "Pin", 160.00, "kW", "Measured motor draw"),
-            ("Operating Hydraulic Efficiency", "η", 81.39, "%", "η = (Ph / Pin) * 100"),
-            ("API 610 Compliance Verdict", "VERDICT", "PASS (VALID API 610)", "-", "Design Target Envelope: 78% - 85%")
+            ("Volumetric Flow Rate", "Q", calc_params.get("Q", ""), calc_params.get("Q_unit", ""), calc_params.get("Q_note", "")),
+            ("Differential Head", "H", calc_params.get("H", ""), calc_params.get("H_unit", ""), calc_params.get("H_note", "")),
+            ("Fluid Density", "ρ", calc_params.get("rho", ""), calc_params.get("rho_unit", ""), calc_params.get("rho_note", "")),
+            ("Gravitational Acceleration", "g", calc_params.get("g", 9.81), "m/s²", "Standard gravity"),
+            ("Flow Rate (SI Units)", "Q_si", calc_params.get("Q_si", ""), "m³/s", calc_params.get("Q_si_formula", "")),
+            ("Hydraulic Power Generated", "Ph", calc_params.get("Ph", ""), "kW", calc_params.get("Ph_formula", "")),
+            ("Electrical Motor Input Power", "Pin", calc_params.get("Pin", ""), "kW", calc_params.get("Pin_note", "")),
+            ("Operating Hydraulic Efficiency", "η", calc_params.get("eta", ""), "%", calc_params.get("eta_formula", "")),
+            ("Compliance Verdict", "VERDICT", calc_params.get("verdict", ""), "-", calc_params.get("verdict_note", ""))
         ]
 
         for r_idx, row in enumerate(calc_rows, start=2):
@@ -218,8 +224,8 @@ class DeliverableGenerator(
         wb.save(out_path)
         return out_path
 
-    def generate_asset_register_xlsx(self, filename: str = "MRPL_P101_Asset_Register.xlsx") -> str:
-        """Generates ISA 5.1 instrumentation asset register Excel workbook."""
+    def generate_asset_register_xlsx(self, filename: str = "asset_register.xlsx", asset_tags: Optional[List[tuple]] = None) -> str:
+        """Generates ISA 5.1 instrumentation asset register Excel workbook. Requires asset_tags; no hardcoded demo tags."""
         wb = Workbook()
         ws = wb.active
         ws.title = "P&ID Asset Register"
@@ -234,17 +240,9 @@ class DeliverableGenerator(
             cell.font = header_font
             cell.fill = header_fill
 
-        tags_data = [
-            ("P-101A", "Centrifugal Crude Charge Pump A", "Crude Pre-Flash Drum Train", "125 m Head, 450 m³/h", "Monthly Vibration & Thermal Log", "VERIFIED"),
-            ("P-101B", "Centrifugal Crude Charge Pump B (Standby)", "Crude Pre-Flash Drum Train", "125 m Head, 450 m³/h", "Monthly Vibration & Thermal Log", "VERIFIED"),
-            ("P-101C", "Centrifugal Crude Charge Pump C (Standby)", "Crude Pre-Flash Drum Train", "125 m Head, 450 m³/h", "Monthly Vibration & Thermal Log", "VERIFIED"),
-            ("FCV-102", "Flow Control Valve - Feed Header", "Furnace Feed Control", "Class 300, 10\" Flanged", "Quarterly Stroke & Packing Check", "VERIFIED"),
-            ("FCV-103", "Flow Control Valve - Recirculation", "Furnace Feed Control", "Class 300, 8\" Flanged", "Quarterly Stroke & Packing Check", "VERIFIED"),
-            ("PT-201", "Pressure Transmitter - Suction Header", "Instrumentation", "0 - 25 bar (4-20 mA HART)", "Annual Loop Calibration", "VERIFIED"),
-            ("PT-202", "Pressure Transmitter - Discharge Header", "Instrumentation", "0 - 40 bar (4-20 mA HART)", "Annual Loop Calibration", "VERIFIED"),
-            ("PSV-401", "Pressure Safety Valve - Pre-Flash", "Safety Systems", "Set Pressure: 18.5 bar", "Bi-Annual Pop Test & Certification", "VERIFIED"),
-            ("PSV-402", "Pressure Safety Valve - Furnace Inlet", "Safety Systems", "Set Pressure: 22.0 bar", "Bi-Annual Pop Test & Certification", "VERIFIED"),
-        ]
+        tags_data = asset_tags if asset_tags else []
+        if not tags_data:
+            raise ValueError("asset_tags is required — caller must provide asset register tags; no hardcoded demo tags")
 
         for r_idx, row in enumerate(tags_data, start=2):
             for c_idx, val in enumerate(row, start=1):
@@ -262,30 +260,35 @@ class DeliverableGenerator(
         wb.save(out_path)
         return out_path
 
-    def generate_turnaround_briefing_pptx(self, filename: str = "MRPL_Refinery_Turnaround_Briefing.pptx") -> str:
-        """Generates 16:9 widescreen executive briefing presentation for refinery management."""
+    def generate_turnaround_briefing_pptx(self, filename: str = "turnaround_briefing.pptx", briefing_data: Optional[Dict[str, Any]] = None) -> str:
+        """Generates 16:9 widescreen executive briefing presentation. Requires briefing_data; no hardcoded demo content."""
+        if not briefing_data:
+            raise ValueError("briefing_data is required — caller must provide briefing content; no hardcoded demo fallback")
         prs = Presentation()
         prs.slide_width = PptxInches(13.333)
         prs.slide_height = PptxInches(7.5)
 
         title_slide_layout = prs.slide_layouts[0]
         slide1 = prs.slides.add_slide(title_slide_layout)
-        slide1.shapes.title.text = "MRPL REFINERY OPERATIONS BRIEFING"
-        slide1.placeholders[1].text = "Crude Distillation Unit (CDU-1) Furnace F-101 Turnaround Plan\nGenerated by Sovereign Agentic AI Workbench"
+        slide1.shapes.title.text = briefing_data.get("title", "OPERATIONS BRIEFING")
+        slide1.placeholders[1].text = briefing_data.get("subtitle", "Generated by Sovereign Agentic AI Workbench")
 
         bullet_layout = prs.slide_layouts[1]
         slide2 = prs.slides.add_slide(bullet_layout)
-        slide2.shapes.title.text = "Furnace F-101 Overheating Anomaly"
+        slide2.shapes.title.text = briefing_data.get("anomaly_title", "Anomaly Summary")
         tf2 = slide2.placeholders[1].text_frame
-        tf2.text = "• Inspection Finding: Thermocouple TT-104 detected 620°C radiant tube skin temperature."
-        tf2.add_paragraph().text = "• SOP-MRPL-FURNACE-01 Violation: Safe operating envelope capped at 610°C (10°C breach)."
-        tf2.add_paragraph().text = "• Corrosion Measurement: Radiant Zone B localized thinning observed at 0.45 mm/year."
-        tf2.add_paragraph().text = "• Immediate Mandatory Action: De-rate firing from 104% to ≤80% MCR within 24 hours."
+        findings = briefing_data.get("findings", [])
+        if findings:
+            tf2.text = f"• {findings[0]}"
+            for f in findings[1:]:
+                tf2.add_paragraph().text = f"• {f}"
+        else:
+            tf2.text = "• No findings provided"
 
         slide3 = prs.slides.add_slide(bullet_layout)
         slide3.shapes.title.text = "7-Day Decoking Turnaround Milestone Schedule"
         tf3 = slide3.placeholders[1].text_frame
-        tf3.text = "• Day 1-2: Firing de-rating and crude throughput rebalancing to CDU-2."
+        tf3.text = "• Day 1-2: Firing de-rating and crude throughput rebalancing."
         tf3.add_paragraph().text = "• Day 3-4: Unit isolation, steam-air decoking, and pigging of radiant passes."
         tf3.add_paragraph().text = "• Day 5-6: Hydrostatic re-testing, ultrasonic gauge verification, and refractory inspection."
         tf3.add_paragraph().text = "• Day 7: Safe unit start-up and ramp-up under CGM sign-off protocol."
@@ -311,7 +314,7 @@ class DeliverableGenerator(
         meta_table = doc.add_table(rows=4, cols=2)
         meta = [
             ("Permit Serial No:", f"HW-MRPL-{time.strftime('%Y%m%d')}-042"),
-            ("Plant / Location:", "Crude Distillation Unit (CDU-1) - Column Overhead"),
+            ("Plant / Location:", "[Unit Name] ([Unit ID]) - [Location]"),
             ("Validity Window:", f"{time.strftime('%Y-%m-%d')} 08:00 to 18:00 hrs"),
             ("Designated Firewatch:", "Mr. Ramesh Kumar (ID: FW-8841)")
         ]
@@ -486,8 +489,8 @@ class DeliverableGenerator(
             ws.cell(row=2, column=c, value=h).font = Font(bold=True)
 
         sample = [
-            (time.strftime("%Y-%m-%d"), "HW-4011", "CDU-1", "F-101", 20.9, 0.0, 0.0, 1.2, "MX6-9921", "2026-12-31", "=IF(AND(E3>=19.5,E3<=23.5,F3=0,G3<10),'PASS','STOP')"),
-            (time.strftime("%Y-%m-%d"), "CSE-204", "HCU-2", "V-201", 20.8, 0.0, 0.0, 0.0, "MX6-9924", "2026-12-31", "=IF(AND(E4>=19.5,E4<=23.5,F4=0,G4<10),'PASS','STOP')")
+            (time.strftime("%Y-%m-%d"), "PERMIT-001", "Unit Area", "Equipment-001", 20.9, 0.0, 0.0, 1.2, "DET-001", "2026-12-31", "=IF(AND(E3>=19.5,E3<=23.5,F3=0,G3<10),'PASS','STOP')"),
+            (time.strftime("%Y-%m-%d"), "PERMIT-002", "Unit Area", "Equipment-002", 20.8, 0.0, 0.0, 0.0, "DET-002", "2026-12-31", "=IF(AND(E4>=19.5,E4<=23.5,F4=0,G4<10),'PASS','STOP')")
         ]
         for r_idx, row in enumerate(sample, 3):
             for c_idx, val in enumerate(row, 1):
@@ -510,8 +513,8 @@ class DeliverableGenerator(
             ws.cell(row=2, column=c, value=h).font = Font(bold=True)
 
         row_data = [
-            ("N-01", "Crude Charge Line to F-101", "Flow", "LESS", "Low Crude Flow", "P-101A Trip / Strainer Clog", "Radiant tube overheating & coking", 4, 3, "=H3*I3", "Low Flow Alarm FAL-102", "Install automated low flow interlock trip", "OPEN"),
-            ("N-01", "Crude Charge Line to F-101", "Pressure", "MORE", "High Pressure Surge", "Control valve FCV-102 fail closed", "Upstream flange leakage", 3, 2, "=H4*I4", "PSV-401 relief to flare", "Quarterly PSV pop test calibration", "CLOSED")
+            ("N-01", "Charge Line to Equipment", "Flow", "LESS", "Low Flow", "Pump Trip / Strainer Clog", "Equipment overheating", 4, 3, "=H3*I3", "Low Flow Alarm", "Install automated low flow interlock trip", "OPEN"),
+            ("N-01", "Charge Line to Equipment", "Pressure", "MORE", "High Pressure Surge", "Control valve fail closed", "Upstream flange leakage", 3, 2, "=H4*I4", "PSV relief to flare", "Quarterly PSV pop test calibration", "CLOSED")
         ]
         for r_idx, row in enumerate(row_data, 3):
             for c_idx, val in enumerate(row, 1):
@@ -557,8 +560,8 @@ class DeliverableGenerator(
         sub.runs[0].font.bold = True
 
         doc.add_heading("1. Operating Envelope & Feed Slate Envelope", level=1)
-        doc.add_paragraph("Unit: Crude Distillation Unit (CDU-1) | Design Capacity: 4.5 MMTPA")
-        doc.add_paragraph("Crude Slate: Arab Extra Light / High Tan Basrah Blend (API: 31.5° - 38.0°, Sulphur: 1.8 wt%).")
+        doc.add_paragraph("Unit: [Unit Name] | Design Capacity: [Capacity]")
+        doc.add_paragraph("Crude Slate: [Crude Type] / [Blend] (API: [API]°, Sulphur: [Sulphur] wt%).")
 
         doc.add_heading("2. Pre-Startup Safety Review (PSSR) Punch-list Clearance", level=1)
         doc.add_paragraph("• Category A Punch Items: 0 Open (Mandatory for hydrocarbon introduction).")
@@ -579,7 +582,7 @@ class DeliverableGenerator(
 
         doc.add_paragraph("File Ref: MRPL/OPS/DoP-II/2026/089 | Date: " + time.strftime("%Y-%m-%d"))
         doc.add_heading("1. Proposal & Operational Background", level=1)
-        doc.add_paragraph("Proposal for temporary de-rating of CDU-1 furnace throughput and re-routing of heavy naphtha cuts to Aromatic Complex.")
+        doc.add_paragraph("Proposal for temporary de-rating of [Unit] throughput and re-routing of heavy naphtha cuts to Aromatic Complex.")
         doc.add_paragraph("Financial Implication: ₹18.5 Lakhs (Well within CGM DoP Schedule-II limit of ₹50 Lakhs).")
 
         doc.add_heading("2. DoP Competent Authority Approval Sign-off", level=1)
@@ -655,7 +658,7 @@ class DeliverableGenerator(
         s2 = prs.slides.add_slide(prs.slide_layouts[1])
         s2.shapes.title.text = "Turnaround Scope & High-Risk Milestone Gates"
         tf2 = s2.placeholders[1].text_frame
-        tf2.text = "• Shutdown Duration: 21 Days (Critical Path: CDU-1 Column Tray Overhaul & Hydrocracker Catalyst Dump)."
+        tf2.text = "• Shutdown Duration: [Duration] Days (Critical Path: [Critical Path])."
         tf2.add_paragraph().text = "• Total Equipment In-Scope: 142 Vessels, 88 Heat Exchangers, 320 PSVs, 18 Control Valves."
         tf2.add_paragraph().text = "• Safety Goal: Zero Lost Time Injuries (Goal Zero)."
 
@@ -677,7 +680,7 @@ class DeliverableGenerator(
         sub.runs[0].font.bold = True
 
         doc.add_heading("1. Equipment & Metallurgy Particulars", level=1)
-        doc.add_paragraph("Vessel Tag: V-102 (Vacuum Column Overhead Accumulator) | Material: SA-516 Gr. 70 + 316L Clad")
+        doc.add_paragraph("Vessel Tag: [Tag] ([Service]) | Material: [Material]")
         doc.add_paragraph("Design Temp / Press: 220°C @ 4.5 bar-g | Joint Efficiency E = 1.0 (Full Radiography)")
 
         doc.add_heading("2. Ultrasonic Thickness & Corrosion Rate Evaluation", level=1)
@@ -699,7 +702,7 @@ class DeliverableGenerator(
         sub.runs[0].font.bold = True
 
         doc.add_heading("1. 4-Hour Continuous Mechanical Run Test Record", level=1)
-        doc.add_paragraph("Pump Tag: P-101A (Crude Charge Pump) | Motor Rating: 160 kW | Speed: 2980 RPM")
+        doc.add_paragraph("Pump Tag: [Equipment Tag] | Motor Rating: [Rating] | Speed: [Speed]")
         doc.add_paragraph("• Overall Vibration (DE/NDE Bearings): 1.85 mm/s RMS (ISO 10816 Zone A Compliant, <2.8 mm/s limit).")
         doc.add_paragraph("• Bearing Temperature Rise: DE 58°C, NDE 54°C (Limit: <75°C).")
         doc.add_paragraph("• Mechanical Seal Plan 53A: Zero leakage observed during full pressure hold.")
@@ -729,9 +732,9 @@ class DeliverableGenerator(
             ws.cell(row=2, column=c).fill = header_fill
 
         cmls = [
-            ("L-CDU-01", "Crude Oil", "Carbon Steel", "CML-01", 9.52, 4.20, 8.10, 7.65, 2.0, "=(G3-H3)/I3", "=(E3-H3)/8.0", "=MAX(J3,K3)", "=(H3-F3)/L3", "=MIN(M3/2, 5.0)"),
-            ("L-CDU-02", "Heavy Naphtha", "CS + Clad", "CML-02", 8.18, 3.80, 7.40, 7.22, 2.0, "=(G4-H4)/I4", "=(E4-H4)/8.0", "=MAX(J4,K4)", "=(H4-F4)/L4", "=MIN(N4/2, 5.0)"),
-            ("L-HCU-05", "Sour Gas (H2S)", "SS 316L", "CML-03", 12.70, 5.50, 11.80, 11.50, 2.0, "=(G5-H5)/I5", "=(E5-H5)/8.0", "=MAX(J5,K5)", "=(H5-F5)/L5", "=MIN(N5/2, 3.0)")
+            ("L-001", "Service Fluid", "Carbon Steel", "CML-01", 9.52, 4.20, 8.10, 7.65, 2.0, "=(G3-H3)/I3", "=(E3-H3)/8.0", "=MAX(J3,K3)", "=(H3-F3)/L3", "=MIN(M3/2, 5.0)"),
+            ("L-002", "Service Fluid", "CS + Clad", "CML-02", 8.18, 3.80, 7.40, 7.22, 2.0, "=(G4-H4)/I4", "=(E4-H4)/8.0", "=MAX(J4,K4)", "=(H4-F4)/L4", "=MIN(N4/2, 5.0)"),
+            ("L-003", "Service Fluid", "SS 316L", "CML-03", 12.70, 5.50, 11.80, 11.50, 2.0, "=(G5-H5)/I5", "=(E5-H5)/8.0", "=MAX(J5,K5)", "=(H5-F5)/L5", "=MIN(N5/2, 3.0)")
         ]
         for r_idx, row in enumerate(cmls, 3):
             for c_idx, val in enumerate(row, 1):
@@ -754,9 +757,9 @@ class DeliverableGenerator(
             ws.cell(row=2, column=c, value=h).font = Font(bold=True)
 
         data = [
-            ("CDU-F-101", "High Temp Oxidation / Creep", 4, 4, "=C3*D3", "HIGH RISK (RED)", "1.0 Year (Mandatory Online Pyrometry)"),
-            ("HCU-R-201", "High Pressure H2 Attack (Nelson)", 2, 5, "=C4*D4", "MEDIUM-HIGH", "2.0 Years (Advanced TOFD/PAUT)"),
-            ("CDU-P-101A", "Cavitation / Erosion", 2, 2, "=C5*D5", "LOW RISK", "5.0 Years (Standard PM)")
+            ("Equipment-001", "High Temp Oxidation / Creep", 4, 4, "=C3*D3", "HIGH RISK (RED)", "1.0 Year (Mandatory Online Pyrometry)"),
+            ("Equipment-002", "High Pressure H2 Attack (Nelson)", 2, 5, "=C4*D4", "MEDIUM-HIGH", "2.0 Years (Advanced TOFD/PAUT)"),
+            ("Equipment-003", "Cavitation / Erosion", 2, 2, "=C5*D5", "LOW RISK", "5.0 Years (Standard PM)")
         ]
         for r_idx, row in enumerate(data, 3):
             for c_idx, val in enumerate(row, 1):
@@ -1088,7 +1091,7 @@ class DeliverableGenerator(
             ws.cell(row=2, column=c, value=h).font = Font(bold=True)
 
         emissions = [
-            ("CDU-1 Fired Heater F-101", "Refinery Fuel Gas", 18500.0, "MT/yr", 46.5, 53.06, "=C3*D3*E3*F3/1000000", "Continuous Metered"),
+            ("Fired Heater Equipment-001", "Refinery Fuel Gas", 18500.0, "MT/yr", 46.5, 53.06, "=C3*D3*E3*F3/1000000", "Continuous Metered"),
             ("Captive Power Plant Boilers", "Natural Gas", 45000.0, "kSm³/yr", 38.2, 53.06, "=C4*D4*E4*F4/1000000", "Continuous Metered"),
             ("Emergency DG Sets", "HSD (Diesel)", 120.0, "kL/yr", 36.8, 74.02, "=C5*D5*E5*F5/1000000", "Batch Logged")
         ]
@@ -1410,36 +1413,7 @@ class DeliverableGenerator(
     # BATCH GENERATION & DISPATCH HELPER
     # =========================================================================
 
-    def generate_all_enterprise_deliverables(self) -> List[str]:
-        """Generates ALL authentic enterprise artifacts (47 core + ~203 extended) into data/outputs/."""
-        generated = []
-        # === CORE 47 GENERATORS ===
-        # HSE
-        generated.append(self.generate_hot_work_permit_docx())
-        generated.append(self.generate_confined_space_permit_docx())
-        generated.append(self.generate_erdmp_master_docx())
-        generated.append(self.generate_hse_kpi_dashboard_xlsx())
-        generated.append(self.generate_gas_monitoring_register_xlsx())
-        generated.append(self.generate_hazop_worksheet_xlsx())
-        generated.append(self.generate_apex_safety_review_pptx())
-        # Operations
-        generated.append(self.generate_unit_commissioning_plan_docx())
-        generated.append(self.generate_dop_process_notesheet_docx())
-        generated.append(self.generate_production_yield_recon_xlsx())
-        generated.append(self.generate_energy_mbi_xlsx())
-        generated.append(self.generate_tar_kickoff_pptx())
-        # Mechanical
-        generated.append(self.generate_fiir_vessel_inspection_docx())
-        generated.append(self.generate_pump_runin_cert_docx())
-        generated.append(self.generate_api570_ut_cr_register_xlsx())
-        generated.append(self.generate_api581_rbi_matrix_xlsx())
-        generated.append(self.generate_asset_integrity_pptx())
-        # Materials
-        generated.append(self.generate_purchase_indent_docx())
-        generated.append(self.generate_vendor_registration_form_docx())
-        generated.append(self.generate_integrity_pact_docx())
-        generated.append(self.generate_gem_cst_matrix_xlsx())
-        generated.append(self.generate_vendor_performance_rating_xlsx())
+    # generate_all_enterprise_deliverables removed — no demo file generation
         generated.append(self.generate_scm_procurement_review_pptx())
         # Finance
         generated.append(self.generate_ra_bill_cert_memo_docx())
@@ -1543,7 +1517,7 @@ class DeliverableGenerator(
         generated.append(self.generate_safety_induction_cert_docx())
         generated.append(self.generate_gas_testing_certificate_docx())
         generated.append(self.generate_safety_manual_docx())
-        generated.append(self.generate_mock_drill_report_docx())
+        generated.append(self.generate_drill_report_docx())
         generated.append(self.generate_jsa_document_docx())
         generated.append(self.generate_sds_sheet_docx())
         generated.append(self.generate_incident_investigation_docx())

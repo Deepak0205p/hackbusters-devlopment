@@ -27,7 +27,7 @@ def test_vllm_real_client_suite():
     print("\n--- [2] TEST REQUEST PAYLOAD CONSTRUCTION ---")
     client = VLLMClusterBackend(endpoint_url="http://10.0.0.100:8000/v1")
     
-    sample_prompt = "Synthesize FCC unit catalytic cracking optimization note for CDU-1"
+    sample_prompt = "Synthesize FCC unit catalytic cracking optimization note for Crude Distillation Unit"
     payload = client.build_request_payload(
         prompt=sample_prompt,
         max_tokens=256,

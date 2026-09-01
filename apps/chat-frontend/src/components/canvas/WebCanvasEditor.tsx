@@ -83,7 +83,7 @@ export function WebCanvasEditor({ deliverable }: WebCanvasEditorProps) {
 <body>
   <div class="header">
     <div>
-      <h1>MRPL Refinery CDU-2 Operational Telemetry</h1>
+      <h1>Operational Telemetry Dashboard</h1>
       <div style="font-size: 12px; color: #64748b; margin-top: 4px;">Live Process Monitoring & OISD Atmospheric Gas Standards</div>
     </div>
     <span class="badge">✓ AIR-GAP VERIFIED</span>

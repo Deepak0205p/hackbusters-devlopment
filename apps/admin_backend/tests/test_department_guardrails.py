@@ -30,7 +30,7 @@ def test_department_guardrails():
     print("\n--- [2] ALL 9 MRPL & ONGC ENTERPRISE DEPARTMENTS IN-SCOPE QUERIES ---")
     dept_queries = [
         ("HSE_SAFETY", "What are the mandatory PPE safety helmet specifications for refinery contractor workers?"),
-        ("REFINERY_OPS", "CDU-1 furnace radiant tube thermocouple TT-104 skin temperature limit and emergency shut-down SOP"),
+        ("REFINERY_OPS", "furnace radiant tube thermocouple sensor skin temperature limit and emergency shut-down SOP"),
         ("MAINTENANCE_INSPECTION", "API 610 centrifugal pump vibration limits and ultrasonic UT corrosion monitoring probes"),
         ("MATERIALS_GEM", "GeM portal tender contractor pre-qualification criteria and earnest money deposit EMD"),
         ("ESG_SUSTAINABILITY", "MRPL BRSR FY25 reporting sustainability water management and carbon emission reduction"),

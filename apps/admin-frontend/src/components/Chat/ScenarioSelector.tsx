@@ -10,11 +10,11 @@ export function ScenarioSelector() {
 
   const handleSelectScenario = (scenario: 'furnace' | 'pump' | 'pid') => {
     if (scenario === 'furnace') {
-      setCurrentInput("Draft an urgent executive approval note for Crude Distillation Unit furnace F-101 based on inspection report and verify compliance against MRPL SOPs.");
+      setCurrentInput("Analyze the uploaded inspection report and generate an executive approval note.");
     } else if (scenario === 'pump') {
-      setCurrentInput("Calculate hydraulic power and operating efficiency for Crude Charge Pump P-101A with Q=450 m3/h, H=125 m, Pin=160 kW.");
+      setCurrentInput("Calculate hydraulic power and operating efficiency for the specified pump.");
     } else if (scenario === 'pid') {
-      setCurrentInput("Analyze P&ID engineering schematic drawing for Crude Pre-Flash Unit and extract all ISA 5.1 instrumentation tags.");
+      setCurrentInput("Analyze the P&ID engineering schematic drawing and extract all instrumentation tags.");
     }
   };
 

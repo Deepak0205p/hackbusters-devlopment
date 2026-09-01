@@ -92,61 +92,68 @@ class ReActAgentEngine:
                 }
                 return
 
-        # Step 1: Unified ReAct Routing Decision (Primary 4B Model: qwen3-4b)
-        routing = self.router.route(prompt, has_attachments=has_attachments)
-        domain = routing["domain"]
-        model_id = routing.get("model_id") or "qwen3-4b"
-        routed_by = routing["routed_by"]
-        confidence = routing["confidence"]
-        is_in_scope = routing.get("is_in_scope", True)
-        department = routing.get("department")
+        # Step 1: Routing Decision — UI Role Override takes priority, bypasses regex/semantic
+        is_in_scope = True
+        department = None
 
-        # Guarantee 4B Model (qwen3-4b) as default primary orchestrator unless specialized override
-        if not model_id or model_id in ("llama-3.2-3b", "unknown", "general"):
-            model_id = "qwen3-4b"
-            domain = "reasoning"
-            routed_by = "Unified 4B ReAct Orchestrator (qwen3-4b)"
-            confidence = 99
-
-        # Explicit UI Role Override (Dynamically resolved from Router configuration)
         if role:
+            # Explicit UI Role Override — skip regex/semantic routing entirely
             role_clean = role.lower().strip()
             if role_clean in ("orchestrator", "master", "hub"):
                 domain = "reasoning"
                 model_id = self.router.domain_model_map.get("reasoning", "qwen3-4b")
                 routed_by = "UI Role Selector (Master Orchestrator Engine)"
                 confidence = 100
-                is_in_scope = True
-            elif role_clean in ("docs", "doc", "word"):
-                domain = "docs"
-                model_id = self.router.domain_model_map.get("reasoning", "qwen3-4b")
-                routed_by = "UI Role Selector (Docs Engine)"
-                confidence = 100
-                is_in_scope = True
-            elif role_clean in ("excel", "xlsx", "sheet", "spreadsheet"):
-                domain = "excel"
-                model_id = self.router.domain_model_map.get("coding", "qwen2.5-coder-3b")
-                routed_by = "UI Role Selector (Excel Engine)"
-                confidence = 100
-                is_in_scope = True
-            elif role_clean in ("ppt", "powerpoint", "slides", "presentation"):
-                domain = "powerpoint"
-                model_id = self.router.domain_model_map.get("reasoning", "qwen3-4b")
-                routed_by = "UI Role Selector (PowerPoint Engine)"
-                confidence = 100
-                is_in_scope = True
             elif role_clean in ("code", "coding", "python"):
                 domain = "coding"
                 model_id = self.router.domain_model_map.get("coding", "qwen2.5-coder-3b")
                 routed_by = "UI Role Selector (Code Engine)"
                 confidence = 100
-                is_in_scope = True
+            elif role_clean in ("docs", "doc", "word"):
+                domain = "docs"
+                model_id = self.router.domain_model_map.get("reasoning", "qwen3-4b")
+                routed_by = "UI Role Selector (Docs Engine)"
+                confidence = 100
+            elif role_clean in ("excel", "xlsx", "sheet", "spreadsheet"):
+                domain = "excel"
+                model_id = self.router.domain_model_map.get("coding", "qwen2.5-coder-3b")
+                routed_by = "UI Role Selector (Excel Engine)"
+                confidence = 100
+            elif role_clean in ("ppt", "powerpoint", "slides", "presentation"):
+                domain = "powerpoint"
+                model_id = self.router.domain_model_map.get("reasoning", "qwen3-4b")
+                routed_by = "UI Role Selector (PowerPoint Engine)"
+                confidence = 100
             elif role_clean in ("ocr", "vision"):
                 domain = "vision"
                 model_id = self.router.domain_model_map.get("vision", "qwen2-vl-2b")
                 routed_by = f"UI Role Selector ({role_clean.upper()} Engine)"
                 confidence = 100
-                is_in_scope = True
+            else:
+                # Unknown role — fallback to regex/semantic routing
+                routing = self.router.route(prompt, has_attachments=has_attachments)
+                domain = routing["domain"]
+                model_id = routing.get("model_id") or "qwen3-4b"
+                routed_by = routing["routed_by"]
+                confidence = routing["confidence"]
+                is_in_scope = routing.get("is_in_scope", True)
+                department = routing.get("department")
+        else:
+            # No UI role — use regex/semantic auto-routing
+            routing = self.router.route(prompt, has_attachments=has_attachments)
+            domain = routing["domain"]
+            model_id = routing.get("model_id") or "qwen3-4b"
+            routed_by = routing["routed_by"]
+            confidence = routing["confidence"]
+            is_in_scope = routing.get("is_in_scope", True)
+            department = routing.get("department")
+
+            # Guarantee 4B Model (qwen3-4b) as default primary orchestrator unless specialized override
+            if not model_id or model_id in ("llama-3.2-3b", "unknown", "general"):
+                model_id = "qwen3-4b"
+                domain = "reasoning"
+                routed_by = "Unified 4B ReAct Orchestrator (qwen3-4b)"
+                confidence = 99
 
         audit_log.append_event(
             "AGENT_TASK_ROUTED",
@@ -266,12 +273,12 @@ class ReActAgentEngine:
             step_num += 1
 
             # Generate formal Word Document Deliverable
-            doc_filename = f"MRPL_Executive_Note_{int(time.time())}.docx"
+            doc_filename = f"executive_note_{int(time.time())}.docx"
             try:
                 gen.generate_approval_note_docx(filename=doc_filename)
                 deliverable_ids.append(doc_filename)
             except Exception:
-                deliverable_ids.append("MRPL_Furnace_Inspection_Approval_Note.docx")
+                deliverable_ids.append("approval_note.docx")
 
             augmented_prompt = (
                 f"You are the MRPL & ONGC Sovereign Document Synthesis Engine. "
@@ -293,14 +300,9 @@ class ReActAgentEngine:
                 )
             else:
                 final_answer_text = (
-                    f"### 📄 **MANGALORE REFINERY AND PETROCHEMICALS LIMITED**\n"
-                    f"**Executive Note Sheet & Statutory Compliance Record**\n\n"
-                    f"**Subject:** Compliance Assessment & Operational Directives for {prompt}\n\n"
-                    f"1. **Operational Context:** Verified parameters against OISD-STD-105 and MRPL Standard Operating Procedures.\n"
-                    f"2. **Risk & Anomaly Mitigation:** Mandatory technical review executed with zero external network egress.\n"
-                    f"3. **Recommended Action:** Execute required operational adjustments and maintain statutory records in accordance with Delegation of Powers (DoP).\n\n"
-                    f"---\n"
-                    f"✅ **Deliverable Generated:** The official `.docx` approval note has been created. Click **'Edit Live'** below to edit live or **Download** to save."
+                    f"⚠️ **LLM Backend Unavailable**\n\n"
+                    f"The document synthesis engine could not generate a response for your query. "
+                    f"Please verify the LLM backend (qwen3-4b) is running and try again."
                 )
 
         elif domain == "excel":
@@ -320,12 +322,12 @@ class ReActAgentEngine:
             }
             step_num += 1
 
-            xlsx_filename = f"MRPL_Hydraulic_Register_{int(time.time())}.xlsx"
+            xlsx_filename = f"hydraulic_register_{int(time.time())}.xlsx"
             try:
                 gen.generate_hydraulic_register_xlsx(filename=xlsx_filename)
                 deliverable_ids.append(xlsx_filename)
             except Exception:
-                deliverable_ids.append("P101A_Hydraulic_Calculation_Register.xlsx")
+                deliverable_ids.append("hydraulic_calculation_register.xlsx")
 
             augmented_prompt = (
                 f"You are the MRPL & ONGC Sovereign Engineering Spreadsheet Engine. "
@@ -347,18 +349,9 @@ class ReActAgentEngine:
                 )
             else:
                 final_answer_text = (
-                    "### 📊 **MRPL REFINERY - HYDRAULIC & ENGINEERING CALCULATION REGISTER**\n"
-                    "**API 610 / API 570 Standard Verification**\n\n"
-                    "**Calculations Computed:**\n"
-                    "• **Volumetric Flow Rate (Q):** 450.0 m³/h (0.125 m³/s)\n"
-                    "• **Differential Head (H):** 125.0 m\n"
-                    "• **Fluid Density (ρ):** 850.0 kg/m³ (Arabian Light Crude)\n"
-                    "• **Hydraulic Power Generated (Ph):** (ρ * g * Q * H) / 1000 = 130.23 kW\n"
-                    "• **Electrical Power In (Pin):** 160.00 kW\n"
-                    "• **Hydraulic Efficiency (η):** (Ph / Pin) * 100 = 81.39%\n\n"
-                    "**API 610 Verdict:** **PASS** (Within optimal efficiency band 78% - 85%).\n\n"
-                    "---\n"
-                    f"✅ **Deliverable Generated:** `{xlsx_filename}` is ready. Click **'Edit Live'** to open in interactive Univer Sheet or **Download** to save."
+                    f"⚠️ **LLM Backend Unavailable**\n\n"
+                    f"The spreadsheet synthesis engine could not generate a response for your query. "
+                    f"Please verify the LLM backend (qwen2.5-coder-3b) is running and try again."
                 )
 
         elif domain == "powerpoint":
@@ -378,12 +371,12 @@ class ReActAgentEngine:
             }
             step_num += 1
 
-            pptx_filename = f"MRPL_Executive_Briefing_{int(time.time())}.pptx"
+            pptx_filename = f"executive_briefing_{int(time.time())}.pptx"
             try:
                 gen.generate_turnaround_briefing_pptx(filename=pptx_filename)
                 deliverable_ids.append(pptx_filename)
             except Exception:
-                deliverable_ids.append("MRPL_Refinery_Turnaround_Briefing.pptx")
+                deliverable_ids.append("turnaround_briefing.pptx")
 
             augmented_prompt = (
                 f"You are the MRPL & ONGC Sovereign Presentation Synthesis Engine. "
@@ -405,15 +398,9 @@ class ReActAgentEngine:
                 )
             else:
                 final_answer_text = (
-                    "### 📽️ **MANGALORE REFINERY AND PETROCHEMICALS LIMITED**\n"
-                    "**Executive Briefing & Operations Review Deck (16:9 Widescreen)**\n\n"
-                    "**Slide Breakdown:**\n"
-                    "• **Slide 1:** Title & Executive Context — CDU-1 Furnace F-101 Turnaround Assessment\n"
-                    "• **Slide 2:** Key Anomaly & Root Cause — Thermocouple TT-104 @ 620°C (SOP-MRPL-FURNACE-01 Breach)\n"
-                    "• **Slide 3:** 7-Day Milestone Decoking Schedule & Risk Mitigation Roadmap\n"
-                    "• **Slide 4:** HSE & Gas Testing Verification (OISD-STD-105 Protocol)\n\n"
-                    "---\n"
-                    f"✅ **Deliverable Generated:** `{pptx_filename}` is ready. Click **'Edit Live'** to open in interactive canvas or **Download** to save."
+                    f"⚠️ **LLM Backend Unavailable**\n\n"
+                    f"The presentation synthesis engine could not generate a response for your query. "
+                    f"Please verify the LLM backend (qwen3-4b) is running and try again."
                 )
 
         elif domain == "coding":
@@ -431,29 +418,22 @@ class ReActAgentEngine:
                 elif "```" in script_to_run:
                     script_to_run = script_to_run.split("```")[1].split("```")[0].strip()
             else:
-                # Deterministic high-precision engineering calculation fallback for air-gapped environment
-                script_to_run = (
-                    "# MRPL P-101A Crude Charge Pump Hydraulic Power & Efficiency Calculation\n"
-                    "Q_m3_h = 450.0       # Volumetric Flow Rate [m3/h]\n"
-                    "H_m = 125.0          # Total Dynamic Head [m]\n"
-                    "rho_kg_m3 = 850.0    # Arabian Light Crude Density [kg/m3]\n"
-                    "g_m_s2 = 9.81        # Gravitational Acceleration [m/s2]\n"
-                    "P_in_kW = 160.0      # Motor Electrical Input Power [kW]\n\n"
-                    "# 1. Convert flow rate to m3/s\n"
-                    "Q_m3_s = Q_m3_h / 3600.0\n\n"
-                    "# 2. Calculate Hydraulic Power Generated (kW)\n"
-                    "P_hyd_kW = (rho_kg_m3 * g_m_s2 * Q_m3_s * H_m) / 1000.0\n\n"
-                    "# 3. Calculate Operating Hydraulic Efficiency (%)\n"
-                    "efficiency_pct = (P_hyd_kW / P_in_kW) * 100.0\n\n"
-                    "# 4. API 610 Verification Verdict\n"
-                    "verdict = 'PASS' if 78.0 <= efficiency_pct <= 85.0 else 'CHECK'\n\n"
-                    "print(f'FLOW_RATE_M3_H:{Q_m3_h}')\n"
-                    "print(f'DIFFERENTIAL_HEAD_M:{H_m}')\n"
-                    "print(f'HYDRAULIC_POWER_KW:{P_hyd_kW:.2f}')\n"
-                    "print(f'MOTOR_INPUT_POWER_KW:{P_in_kW:.2f}')\n"
-                    "print(f'HYDRAULIC_EFFICIENCY_PCT:{efficiency_pct:.2f}')\n"
-                    "print(f'API_610_VERDICT:{verdict}')\n"
+                final_answer_text = (
+                    f"⚠️ **LLM Backend Unavailable**\n\n"
+                    f"The code synthesis engine could not generate a Python script for your query. "
+                    f"Please verify the LLM backend (qwen2.5-coder-3b) is running and try again."
                 )
+                yield {
+                    "event": "final_answer",
+                    "content": final_answer_text,
+                    "model_id": model_id,
+                    "display_model": display_label,
+                    "routed_by": routed_by,
+                    "confidence": confidence,
+                    "deliverable_ids": [],
+                    "is_cached": False
+                }
+                return
 
             # Persist script deliverable
             with open(out_script_path, "w", encoding="utf-8") as f:
@@ -538,23 +518,12 @@ class ReActAgentEngine:
             llm_res = backend.generate(prompt=augmented_prompt, max_tokens=384, temperature=0.2)
             
             if not llm_res.success or not llm_res.content or len(llm_res.content.strip()) < 5:
-                sop_bullets = "\n".join([
-                    f"• **{getattr(h, 'title', 'SOP Section')} (Clause {getattr(h, 'clause', 'N/A')})**: {getattr(h, 'matched_text', '')[:200]}..."
-                    for h in sop_hits[:3]
-                ]) if sop_hits else ""
                 final_answer_text = (
-                    f"### 📋 **MRPL & ONGC SOVEREIGN COMPLIANCE & REASONING ASSESSMENT**\n\n"
-                    f"Analysis for: **\"{prompt}\"**:\n\n"
-                    f"| Standard / Parameter | Specification | Compliance Status |\n"
-                    f"|---|---|---|\n"
-                    f"| **Domain & Department** | {department or 'Refinery Operations & Process Safety'} | Verified |\n"
-                    f"| **Regulatory Directive** | OISD-STD-105 / OISD-RP-126 / PESO 2026 | Compliant |\n"
-                    f"| **Vector Grounding** | ChromaDB Dense Semantic Match ({len(sop_hits)} chunks) | 100% Air-Gapped |\n\n"
-                    f"#### **Key Operational Directives & Guidelines:**\n"
-                    f"{sop_bullets or '• Strict adherence to permit-to-work (PTW) protocols and safe operating limits (SOL).\n• Continuous monitoring of process instrumentation and interlock safety systems.\n• Mandatory PPE and H2S personal gas detectors in active operating units.'}\n\n"
-                    f"> ℹ️ **Grounding Verification**: Verified against on-premise ChromaDB vector storage without external data egress."
+                    f"⚠️ **LLM Backend Unavailable**\n\n"
+                    f"The reasoning engine could not generate a response for your query. "
+                    f"Please verify the LLM backend (qwen3-4b) is running and try again."
                 )
-                deliverable_ids.append("MRPL_SOP_Evaluation_Note.docx")
+                deliverable_ids = []
             else:
                 raw_answer = llm_res.content
                 # Grounding Verification Gate
@@ -619,12 +588,12 @@ class ReActAgentEngine:
             step_num += 1
 
             # Generate ISA 5.1 Asset Register Spreadsheet Deliverable
-            asset_reg_filename = f"MRPL_PID_Asset_Register_{int(time.time())}.xlsx"
+            asset_reg_filename = f"asset_register_{int(time.time())}.xlsx"
             try:
                 gen.generate_asset_register_xlsx(filename=asset_reg_filename)
                 deliverable_ids.append(asset_reg_filename)
             except Exception:
-                deliverable_ids.append("MRPL_P101_Asset_Register.xlsx")
+                deliverable_ids.append("asset_register.xlsx")
 
             augmented_prompt = (
                 f"You are the MRPL & ONGC Sovereign Vision & P&ID Schematic Intelligence Engine. "
@@ -645,15 +614,9 @@ class ReActAgentEngine:
                 )
             else:
                 final_answer_text = (
-                    "### 🔍 **MRPL P&ID SCHEMATIC & ISA 5.1 INSTRUMENTATION AUDIT**\n\n"
-                    "**Detected ISA 5.1 Components & Design Envelopes:**\n"
-                    "• **Pumps (`P-101A/B/C`):** Centrifugal Crude Charge Pumps (125 m Head, 450 m³/h capacity, 160 kW motor drive)\n"
-                    "• **Control Valves (`FCV-102`, `FCV-103`):** Feed Header & Recirculation Pneumatic Flow Control (Class 300, 10\"/8\" flanged)\n"
-                    "• **Pressure Transmitters (`PT-201`, `PT-202`):** Suction & Discharge 4-20 mA HART transmitters (0-25 bar / 0-40 bar)\n"
-                    "• **Safety Relief Valves (`PSV-401`, `PSV-402`):** Overpressure Protection Valves (Set pressures: 18.5 bar / 22.0 bar)\n\n"
-                    "**Verification Verdict:** **100% VERIFIED** against MRPL P&ID Drawing DWG-CDU-101-REV-04.\n\n"
-                    "---\n"
-                    f"✅ **Deliverable Generated:** `{asset_reg_filename}` is ready. Click **'Edit Live'** to open in live canvas or **Download** to save."
+                    f"⚠️ **LLM Backend Unavailable**\n\n"
+                    f"The vision analysis engine could not generate a response for your query. "
+                    f"Please verify the LLM backend (qwen2-vl-2b) is running and try again."
                 )
 
         else:
@@ -668,18 +631,9 @@ class ReActAgentEngine:
             llm_res = backend.generate(prompt=general_prompt, max_tokens=256, temperature=0.3)
             if not llm_res.success or not llm_res.content or len(llm_res.content.strip()) < 5:
                 final_answer_text = (
-                    f"Hello! I am the **MRPL & ONGC Sovereign AI Assistant** (Air-Gapped Core).\n\n"
-                    f"I support engineers, officers, and operators across all MRPL & ONGC departments and fields:\n"
-                    f"• **HSE & Fire Safety**: OISD standards, permits (Hot Work / CSE), PPE, gas testing & emergency response\n"
-                    f"• **Refinery Operations & Process**: CDU/VDU, FCCU, DHDS, furnace skin temps, throughput optimization & SOPs\n"
-                    f"• **Mechanical & Maintenance**: API 610/510/570 calculations, UT thickness, vibration & asset reliability\n"
-                    f"• **Materials & Contracts**: GeM e-tendering, IMMM manual, vendor rating & purchase indents\n"
-                    f"• **Finance & e-MB**: Measurement Book (Form 7), RA bill compilation, GST/TDS deductions & project cash flow\n"
-                    f"• **ESG & Sustainability**: SEBI BRSR Core Principles, Scope 1 & 2 GHG inventory, water neutrality & ZLD\n"
-                    f"• **CAG & Statutory Audit**: Compliance reporting, audit para management & statutory calendars\n"
-                    f"• **HR & Industrial Relations**: CLRA 1970 Form VI, contractor labor registration, wages & welfare\n"
-                    f"• **Vigilance & Ethics**: Integrity pact, CVC directives, whistleblower policy & anti-corruption\n\n"
-                    f"> ℹ️ *How may I assist you with your department or field inquiry today?*"
+                    f"⚠️ **LLM Backend Unavailable**\n\n"
+                    f"The general assistant could not generate a response for your query. "
+                    f"Please verify the LLM backend is running and try again."
                 )
             else:
                 final_answer_text = llm_res.content

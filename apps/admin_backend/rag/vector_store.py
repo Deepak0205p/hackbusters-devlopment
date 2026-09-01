@@ -44,62 +44,9 @@ class SOPRetrievalResult(BaseModel):
     source_folder: Optional[str] = "mrpl_documents"
     filename: Optional[str] = None
 
-# Seed Refinery SOPs for MRPL Operations (fallback & baseline)
-SEED_SOPS = [
-    SOPChunk(
-        id="sop_furnace_01_clause_412",
-        sop_id="SOP-MRPL-FURNACE-01",
-        title="Crude Distillation Unit (CDU-1) Furnace F-101 Operating Standard",
-        clause="4.1.2",
-        page_number=14,
-        content=(
-            "Maximum Allowable Radiant Tube Skin Temperature Limits: Radiant section thermocouple TT-104 skin "
-            "temperature must not exceed 610°C under continuous operation. Any excursion above 610°C indicates internal "
-            "coking and localized tube overheating. If temperature exceeds 610°C, the operator must immediately de-rate "
-            "burner firing to <=80% MCR and initiate an emergency decoking turnaround within 7 calendar days."
-        ),
-        metadata={"unit": "CDU-1", "equipment": "Furnace F-101", "criticality": "HIGH", "threshold_temp_c": 610}
-    ),
-    SOPChunk(
-        id="sop_furnace_01_clause_413",
-        sop_id="SOP-MRPL-FURNACE-01",
-        title="Crude Distillation Unit (CDU-1) Furnace F-101 Operating Standard",
-        clause="4.1.3",
-        page_number=15,
-        content=(
-            "Tube Corrosion and Wall Thinning Action Criteria: Minimum allowable radiant tube wall thickness is 5.0 mm. "
-            "If ultrasonic gauge measurement detects wall thinning exceeding 0.35 mm/year, non-destructive testing (NDT) "
-            "frequency must be increased to weekly, and replacement tube bundles must be requisitioned."
-        ),
-        metadata={"unit": "CDU-1", "equipment": "Furnace F-101", "criticality": "MEDIUM", "min_thickness_mm": 5.0}
-    ),
-    SOPChunk(
-        id="sop_pump_api610_clause_341",
-        sop_id="SOP-MRPL-PUMP-API610",
-        title="Centrifugal Pump Operating Envelopes and API 610 Standards",
-        clause="3.4.1",
-        page_number=22,
-        content=(
-            "Centrifugal Pump Hydraulic Efficiency Design Envelopes: For heavy-duty crude charge pumps (e.g. P-101A/B/C), "
-            "operating hydraulic efficiency calculated as Ph / Pin must remain within the 78.0% to 85.0% envelope at rated flow. "
-            "Efficiencies below 75% require immediate impeller inspection for cavitation wear or recirculation damage."
-        ),
-        metadata={"unit": "CDU-1", "equipment": "Pump P-101A", "standard": "API 610", "min_efficiency": 78.0}
-    ),
-    SOPChunk(
-        id="sop_pid_isa51_clause_210",
-        sop_id="SOP-MRPL-PID-ISA51",
-        title="Refinery P&ID Instrumentation Tagging and Safety Relief Standards",
-        clause="2.1.0",
-        page_number=8,
-        content=(
-            "Crude Pre-Flash and Fractionation Train Instrumentation Verification: All pressure safety relief valves (PSV) "
-            "and flow control valves (FCV) must be dual-cross-referenced with the MRPL Asset Database. Standby crude charge "
-            "pumps must maintain auto-start readiness on discharge header pressure drop below 15 bar."
-        ),
-        metadata={"unit": "CDU-1", "standard": "ISA 5.1", "criticality": "HIGH"}
-    )
-]
+# Seed SOPs — populated dynamically from real documents in data/mrpl_documents and data/ongc_policies
+# No hardcoded equipment-specific demo data. Vector store loads actual PDFs at startup.
+SEED_SOPS: List[SOPChunk] = []
 
 def generate_local_dense_embedding(text: str, dim: int = 384) -> List[float]:
     """

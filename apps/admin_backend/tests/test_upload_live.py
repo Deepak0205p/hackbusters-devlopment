@@ -12,9 +12,8 @@ def test_multimodal_upload_live():
 
     # 1. Test Valid PDF Inspection Report Upload with Real Magic Bytes (%PDF)
     print("\n--- [1] TEST VALID INSPECTION REPORT PDF (%PDF HEADER) ---")
-    with open("data/sample_inputs/inspection_report_furnace.pdf", "rb") as f:
-        pdf_content = f.read()
-    files = {"file": ("inspection_report_furnace.pdf", pdf_content, "application/pdf")}
+    pdf_content = b"%PDF-1.4\n%INSPECTION REPORT\n1 0 obj<<>>endobj\ntrailer<<>>%%EOF"
+    files = {"file": ("test_inspection_report.pdf", pdf_content, "application/pdf")}
 
     res = client.post("/api/upload", files=files)
     print(f"POST /api/upload -> Status: {res.status_code}")
@@ -29,7 +28,7 @@ def test_multimodal_upload_live():
     print(f"  • SOP Violations: {data['sop_violations']}")
 
     assert res.status_code == 200
-    assert data["name"] == "inspection_report_furnace.pdf"
+    assert data["name"] == "test_inspection_report.pdf"
     assert len(data["findings"]) >= 4
     assert len(data["sop_violations"]) > 0
 

@@ -129,14 +129,6 @@ export const useDeliverableStore = create<DeliverableState>((set, get) => ({
 
     // Client-side download fallback
     const sanitizedFilename = item.filename.replace(/[^a-zA-Z0-9._-]/g, '_');
-    const mockContent = `MRPL SOVEREIGN WORKBENCH ARTIFACT\nFilename: ${sanitizedFilename}\nSHA-256: ${item.sha256_hash}\nGenerated: ${item.generated_timestamp}\nModel: ${item.generating_model}\nSummary: ${item.summary}`;
-    
-    const blob = new Blob([mockContent], { type: 'application/octet-stream' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = sanitizedFilename;
-    a.click();
-    URL.revokeObjectURL(url);
+    set({ validationError: `Backend unavailable. Cannot download ${sanitizedFilename}.` });
   }
 }));

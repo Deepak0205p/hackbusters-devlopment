@@ -4,20 +4,12 @@ import React, { useState } from 'react';
 import { Box, Shield, Play, Terminal, CheckCircle2, AlertTriangle, Clock, HardDrive, Network } from 'lucide-react';
 
 export function SandboxObservatory() {
-  const [testScript, setTestScript] = useState(`import numpy as np
-
-# Centrifugal Pump Efficiency Calculation (ISO 5198)
-Q = 450.0  # Flow rate in m3/hr
-H = 65.0   # Head in meters
-rho = 850.0 # Density in kg/m3
-g = 9.81   # Gravity
-
-hydraulic_power_kw = (rho * g * (Q / 3600.0) * H) / 1000.0
-shaft_power_kw = 82.5 # Input power
-efficiency = (hydraulic_power_kw / shaft_power_kw) * 100.0
-
-print(f"Hydraulic Power: {hydraulic_power_kw:.2f} kW")
-print(f"Pump Efficiency: {efficiency:.2f}%")
+  const [testScript, setTestScript] = useState(`# Write your Python script here
+# Example:
+# Q = 450.0  # Flow rate in m3/hr
+# H = 65.0   # Head in meters
+# print(f"Hydraulic Power: {(850 * 9.81 * (Q / 3600) * H) / 1000:.2f} kW")
+print("Hello from Sandbox")
 `);
   const [isRunning, setIsRunning] = useState(false);
   const [executionLog, setExecutionLog] = useState<any>(null);
@@ -40,21 +32,44 @@ print(f"Pump Efficiency: {efficiency:.2f}%")
           astSecurityVerdict: "VIOLATION (Forbidden library access)",
         });
       } else {
-        setExecutionLog({
-          status: 'SUCCESS',
-          exitCode: 0,
-          runtimeMs: 138,
-          stdout: "Hydraulic Power: 67.75 kW\nPump Efficiency: 82.12%\n[Sandbox] Script executed successfully in isolated container.\n",
-          stderr: "",
-          containerId: "sbx-" + Math.random().toString(36).substring(7),
-          networkPolicy: "--network none (LOCKED)",
-          cpuQuota: "2.0 vCPU",
-          memoryLimit: "512 MB",
-          astSecurityVerdict: "PERMITTED (Zero unsafe imports)",
+        // Execute actual script via backend API
+        fetch(`http://${window.location.hostname}:8000/api/sandbox/execute`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ script: testScript })
+        })
+        .then(res => res.json())
+        .then(data => {
+          setExecutionLog({
+            status: data.success ? 'SUCCESS' : 'FAILED',
+            exitCode: data.exit_code || 0,
+            runtimeMs: data.duration_ms || 0,
+            stdout: data.stdout || "",
+            stderr: data.stderr || "",
+            containerId: "sbx-" + Math.random().toString(36).substring(7),
+            networkPolicy: "--network none (LOCKED)",
+            cpuQuota: "2.0 vCPU",
+            memoryLimit: "512 MB",
+            astSecurityVerdict: data.success ? "PERMITTED (Zero unsafe imports)" : "VIOLATION",
+          });
+        })
+        .catch(() => {
+          setExecutionLog({
+            status: 'ERROR',
+            exitCode: 1,
+            runtimeMs: 0,
+            stdout: "",
+            stderr: "Backend unavailable. Cannot execute script.",
+            containerId: "sbx-error",
+            networkPolicy: "--network none (LOCKED)",
+            cpuQuota: "2.0 vCPU",
+            memoryLimit: "512 MB",
+            astSecurityVerdict: "N/A",
+          });
         });
       }
       setIsRunning(false);
-    }, 500);
+    }, 100);
   };
 
   return (

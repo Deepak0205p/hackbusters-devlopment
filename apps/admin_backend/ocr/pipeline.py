@@ -148,7 +148,7 @@ class MultimodalOCRPipeline:
         if not text:
             return findings
 
-        # Equipment tags (e.g. Furnace F-101, CDU-1, Pump P-101A, FCV-102, PT-201, PSV-401)
+        # Equipment tags extracted from uploaded documents
         equip_matches = re.findall(
             r'\b(?:Furnace\s+[A-Z0-9\-]+|CDU-\d+|VDU-\d+|Pump\s+[A-Z0-9\-]+|[A-Z]{1,3}-\d{3,4}[A-Z]?)\b',
             text,

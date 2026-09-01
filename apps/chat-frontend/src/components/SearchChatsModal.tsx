@@ -111,9 +111,9 @@ export function SearchChatsModal({ isOpen, onClose }: SearchChatsModalProps) {
     },
     {
       id: 'action-sop-audit',
-      title: 'Audit CDU-1 Furnace F-101 SOP Limits',
+      title: 'Audit SOP Limits',
       category: 'actions',
-      desc: 'Verify tube skin temperature thresholds against SOP-MRPL-FURNACE-01',
+      desc: 'Verify equipment thresholds against applicable SOP',
       icon: <ShieldCheck className="h-4 w-4 text-purple-600 dark:text-purple-400" />,
       action: () => {
         const docItem = deliverables.find(d => d.type === 'docx') || deliverables[0];

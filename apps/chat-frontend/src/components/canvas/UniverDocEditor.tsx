@@ -113,7 +113,7 @@ export function UniverDocEditor({ deliverable }: UniverDocEditorProps) {
       return `
         <h1 style="color: #1e40af; border-bottom: 2px solid #cbd5e1; padding-bottom: 8px; font-size: 22px; font-weight: 800; letter-spacing: -0.02em;">MRPL HOT WORK & NAKED FLAME PERMIT (FORM B)</h1>
         <p style="color: #64748b; font-size: 13px; margin-top: 6px;"><strong>Permit Serial No:</strong> MRPL/HSE/2026/HW-8902 &nbsp;|&nbsp; <strong>Date:</strong> 27-AUG-2026 &nbsp;|&nbsp; <strong>Valid Up To:</strong> 18:00 HRS IST</p>
-        <p style="color: #64748b; font-size: 13px; margin-top: 2px;"><strong>Work Location / Plant Unit:</strong> CDU-2 / VDU Distillation Column Top Platform (Elev. +38.5m)</p>
+        <p style="color: #64748b; font-size: 13px; margin-top: 2px;"><strong>Work Location / Plant Unit:</strong> Distillation Column Top Platform (Elev. +38.5m)</p>
         
         <h2 style="color: #0369a1; margin-top: 24px; font-size: 16px; font-weight: 700;">1. Scope & Description of Work</h2>
         <p style="color: #1e293b; line-height: 1.7; font-size: 14px;">Replacement and plasma bevel cutting of 8-inch high-pressure crude transfer line spool (P-104A discharge). Welding and grinding work requires continuous firewatch and spark containment enclosure.</p>

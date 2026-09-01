@@ -47,7 +47,7 @@ def test_full_backend_integration_live():
     # 5. Agent Engine & Full-Duplex ReAct WebSocket
     print("\n[MODULE 5: REACT AGENT ENGINE & STREAMING]")
     with client.websocket_connect("/api/chat/stream") as ws:
-        ws.send_json({"prompt": "Calculate pump efficiency for Crude Charge Pump P-101A", "attachments": []})
+        ws.send_json({"prompt": "Calculate pump efficiency for centrifugal charge pump", "attachments": []})
         chat_frames = []
         while True:
             try:

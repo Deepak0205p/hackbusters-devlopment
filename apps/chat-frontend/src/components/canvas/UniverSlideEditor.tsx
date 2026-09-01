@@ -237,9 +237,9 @@ export function UniverSlideEditor({ deliverable }: UniverSlideEditorProps) {
         id: 1,
         layout: 'title',
         title: 'Monthly Apex Safety & Refinery Operations Review',
-        subtitle: 'MRPL Executive Engineering Briefing • Q2 FY26 Statutory Compliance',
+        subtitle: 'Executive Engineering Briefing • Q2 FY26 Statutory Compliance',
         bullets: [
-          'Zero Loss Time Incidents (LTI) maintained across all CDU/VDU process complexes.',
+          'Zero Loss Time Incidents (LTI) maintained across all process complexes.',
           '100% compliance with OISD-STD-105 Form B hot work & atmospheric gas safety norms.'
         ],
         kpis: [
@@ -248,7 +248,7 @@ export function UniverSlideEditor({ deliverable }: UniverSlideEditorProps) {
           { label: 'Compliance', value: '100%', change: 'Certified' }
         ],
         timeline: [
-          { step: '01', title: 'CDU Pre-Audit', desc: '4-gas testing verified' },
+          { step: '01', title: 'Process Unit Pre-Audit', desc: '4-gas testing verified' },
           { step: '02', title: 'LOTO Lockout', desc: 'Blind tags installed' },
           { step: '03', title: 'Hot Work', desc: 'Continuous firewatch' },
         ],
@@ -272,7 +272,7 @@ export function UniverSlideEditor({ deliverable }: UniverSlideEditorProps) {
           { label: 'Uptime Score', value: '99.9%', change: 'Nominal' }
         ],
         timeline: [],
-        notes: 'Walk through zone breakdown. Compliment the CDU-2 operations team on fast audit closure.',
+        notes: 'Walk through zone breakdown. Compliment the operations team on fast audit closure.',
         bgColor: '#ffffff',
         accentColor: '#2563eb'
       },
@@ -280,7 +280,7 @@ export function UniverSlideEditor({ deliverable }: UniverSlideEditorProps) {
         id: 3,
         layout: 'two-column',
         title: 'Refinery Yield & Energy Optimization Matrix',
-        subtitle: 'CDU / VDU / FCCU Unit Performance Benchmarks',
+        subtitle: 'Process Unit Performance Benchmarks',
         bullets: [
           'High Sulphur Crude blend ratio optimized from 68% to 74% yielding +$1.42/bbl margin uplift.',
           'FCCU Catalyst circulation rate maintained at 24.2 tons/min with zero slide-valve sticking.',

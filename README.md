@@ -129,7 +129,7 @@ G:/SIH/p/
 │   ├── annual_reports/                 # Industrial annual reports (ONGC, MRPL, etc.)
 │   ├── mrpl_documents/                 # Safety policies, CSB reports, and refinery SOPs
 │   ├── ongc_policies/                  # Corporate governance & procurement guidelines
-│   ├── sample_inputs/                  # Inspection PDFs & CAD/P&ID engineering drawings
+│   ├── uploads/                          # User-uploaded documents & engineering drawings
 │   └── outputs/                        # Generated Word/Excel/PPTX deliverable files
 │
 ├── docs/                               # System Specs, PRD & Evaluation Runbooks

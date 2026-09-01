@@ -1,4 +1,4 @@
-import os
+﻿import os
 import sys
 import time
 import ast
@@ -66,7 +66,6 @@ class ToolRegistry:
 
         handler = self._tools[tool_name]
         try:
-            # Parse input JSON if structured
             try:
                 params = json.loads(tool_input_str)
             except Exception:
@@ -148,7 +147,10 @@ def execute_ocr_extraction(params: Dict[str, Any]) -> str:
     elif isinstance(raw_content, bytes):
         content_bytes = raw_content
     else:
-        content_bytes = b"Sample Document"
+        return json.dumps({
+            "error": "No document content provided for OCR extraction.",
+            "status": "FAILED"
+        })
 
     try:
         res = multimodal_pipeline.process_document(filename, content_bytes)
@@ -162,12 +164,8 @@ def execute_ocr_extraction(params: Dict[str, Any]) -> str:
     except Exception as e:
         return json.dumps({
             "engine": "Air-Gapped Sovereign OCR",
-            "extracted_entities": {
-                "Equipment": "Furnace F-101",
-                "Tube Skin Temp": "620 °C",
-                "Corrosion Rate": "0.45 mm/year"
-            },
-            "status": "SUCCESS"
+            "error": f"OCR processing failed: {str(e)}",
+            "status": "FAILED"
         })
 
 @tool_registry.register(
@@ -175,20 +173,34 @@ def execute_ocr_extraction(params: Dict[str, Any]) -> str:
     description="Spatial multimodal analysis of P&ID engineering schematics for ISA 5.1 instrumentation."
 )
 def analyze_pid_drawing(params: Dict[str, Any]) -> str:
+    prompt = params.get("prompt", "")
+    if not prompt:
+        return json.dumps({
+            "error": "No prompt provided for P&ID analysis",
+            "status": "FAILED"
+        })
     return json.dumps({
-        "detected_tags": ["P-101A", "P-101B", "P-101C", "FCV-102", "FCV-103", "PT-201", "PT-202", "PSV-401", "PSV-402"],
-        "equipment_summary": "9 ISA 5.1 instrumentation components detected with 100% database verification.",
-        "status": "VALIDATED"
+        "error": "P&ID analyzer not yet implemented. Please use the Vision role with an uploaded P&ID image.",
+        "status": "NOT_IMPLEMENTED"
     })
 
 @tool_registry.register(name="docx_generator", description="Generates executive .docx approval notes and memos.")
 def generate_docx_memo(params: Dict[str, Any]) -> str:
-    return "Generated data/outputs/docx/MRPL_Furnace_Inspection_Approval_Note.docx (48,120 bytes)"
+    return json.dumps({
+        "error": "DOCX generator not yet implemented",
+        "status": "NOT_IMPLEMENTED"
+    })
 
 @tool_registry.register(name="xlsx_generator", description="Generates Excel calculation registers and equipment ledgers.")
 def generate_xlsx_register(params: Dict[str, Any]) -> str:
-    return "Generated data/outputs/xlsx/P101A_Hydraulic_Calculation_Register.xlsx (28,400 bytes)"
+    return json.dumps({
+        "error": "XLSX generator not yet implemented",
+        "status": "NOT_IMPLEMENTED"
+    })
 
 @tool_registry.register(name="pptx_generator", description="Generates PowerPoint presentation decks for turnaround briefings.")
 def generate_pptx_deck(params: Dict[str, Any]) -> str:
-    return "Generated data/outputs/pptx/MRPL_Refinery_Turnaround_Briefing.pptx (184,200 bytes)"
+    return json.dumps({
+        "error": "PPTX generator not yet implemented",
+        "status": "NOT_IMPLEMENTED"
+    })

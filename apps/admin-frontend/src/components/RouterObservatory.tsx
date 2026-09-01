@@ -110,7 +110,7 @@ export function RouterObservatory() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => setTestQuery('Calculate head loss for P-101A centrifugal pump with flow rate 450 m3/hr')}
+                  onClick={() => setTestQuery('Calculate head loss for centrifugal pump with specified flow rate')}
                   className="px-2.5 py-1 rounded bg-gray-100 hover:bg-gray-200 border border-gray-200 text-[11px] text-gray-900 transition-colors"
                 >
                   Calculation

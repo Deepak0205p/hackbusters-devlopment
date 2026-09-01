@@ -7,14 +7,14 @@ BENCHMARK_PROMPTS = [
     ("def calculate_reynolds(density, velocity, diameter, viscosity): return (density * velocity * diameter) / viscosity", "coding", "qwen2.5-coder-3b"),
     ("Fix this Python IndexError traceback in the furnace calculation loop", "coding", "qwen2.5-coder-3b"),
     ("Generate a pandas script to aggregate crude oil throughput metrics by shift", "coding", "qwen2.5-coder-3b"),
-    ("Calculate hydraulic power and operating efficiency for Crude Charge Pump P-101A with Flow = 450 m3/h", "coding", "qwen2.5-coder-3b"),
+    ("Calculate hydraulic power and operating efficiency for centrifugal charge pump with Flow = 450 m3/h", "coding", "qwen2.5-coder-3b"),
 
     # 2. Reasoning Tasks -> qwen3-4b
-    ("Draft an urgent executive approval note for furnace F-101 emergency decoking turnaround", "reasoning", "qwen3-4b"),
+    ("Draft an urgent executive approval note for furnace emergency decoking turnaround", "reasoning", "qwen3-4b"),
     ("Evaluate SOP-MRPL-SAFETY-09 clause 4.2 compliance regarding hazardous gas thresholds", "reasoning", "qwen3-4b"),
     ("Perform root cause analysis on high tube skin temperature alarms and synthesize recommendations", "reasoning", "qwen3-4b"),
     ("Prepare formal management memo on turnaround scheduling strategy for Crude Distillation Unit", "reasoning", "qwen3-4b"),
-    ("Draft an urgent executive approval note for Crude Distillation Unit furnace F-101 based on inspection report and verify compliance against MRPL SOPs", "reasoning", "qwen3-4b"),
+    ("Draft an urgent executive approval note for Crude Distillation Unit furnace based on inspection report and verify compliance against MRPL SOPs", "reasoning", "qwen3-4b"),
 
     # 3. Vision Tasks -> qwen2-vl-2b
     ("Extract equipment tags and valve IDs from this scanned P&ID drawing", "vision", "qwen2-vl-2b"),

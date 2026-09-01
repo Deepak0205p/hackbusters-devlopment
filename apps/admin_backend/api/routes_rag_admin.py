@@ -245,7 +245,7 @@ async def list_available_documents():
         ("data/annual_reports", "Annual & Sustainability Reports"),
         ("data/mrpl_documents", "MRPL Technical & Safety Policies"),
         ("data/ongc_policies", "ONGC Corporate & Compliance Policies"),
-        ("data/sample_inputs", "Engineering Drawings & Field Inputs"),
+
         ("data/outputs/docx", "Generated Word Reports"),
         ("data/outputs/xlsx", "Asset & Calculation Spreadsheets"),
         ("data/outputs/pptx", "Executive Briefing Slides"),

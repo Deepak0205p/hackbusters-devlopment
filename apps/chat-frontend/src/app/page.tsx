@@ -290,24 +290,24 @@ function FluidAuroraGlow() {
 const STARTER_PROMPTS = [
   {
     id: 's1',
-    title: 'Furnace F-101 SOP Audit',
-    desc: 'Verify tube skin temperature limits & emergency turnaround actions',
+    title: 'SOP Compliance Audit',
+    desc: 'Verify equipment limits & emergency actions',
     icon: <Flame className="h-5 w-5 text-amber-400" />,
-    prompt: 'Review Crude Distillation Unit furnace F-101 thermocouple telemetry and evaluate compliance against SOP-MRPL-FURNACE-01.'
+    prompt: 'Review the uploaded inspection report and evaluate compliance against applicable SOPs.'
   },
   {
     id: 's2',
     title: 'Pump Efficiency Calculation',
     desc: 'Compute hydraulic power & generate calculation register',
     icon: <Calculator className="h-5 w-5 text-[#a8c7fa]" />,
-    prompt: 'Write a Python script to calculate centrifugal pump hydraulic efficiency for Crude Charge Pump P-101A with Flow = 450 m3/h, Head = 125 m, Density = 850 kg/m3, Power In = 160 kW. Execute in sandbox.'
+    prompt: 'Write a Python script to calculate centrifugal pump hydraulic efficiency with the specified parameters. Execute in sandbox.'
   },
   {
     id: 's3',
     title: 'ISA 5.1 Tag Verification',
     desc: 'Analyze instrumentation symbols & pressure relief valves',
     icon: <Binary className="h-5 w-5 text-emerald-400" />,
-    prompt: 'List the mandatory ISA 5.1 instrumentation tags and verification criteria for CDU-1 fractionation train safety valves.'
+    prompt: 'List the mandatory ISA 5.1 instrumentation tags and verification criteria for the specified unit.'
   },
   {
     id: 's4',
@@ -627,7 +627,7 @@ export default function GeminiReplicaChatApp() {
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     });
 
-    socketManager.sendChatTask(prompt, []);
+    socketManager.sendChatTask(prompt, [], activeModelRole);
     scrollToActive('smooth');
     setTimeout(() => scrollToActive('smooth'), 60);
   };
@@ -652,7 +652,7 @@ export default function GeminiReplicaChatApp() {
   };
 
   const handleRegenerate = (msgIndex: number) => {
-    useChatStore.getState().regenerateMessage(msgIndex);
+    useChatStore.getState().regenerateMessage(msgIndex, activeModelRole);
     scrollToActive('smooth');
     setTimeout(() => scrollToActive('smooth'), 60);
   };
@@ -682,9 +682,9 @@ export default function GeminiReplicaChatApp() {
         body: formData
       });
       const data = await res.json();
-      socketManager.sendChatTask(`Analyze uploaded document ${file.name}: ${JSON.stringify(data.findings || [])}`, []);
+      socketManager.sendChatTask(`Analyze uploaded document ${file.name}: ${JSON.stringify(data.findings || [])}`, [], activeModelRole);
     } catch {
-      socketManager.sendChatTask(`Analyze inspection report ${file.name}`, []);
+      socketManager.sendChatTask(`Analyze inspection report ${file.name}`, [], activeModelRole);
     }
   };
 
@@ -711,7 +711,7 @@ export default function GeminiReplicaChatApp() {
   const { openCanvas, isOpen: isCanvasOpen } = useCanvasStore();
 
   const MODEL_ROLES = [
-    { id: 'orchestrator', label: 'Orchestrator', icon: <MasterHubIcon className="h-6 w-6" />, color: 'text-[#a8c7fa]', glow: 'shadow-blue-500/20', border: 'border-blue-400/60' },
+    { id: 'orchestrator', label: 'Auto', icon: <MasterHubIcon className="h-6 w-6" />, color: 'text-[#a8c7fa]', glow: 'shadow-blue-500/20', border: 'border-blue-400/60' },
     { id: 'code', label: 'Code', icon: <VSCodeIcon className="h-6 w-6" />, color: 'text-blue-400', glow: 'shadow-blue-500/20', border: 'border-blue-400/60' },
     { id: 'vision', label: 'Vision', icon: <VisionCamIcon className="h-6 w-6" />, color: 'text-emerald-400', glow: 'shadow-emerald-500/20', border: 'border-emerald-400/60' },
     { id: 'docs', label: 'Docs', icon: <WordDocsIcon className="h-6 w-6" />, color: 'text-blue-500', glow: 'shadow-blue-600/20', border: 'border-blue-500/60' },

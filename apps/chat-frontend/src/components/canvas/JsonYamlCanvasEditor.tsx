@@ -33,21 +33,14 @@ export function JsonYamlCanvasEditor({ deliverable }: JsonYamlCanvasEditorProps)
       {
         system: "MRPL Sovereign Refinery Intelligence Platform",
         document: deliverable.filename,
-        version: "2.4.0",
+        version: "1.0.0",
         classification: "Air-Gapped Confidential",
-        telemetry_readings: {
+        data: {
           timestamp: new Date().toISOString(),
-          cdu_throughput_kbpd: 310.5,
-          fccu_catalyst_circulation_tpm: 24.2,
-          specific_energy_mbn: 54.2,
-          hot_work_permits_active: 4,
-          sensors: [
-            { id: "TT-104A", type: "Crude Preheat Temperature", value: 365.2, unit: "degC", status: "NOMINAL" },
-            { id: "PT-202B", type: "Column Head Pressure", value: 1.84, unit: "kg/cm2", status: "NOMINAL" },
-            { id: "GT-901", type: "Hydrocarbon Combustible LEL", value: 0.0, unit: "%LEL", status: "PASS" }
-          ]
+          status: "NOMINAL",
+          readings: []
         },
-        compliance_status: "OISD_STD_105_VERIFIED"
+        compliance_status: "VERIFIED"
       },
       null,
       2

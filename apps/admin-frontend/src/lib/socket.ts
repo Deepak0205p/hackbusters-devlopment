@@ -87,7 +87,6 @@ class WebSocketClientManager {
     }
   }
 
-  // TODO: remove mock-fallback once backend is live
   private activateAuditFallback() {
     this.isFallbackMode = true;
     // Keep UI healthy with local baseline data
@@ -100,7 +99,7 @@ class WebSocketClientManager {
   /**
    * Submits a prompt and optional attachments over ws://<host>:8000/api/chat/stream
    */
-  public sendChatTask(prompt: string, attachments: any[] = []) {
+  public sendChatTask(prompt: string, attachments: any[] = [], role?: string) {
     const host = this.getWsHost();
     const wsUrl = `ws://${host}:8000/api/chat/stream`;
 
@@ -118,7 +117,7 @@ class WebSocketClientManager {
 
       this.chatWs.onopen = () => {
         wsConnected = true;
-        this.chatWs?.send(JSON.stringify({ prompt, attachments }));
+        this.chatWs?.send(JSON.stringify({ prompt, attachments, role }));
       };
 
       this.chatWs.onmessage = (event) => {
@@ -132,7 +131,14 @@ class WebSocketClientManager {
 
       this.chatWs.onerror = () => {
         if (!wsConnected) {
-          this.executeChatMockFallback(prompt);
+          chatStore.setStreaming(false);
+          chatStore.addMessage({
+            id: `err-${Date.now()}`,
+            role: 'agent',
+            content: 'Backend unavailable. Please ensure the Sovereign Backend server is active.',
+            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            model_id: 'System Error',
+          });
         }
       };
 
@@ -140,29 +146,15 @@ class WebSocketClientManager {
         chatStore.setStreaming(false);
       };
     } catch (err) {
-      this.executeChatMockFallback(prompt);
+      chatStore.setStreaming(false);
+      chatStore.addMessage({
+        id: `err-${Date.now()}`,
+        role: 'agent',
+        content: 'Could not initialize WebSocket connection to backend.',
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        model_id: 'System Error',
+      });
     }
-  }
-
-  // TODO: remove mock-fallback once backend is live
-  private async executeChatMockFallback(prompt: string) {
-    const chatStore = useChatStore.getState();
-    const modelStore = useModelStore.getState();
-
-    chatStore.setStreaming(true);
-    await new Promise((r) => setTimeout(r, 900));
-
-    chatStore.addMessage({
-      id: `agent-${Date.now()}`,
-      role: 'agent',
-      content: `Completed analysis for: "${prompt}". Calculations verified in isolated sandbox with zero external egress.`,
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      model_id: modelStore.activePrimaryId,
-      routed_by: 'stage1_regex',
-      confidence: 98,
-    });
-
-    chatStore.setStreaming(false);
   }
 }
 

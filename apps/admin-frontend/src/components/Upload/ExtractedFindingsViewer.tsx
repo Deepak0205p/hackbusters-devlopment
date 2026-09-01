@@ -18,14 +18,14 @@ export function ExtractedFindingsViewer() {
   if (!selectedDoc) {
     return (
       <Card className="border-gray-200 bg-gray-100 p-8 text-center text-xs text-gray-400 min-h-[160px] flex items-center justify-center">
-        No document processed yet. Drag &amp; drop a file or load a sample dataset above.
+        No document processed yet. Upload a refinery document to begin extraction.
       </Card>
     );
   }
 
   const handleSendToAgent = () => {
     if (selectedDoc.type === 'inspection_pdf') {
-      setCurrentInput("Draft an urgent executive approval note for Crude Distillation Unit furnace F-101 based on this inspection report and verify compliance against MRPL SOPs.");
+      setCurrentInput("Draft an executive approval note based on this inspection report and verify compliance against applicable SOPs.");
     } else {
       setCurrentInput("Extract all equipment tags and valves from this P&ID drawing and export an Excel asset register.");
     }

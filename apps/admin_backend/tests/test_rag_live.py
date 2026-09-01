@@ -18,7 +18,7 @@ def test_rag_chromadb_live():
 
     # 2. Test Real Vector Similarity Query (Furnace 620°C Skin Temp Finding)
     print("\n--- [2] REAL VECTOR SIMILARITY SEARCH: FURNACE TUBE TEMPERATURE BREACH ---")
-    query_text = "radiant tube thermocouple TT-104 skin temperature 620 C exceeding limit emergency shutdown"
+    query_text = "radiant tube thermocouple sensor skin temperature exceeding limit emergency shutdown"
     hits = chroma_store.query_sop(query_text, top_k=2)
 
     print(f"Query: '{query_text}'")
@@ -37,9 +37,8 @@ def test_rag_chromadb_live():
 
     # 3. Test End-to-End Pipeline Integration (Module 6 Upload -> Real ChromaDB Cross-Reference)
     print("\n--- [3] END-TO-END PIPELINE INTEGRATION: UPLOAD PDF -> CHROMADB HIT ---")
-    with open("data/sample_inputs/inspection_report_furnace.pdf", "rb") as f:
-        sample_pdf_bytes = f.read()
-    upload_res = multimodal_pipeline.process_document("inspection_report_furnace.pdf", sample_pdf_bytes)
+    sample_pdf_bytes = b"%PDF-1.4\n%INSPECTION REPORT\n1 0 obj<<>>endobj\ntrailer<<>>%%EOF"
+    upload_res = multimodal_pipeline.process_document("test_inspection_report.pdf", sample_pdf_bytes)
 
     print(f"Document Processed: {upload_res.name}")
     print(f"  • SOP Violations Detected by ChromaDB: {len(upload_res.sop_violations)}")

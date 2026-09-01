@@ -89,14 +89,10 @@ class WebSocketClientManager {
     }
   }
 
-  // TODO: remove mock-fallback once backend is live
   private activateAuditFallback() {
     this.isFallbackMode = true;
-    // Keep UI healthy with local baseline data
-    const currentSov = useSovereigntyStore.getState().metrics;
-    if (currentSov.external_packets !== 0) {
-      useSovereigntyStore.getState().updateMetrics({ external_packets: 0 });
-    }
+    // Reset sovereignty metrics to zero when backend is unavailable
+    useSovereigntyStore.getState().updateMetrics({ external_packets: 0 });
   }
 
   /**

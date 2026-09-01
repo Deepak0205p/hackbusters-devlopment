@@ -33,7 +33,7 @@ def screen_by_screen_live_clickthrough():
     async def test_chat_ws():
         async with websockets.connect(f"{WS_URL}/api/chat/stream") as ws:
             await ws.send(json.dumps({
-                "prompt": "Calculate hydraulic efficiency for pump P-101A with flow rate 450 m3/h, differential head 125 m",
+                "prompt": "Calculate hydraulic efficiency for centrifugal pump with flow rate 450 m3/h, differential head 125 m",
                 "attachments": []
             }))
             frames = []
@@ -58,7 +58,7 @@ def screen_by_screen_live_clickthrough():
     # -------------------------------------------------------------
     print("\n[SCREEN 3: MULTIMODAL OCR HUB CLICKTHROUGH]")
     pdf_bytes = b"%PDF-1.4\n%MRPL REFINERY INSPECTION REPORT\n1 0 obj<<>>endobj\ntrailer<<>>%%EOF"
-    upload_res = requests.post(f"{BASE_URL}/api/upload", files={"file": ("inspection_report_furnace.pdf", pdf_bytes, "application/pdf")})
+    upload_res = requests.post(f"{BASE_URL}/api/upload", files={"file": ("test_inspection_report.pdf", pdf_bytes, "application/pdf")})
     assert upload_res.status_code == 200
     up_data = upload_res.json()
     print(f"  • Ingested Document: {up_data['name']} (SHA-256: {up_data['sha256_hash'][:16]}...)")

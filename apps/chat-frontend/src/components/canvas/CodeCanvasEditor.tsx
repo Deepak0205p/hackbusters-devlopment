@@ -113,21 +113,14 @@ ORDER BY p.operating_temp_c DESC;
       return `{
   "system": "MRPL Sovereign Refinery Intelligence Platform",
   "document": "${filename}",
-  "version": "2.4.0",
+  "version": "1.0.0",
   "air_gapped": true,
-  "telemetry_readings": {
+  "data": {
     "timestamp": "${new Date().toISOString()}",
-    "cdu_throughput_kbpd": 310.5,
-    "fccu_catalyst_circulation_tpm": 24.2,
-    "specific_energy_mbn": 54.2,
-    "hot_work_permits_active": 4,
-    "sensors": [
-      { "id": "TT-104A", "type": "Crude Preheat Temperature", "value": 365.2, "unit": "degC", "status": "NOMINAL" },
-      { "id": "PT-202B", "type": "Column Head Pressure", "value": 1.84, "unit": "kg/cm2", "status": "NOMINAL" },
-      { "id": "GT-901", "type": "Hydrocarbon Combustible LEL", "value": 0.0, "unit": "%LEL", "status": "PASS" }
-    ]
+    "status": "NOMINAL",
+    "readings": []
   },
-  "compliance_status": "OISD_STD_105_VERIFIED"
+  "compliance_status": "VERIFIED"
 }`;
 
     case 'typescript':
@@ -200,7 +193,7 @@ console.log(JSON.stringify(evaluation, null, 2));
 <body>
   <div class="card">
     <div style="display: flex; justify-content: space-between; align-items: center;">
-      <h1>MRPL Refinery CDU-2 Operational Telemetry</h1>
+      <h1>Operational Telemetry Dashboard</h1>
       <span class="badge">AIR-GAP ACTIVE</span>
     </div>
     <p style="color: #94a3b8; font-size: 13px;">Live automated process data stream monitoring (OISD-STD-105 Compliant)</p>
@@ -410,10 +403,10 @@ export function CodeCanvasEditor({ deliverable }: CodeCanvasEditorProps) {
       setSqlResults({
         headers: ['UNIT_ID', 'UNIT_NAME', 'OPERATING_TEMP_C', 'PRESSURE_BAR', 'LEL_PCT', 'O2_PCT', 'OISD_STATUS'],
         rows: [
-          ['CDU-1', 'Atmospheric Distillation', 365.2, 1.84, '0.0%', '20.8%', 'SAFE_AUTHORIZED'],
-          ['VDU-2', 'Vacuum Distillation', 410.0, 0.08, '0.0%', '20.9%', 'SAFE_AUTHORIZED'],
-          ['FCCU-1', 'Fluidized Catalytic Cracking', 525.0, 2.45, '0.0%', '20.8%', 'SAFE_AUTHORIZED'],
-          ['DHDS-1', 'Diesel Hydrotreater', 340.5, 45.0, '0.0%', '20.8%', 'SAFE_AUTHORIZED'],
+          ['Unit-001', 'Sample Distillation', 365.2, 1.84, '0.0%', '20.8%', 'SAFE_AUTHORIZED'],
+          ['Unit-002', 'Sample Processing', 410.0, 0.08, '0.0%', '20.9%', 'SAFE_AUTHORIZED'],
+          ['Unit-003', 'Sample Cracking', 525.0, 2.45, '0.0%', '20.8%', 'SAFE_AUTHORIZED'],
+          ['Unit-004', 'Sample Hydrotreating', 340.5, 45.0, '0.0%', '20.8%', 'SAFE_AUTHORIZED'],
         ],
       });
       setOutputConsole(`[SQL QUERY SUCCESS]

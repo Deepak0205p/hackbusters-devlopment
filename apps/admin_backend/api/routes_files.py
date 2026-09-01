@@ -131,34 +131,7 @@ async def download_file(filename: str):
             break
 
     if not target_file:
-        # If file is a known demo deliverable that hasn't been generated to disk yet, generate on-demand
-        if safe_filename.endswith(".docx"):
-            target_file = deliverable_generator.generate_approval_note_docx(safe_filename)
-        elif safe_filename == "P101A_Hydraulic_Calculation_Register.xlsx":
-            target_file = deliverable_generator.generate_hydraulic_register_xlsx(safe_filename)
-        elif safe_filename == "MRPL_P101_Asset_Register.xlsx":
-            target_file = deliverable_generator.generate_asset_register_xlsx(safe_filename)
-        elif safe_filename.endswith(".pptx"):
-            target_file = deliverable_generator.generate_turnaround_briefing_pptx(safe_filename)
-        elif safe_filename == "pump_efficiency.py":
-            script_path = os.path.join(allowed_base, "scripts", safe_filename)
-            with open(script_path, "w", encoding="utf-8") as f:
-                f.write(
-                    "# MRPL Centrifugal Pump Hydraulic Calculation Script\n"
-                    "# Verified API 610 compliant execution\n"
-                    "def calculate_efficiency(flow_m3_h, head_m, density_kg_m3, power_in_kw):\n"
-                    "    g = 9.81\n"
-                    "    q_si = flow_m3_h / 3600.0\n"
-                    "    p_hyd_kw = (density_kg_m3 * g * q_si * head_m) / 1000.0\n"
-                    "    eff_pct = (p_hyd_kw / power_in_kw) * 100.0\n"
-                    "    return {'hydraulic_power_kw': p_hyd_kw, 'efficiency_pct': eff_pct}\n\n"
-                    "if __name__ == '__main__':\n"
-                    "    res = calculate_efficiency(450, 125, 850, 160)\n"
-                    "    print('Calculation result:', res)\n"
-                )
-            target_file = script_path
-        else:
-            raise HTTPException(status_code=404, detail=f"Deliverable '{safe_filename}' not found.")
+        raise HTTPException(status_code=404, detail=f"Deliverable '{safe_filename}' not found. No demo generation — files must be created via agent with caller-provided data.")
 
     ext = safe_filename.split(".")[-1].lower() if "." in safe_filename else "bin"
     media_type = MIME_MAP.get(ext, "application/octet-stream")
