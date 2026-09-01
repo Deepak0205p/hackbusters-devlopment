@@ -11,6 +11,7 @@ TEST_MODULES = [
     "apps.admin_backend.tests.test_rag_live",
     "apps.admin_backend.tests.test_real_rag_grounding_cache",
     "apps.admin_backend.tests.test_enterprise_auth_pki_live",
+    "apps.admin_backend.tests.test_model_serving_live",
     "apps.admin_backend.tests.test_department_guardrails",
     "apps.admin_backend.tests.test_full_backend_integration"
 ]

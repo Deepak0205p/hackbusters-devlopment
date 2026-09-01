@@ -54,3 +54,5 @@ Agent.md
 # Excluded folders
 data/
 docs/
+*.gguf
+models/gguf/*.gguf
