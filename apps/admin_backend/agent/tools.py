@@ -1,4 +1,4 @@
-﻿import os
+import os
 import sys
 import time
 import ast
@@ -104,15 +104,22 @@ tool_registry = ToolRegistry()
     description="Executes Python calculations inside an isolated container with --network none and AST screening."
 )
 def execute_python_sandbox(params: Dict[str, Any]) -> str:
-    script = params.get("script", "")
+    script = params.get("script", "") or params.get("code", "")
     if not script:
-        raise ValueError("Parameter 'script' is required for docker_sandbox.")
+        raise ValueError("Parameter 'script' or 'code' is required for docker_sandbox.")
 
     exec_res = sandbox_manager.execute_script(script)
     if not exec_res.success:
         raise RuntimeError(exec_res.stderr or f"Sandbox execution failed with exit code {exec_res.exit_code}")
 
     return exec_res.stdout or "Execution completed successfully (exit code 0)."
+
+@tool_registry.register(
+    name="execute_python_calculation",
+    description="Calculates engineering, hydraulic, and corrosion formulas inside the isolated container sandbox."
+)
+def execute_python_calculation(params: Dict[str, Any]) -> str:
+    return execute_python_sandbox(params)
 
 @tool_registry.register(
     name="chroma_sop_search",

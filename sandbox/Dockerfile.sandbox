@@ -1,0 +1,47 @@
+# ==============================================================================
+# MRPL SOVEREIGN AI WORKBENCH - HARDENED AIR-GAPPED PYTHON SANDBOX (SIH PS 26117)
+# ==============================================================================
+FROM python:3.11-slim-bookworm
+
+# 1. Prevent Python from writing .pyc files and enable unbuffered output
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PYTHONNOUSERSITE=1 \
+    PYTHONFAULTHANDLER=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1
+
+# 2. Install Mathematical, Scientific & Industrial Engineering Packages
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    libopenblas-dev \
+    && pip install --no-cache-dir \
+        numpy==1.26.4 \
+        scipy==1.13.1 \
+        pandas==2.2.2 \
+        sympy==1.13.2 \
+        pint==0.24.3 \
+        openpyxl==3.1.5 \
+    && apt-get purge -y --auto-remove build-essential \
+    && rm -rf /var/lib/apt/lists/* \
+    && rm -rf /root/.cache
+
+# 3. Security Hardening: Remove network utilities and package managers
+RUN rm -f /usr/bin/curl /usr/bin/wget /usr/bin/nc /usr/bin/netcat /usr/bin/telnet /usr/bin/ftp || true
+
+# 4. Create Non-Root Industrial Sandbox User (UID/GID 10001)
+RUN groupadd -g 10001 sandboxgroup && \
+    useradd -u 10001 -g sandboxgroup -s /sbin/nologin -M -d /workspace sandboxuser
+
+# 5. Create Isolated Execution Workspace
+WORKDIR /workspace
+RUN mkdir -p /workspace && \
+    chown -R sandboxuser:sandboxgroup /workspace && \
+    chmod 700 /workspace
+
+# 6. Switch to Unprivileged Non-Root User
+USER 10001:10001
+
+# 7. Default Entrypoint in Isolated Mode (-I: isolate from user environment/site-packages)
+ENTRYPOINT ["python", "-I"]
+CMD ["-c", "print('MRPL Sovereign Air-Gapped Sandbox Ready')"]
