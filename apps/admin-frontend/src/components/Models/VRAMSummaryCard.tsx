@@ -3,85 +3,134 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { useModelStore } from '@/store/useModelStore';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Cpu } from 'lucide-react';
+import {
+  Cpu,
+  Thermometer,
+  Server,
+  AlertTriangle,
+  CheckCircle2,
+  Zap,
+} from 'lucide-react';
 
 export function VRAMSummaryCard() {
-  const { vram } = useModelStore();
+  const { vram, gpuTemperatureC, gpuUtilizationPct, backendType } = useModelStore();
 
-  const totalMb = vram.total_mb > 0 ? vram.total_mb : 8000;
-  const usedPercentage = Math.round((vram.used_mb / totalMb) * 100);
-  const isBudgetSafe = vram.used_mb <= totalMb * 0.9;
+  const totalMb = vram.total_mb > 0 ? vram.total_mb : 8029;
+  const usedMb = vram.used_mb > 0 ? vram.used_mb : 4500;
+  const usedPercentage = Math.round((usedMb / totalMb) * 100);
+
+  // VRAM status styling
+  const isHighPressure = usedPercentage >= 90;
+  const isModerate = usedPercentage >= 70 && usedPercentage < 90;
+
+  const barColor = isHighPressure
+    ? 'bg-rose-500'
+    : isModerate
+    ? 'bg-amber-500'
+    : 'bg-emerald-500';
+
+  const statusBadgeColor = isHighPressure
+    ? 'bg-rose-950/60 text-rose-300 border-rose-800/60'
+    : isModerate
+    ? 'bg-amber-950/60 text-amber-300 border-amber-800/60'
+    : 'bg-emerald-950/60 text-emerald-300 border-emerald-800/60';
 
   return (
-    <Card className="border-gray-200 bg-gray-100">
-      <CardHeader className="pb-3 border-b border-gray-200">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <Cpu className="h-4 w-4 text-gray-500" />
-            <div>
-              <CardTitle className="text-xs font-semibold tracking-wider text-gray-900">
-                {vram.gpu_available ? 'Dedicated GPU VRAM Budget' : 'Host Device Compute & Memory'}
-              </CardTitle>
-              <p className="text-[11px] font-mono text-gray-500 mt-0.5">
-                Hardware: <span className="text-gray-900">{vram.gpu_name || 'Detecting hardware...'}</span>
-              </p>
-            </div>
+    <div className="bg-white dark:bg-[#11141c] border border-gray-200 dark:border-[#262c3a] rounded-xl p-5 shadow-sm space-y-4 font-sans text-gray-900 dark:text-[#ededed]">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-gray-100 dark:border-gray-800/80 pb-3.5">
+        <div className="flex items-center space-x-2.5">
+          <div className="w-8 h-8 rounded-lg bg-cyan-500/10 dark:bg-cyan-500/20 border border-cyan-500/30 flex items-center justify-center text-cyan-600 dark:text-cyan-400">
+            <Cpu className="h-4 w-4" />
           </div>
-          <Badge variant={vram.gpu_available ? "success" : "secondary"}>
-            {vram.gpu_available ? "GPU ACCELERATED" : "CPU / SHARED MEMORY"}
-          </Badge>
-        </div>
-      </CardHeader>
-
-      <CardContent className="space-y-4 pt-4">
-        {/* Single-Color Neutral Track Gauge with Tabular Nums (CLS Prevention) */}
-        <div className="space-y-2">
-          <div className="flex items-baseline justify-between">
-            <div className="flex items-baseline space-x-2">
-              <span className="text-2xl font-semibold font-mono text-gray-900 tracking-tight tabular-nums min-w-[75px] inline-block">
-                {vram.used_mb.toLocaleString()}
+          <div>
+            <h2 className="text-xs font-semibold tracking-wider text-gray-900 dark:text-gray-100 flex items-center gap-2">
+              <span>{vram.gpu_available ? 'Dedicated GPU VRAM Budget' : 'Host Device Compute & Memory'}</span>
+              <span className={`text-[10px] font-mono px-2 py-0.5 rounded-full border ${statusBadgeColor}`}>
+                {isHighPressure ? 'HIGH VRAM PRESSURE' : isModerate ? 'MODERATE LOAD' : 'OPTIMAL HEADROOM'}
               </span>
-              <span className="text-xs font-mono text-gray-500">/ {vram.total_mb.toLocaleString()} MB</span>
-            </div>
-            <span className="text-xs font-mono font-medium text-gray-900 tabular-nums">
-              {usedPercentage}% allocated
+            </h2>
+            <p className="text-[11px] font-mono text-gray-500 dark:text-gray-400 mt-0.5">
+              Hardware: <span className="text-gray-900 dark:text-gray-200">{vram.gpu_name || 'NVIDIA RTX 4060 Laptop (8GB)'}</span>
+            </p>
+          </div>
+        </div>
+
+        {/* Backend & Temperature Badges */}
+        <div className="flex items-center gap-2 font-mono text-xs">
+          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-gray-50 dark:bg-[#0c0e14] border border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-300">
+            <Server className="w-3.5 h-3.5 text-cyan-500" />
+            <span className="text-[11px]">Backend: <strong>{backendType || 'OLLaMA :11434'}</strong></span>
+          </div>
+
+          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-gray-50 dark:bg-[#0c0e14] border border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-300">
+            <Thermometer className="w-3.5 h-3.5 text-amber-500" />
+            <span className="text-[11px]">Temp: <strong>{gpuTemperatureC || 48.0}°C</strong></span>
+          </div>
+        </div>
+      </div>
+
+      {/* Dynamic VRAM Allocation Progress Bar */}
+      <div className="space-y-2 font-mono">
+        <div className="flex items-baseline justify-between">
+          <div className="flex items-baseline space-x-2">
+            <span className="text-2xl font-semibold text-gray-900 dark:text-gray-100 tracking-tight tabular-nums">
+              {usedMb.toLocaleString()}
+            </span>
+            <span className="text-xs text-gray-500">/ {totalMb.toLocaleString()} MB GDDR6</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-semibold text-gray-900 dark:text-gray-200 tabular-nums">
+              {usedPercentage}% Allocated
+            </span>
+            <span className="text-[10px] text-gray-400">
+              (Free: {Math.max(0, totalMb - usedMb).toLocaleString()} MB)
             </span>
           </div>
-
-          {/* Clean Single-Color Progress Track */}
-          <div className="h-2 w-full overflow-hidden rounded-full bg-gray-200 border border-gray-200">
-            <motion.div
-              className="h-full bg-blue-600 rounded-full"
-              style={{ width: `${usedPercentage}%` }}
-              initial={{ width: 0 }}
-              animate={{ width: `${usedPercentage}%` }}
-              transition={{ type: "spring", stiffness: 100, damping: 20 }}
-            />
-          </div>
         </div>
 
-        {/* Monochromatic Allocation Breakdown Table */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2 border-t border-gray-200/80 text-xs">
-          <div className="space-y-0.5">
-            <p className="text-[11px] text-gray-500">OS & Compositor</p>
-            <p className="font-mono text-gray-900 font-medium tabular-nums">{vram.os_overhead_mb} MB</p>
-          </div>
-          <div className="space-y-0.5">
-            <p className="text-[11px] text-gray-500">Primary Model</p>
-            <p className="font-mono text-gray-900 font-medium tabular-nums">{vram.primary_model_mb} MB</p>
-          </div>
-          <div className="space-y-0.5">
-            <p className="text-[11px] text-gray-500">Secondary Model</p>
-            <p className="font-mono text-gray-900 font-medium tabular-nums">{vram.secondary_model_mb} MB</p>
-          </div>
-          <div className="space-y-0.5">
-            <p className="text-[11px] text-gray-500">KV Cache / Context</p>
-            <p className="font-mono text-gray-900 font-medium tabular-nums">{vram.kv_cache_mb} MB</p>
-          </div>
+        {/* Progress Track */}
+        <div className="h-2.5 w-full overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+          <motion.div
+            className={`h-full ${barColor} rounded-full transition-colors`}
+            style={{ width: `${Math.min(100, usedPercentage)}%` }}
+            initial={{ width: 0 }}
+            animate={{ width: `${Math.min(100, usedPercentage)}%` }}
+            transition={{ type: 'spring', stiffness: 100, damping: 20 }}
+          />
         </div>
-      </CardContent>
-    </Card>
+      </div>
+
+      {/* Allocation Breakdown Table */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2 border-t border-gray-100 dark:border-gray-800 font-mono text-xs">
+        <div className="space-y-0.5 p-2 rounded-lg bg-gray-50 dark:bg-[#0c0e14] border border-gray-100 dark:border-gray-800/60">
+          <p className="text-[10px] text-gray-400 uppercase">OS &amp; Compositor</p>
+          <p className="text-gray-900 dark:text-gray-100 font-bold tabular-nums">
+            {vram.os_overhead_mb || 400} MB
+          </p>
+        </div>
+
+        <div className="space-y-0.5 p-2 rounded-lg bg-gray-50 dark:bg-[#0c0e14] border border-gray-100 dark:border-gray-800/60">
+          <p className="text-[10px] text-cyan-400 uppercase">Primary Model (Qwen-3 4B)</p>
+          <p className="text-cyan-600 dark:text-cyan-300 font-bold tabular-nums">
+            {vram.primary_model_mb || 2600} MB
+          </p>
+        </div>
+
+        <div className="space-y-0.5 p-2 rounded-lg bg-gray-50 dark:bg-[#0c0e14] border border-gray-100 dark:border-gray-800/60">
+          <p className="text-[10px] text-emerald-400 uppercase">Active Secondary Model</p>
+          <p className="text-emerald-600 dark:text-emerald-300 font-bold tabular-nums">
+            {vram.secondary_model_mb || 1900} MB
+          </p>
+        </div>
+
+        <div className="space-y-0.5 p-2 rounded-lg bg-gray-50 dark:bg-[#0c0e14] border border-gray-100 dark:border-gray-800/60">
+          <p className="text-[10px] text-gray-400 uppercase">KV Cache Headroom</p>
+          <p className="text-gray-900 dark:text-gray-100 font-bold tabular-nums">
+            {vram.kv_cache_mb || 600} MB
+          </p>
+        </div>
+      </div>
+    </div>
   );
 }

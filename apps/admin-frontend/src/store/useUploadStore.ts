@@ -1,4 +1,4 @@
-﻿import { create } from 'zustand';
+import { create } from 'zustand';
 
 export interface ExtractedFinding {
   key: string;
@@ -79,12 +79,12 @@ export const useUploadStore = create<UploadState>((set, get) => ({
     const fileExt = '.' + fileInput.name.split('.').pop()?.toLowerCase();
 
     if (!ALLOWED_EXTENSIONS.includes(fileExt)) {
-      set({ validationError: Invalid file extension "". Allowed: .pdf, .png, .jpg, .jpeg });
+      set({ validationError: `Invalid file extension "${fileExt}". Allowed: .pdf, .png, .jpg, .jpeg` });
       return;
     }
 
     if (fileInput.size > MAX_SIZE) {
-      set({ validationError: File exceeds maximum limit of 50MB (MB provided). });
+      set({ validationError: `File exceeds maximum limit of 50MB (${(fileInput.size / (1024 * 1024)).toFixed(1)}MB provided).` });
       return;
     }
 
@@ -113,14 +113,14 @@ export const useUploadStore = create<UploadState>((set, get) => ({
 
       set({ currentStage: 'ocr_processing', stageProgress: 50, stageMessage: 'Running local PaddleOCR CPU & entity parser...' });
 
-      const res = await fetch(http://System.Management.Automation.Internal.Host.InternalHost:8000/api/upload, {
+      const res = await fetch(`http://${host}:8000/api/upload`, {
         method: 'POST',
         body: formData
       });
 
       if (!res.ok) {
         const errorData = await res.json().catch(() => ({ detail: 'Upload failed' }));
-        throw new Error(errorData.detail || Server returned status );
+        throw new Error(errorData.detail || `Server returned status ${res.status}`);
       }
 
       set({ currentStage: 'chromadb_lookup', stageProgress: 85, stageMessage: 'Querying ChromaDB vector store for SOP violations...' });
@@ -132,13 +132,13 @@ export const useUploadStore = create<UploadState>((set, get) => ({
         selectedDocId: backendResult.id,
         currentStage: 'completed',
         stageProgress: 100,
-        stageMessage: Ingestion complete. Extracted  findings,  SOP alerts.
+        stageMessage: `Ingestion complete. Extracted ${backendResult.findings?.length || 0} findings, ${backendResult.sop_violations?.length || 0} SOP alerts.`
       }));
 
       return;
     } catch (err: any) {
       set({ 
-        validationError: Backend unavailable: ,
+        validationError: `Backend error: ${err.message}`,
         currentStage: 'error',
         stageProgress: 0,
         stageMessage: ''

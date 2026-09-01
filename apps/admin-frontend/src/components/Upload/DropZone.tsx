@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useRef } from 'react';
 import { useUploadStore } from '@/store/useUploadStore';
@@ -43,7 +43,9 @@ export function DropZone() {
       <Card
         onDragOver={(e) => e.preventDefault()}
         onDrop={handleDrop}
-        className={order-dashed border-2 p-6 text-center transition-colors cursor-pointer }
+        className={`border-dashed border-2 p-6 text-center transition-colors cursor-pointer ${
+          isBusy ? 'opacity-50 pointer-events-none' : 'hover:border-blue-500/50'
+        }`}
         onClick={() => !isBusy && fileInputRef.current?.click()}
       >
         <input

@@ -3,6 +3,7 @@
 import React from 'react';
 import { SovereigntyBanner } from './SovereigntyBanner';
 import { DeploymentModeSwitcher } from './DeploymentModeSwitcher';
+import { CertificateManagerCard } from './CertificateManagerCard';
 import { ActiveSocketTable } from './ActiveSocketTable';
 import { TamperEvidentLogViewer } from './TamperEvidentLogViewer';
 
@@ -14,6 +15,9 @@ export function SovereigntyDashboard() {
 
       {/* Mode Topology Switcher */}
       <DeploymentModeSwitcher />
+
+      {/* Plant PKI & Live CRL Revocation Management */}
+      <CertificateManagerCard />
 
       {/* Active Sockets Live Sniffer Table */}
       <ActiveSocketTable />
