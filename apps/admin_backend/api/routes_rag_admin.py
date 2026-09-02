@@ -6,8 +6,8 @@ from pydantic import BaseModel
 from fastapi import APIRouter, UploadFile, File, Form, HTTPException
 from fastapi.responses import FileResponse
 
-from apps.admin_backend.rag.ingest import DocumentIngestor, BASE_DATA_DIR, MRPL_DOCS_DIR, ONGC_POLICIES_DIR
-from apps.admin_backend.rag.vector_store import get_vector_store
+from apps.shared.rag.ingest import DocumentIngestor, BASE_DATA_DIR, MRPL_DOCS_DIR, ONGC_POLICIES_DIR
+from apps.shared.rag.vector_store import get_vector_store
 
 router = APIRouter(prefix="/api/rag-admin", tags=["RAG Document Ingestion & Vector Builder"])
 

@@ -112,6 +112,8 @@ REVEAL 2.0 incorporates defense-grade authentication meeting **ISA/IEC 62443** c
 | :--- | :--- | :--- | :--- |
 | **Backend Core** | **Python / FastAPI** | `3.11+` / `0.111.0` | Asynchronous REST & WebSocket intelligence gateway |
 | **ASGI Server** | **Uvicorn** | `0.30.1` | High-throughput asynchronous server on `0.0.0.0:8000` |
+| **Database Layer** | **XAMPP MySQL / PyMySQL** | `8.0+` / `1.1.1` | On-premise relational store for users, RBAC, chat sessions & CRLs |
+| **Security Layer** | **Argon2id / OWASP Middleware** | `23.8.0` / Custom | Memory-hard password hashing, sliding-window rate limiting & security headers |
 | **Agent Framework** | **LangChain** | `0.2.11` | Strict ReAct reasoning loop with tool execution |
 | **Model Runtime** | **Ollama / GGUF** | Latest | Local GPU model serving with dynamic LRU dual-slot swapping |
 | **Vector Store** | **ChromaDB** | `0.5.4` | On-premise vector store with source citation attribution |
@@ -146,7 +148,7 @@ G:/SIH/p/
 │   │   │   │   ├── canvas/             # UniverJS Sheets, Slides, Docs & Monaco Editor
 │   │   │   │   ├── sidebar/            # App sidebar with operator profile & session list
 │   │   │   │   └── MarkdownContent.tsx # GFM renderer with syntax highlighting & tables
-│   │   │   └── store/                  # Zustand state stores (Chat, Auth, Canvas, Theme)
+│   │   │   └── store/                  # Zustand state stores (Chat, Auth with auto-lock, Canvas, Theme)
 │   │   ├── package.json                # Next.js scripts ("dev:http": "next dev -p 3000")
 │   │   └── server-https.js             # Optional HTTPS server for mobile microphone access
 │   │
@@ -158,23 +160,24 @@ G:/SIH/p/
 │   │   └── package.json                # Next.js scripts ("dev": "next dev -p 3001")
 │   │
 │   └── admin_backend/                  # Unified FastAPI Gateway (Port 8000)
-│       ├── main.py                     # Entry point, 100% offline env setup & router mounts
+│       ├── main.py                     # Entry point, 100% offline env setup, OWASP middleware & router mounts
 │       ├── requirements.txt            # Python backend dependencies
 │       ├── api/                        # Route handlers (auth, chat, files, models, ocr, rag, sandbox)
-│       ├── core/                       # Enterprise auth manager, PKI validator & RBAC engine
+│       ├── core/                       # Enterprise auth manager, XAMPP MySQL backend, PKI validator & RBAC engine
+│       │   ├── auth_manager.py         # PyMySQL repository, Argon2id hasher & session manager
+│       │   └── security_middleware.py  # Rate limiter (DDoS shield), path sanitizers & security headers
 │       ├── agent/                      # LangChain ReAct reasoning loop & tool definitions
 │       ├── models/                     # Dual-slot LRU VRAM memory manager & compute backends
 │       ├── rag/                        # ChromaDB ingestion, retrieval & citation linking
 │       ├── ocr/                        # PaddleOCR / Tesseract pipeline & P&ID graph extraction
 │       ├── sovereignty/                # Network socket inspector & SHA-256 tamper-evident log
-│       └── config/                     # auth_config.yaml, hardware_profiles.yaml, models.yaml
+│       └── config/                     # auth_config.yaml (MySQL), hardware_profiles.yaml, models.yaml
 │
 ├── data/                               # Air-Gapped Persistent Storage
 │   ├── chroma_db/                      # Embedded ChromaDB vector indices
 │   ├── mrpl_documents/                 # Refinery SOPs, safety guidelines & CSB reports
 │   ├── uploads/                        # User-uploaded documents and P&ID drawings
-│   ├── outputs/                        # Programmatically generated Word, Excel & PPTX files
-│   └── users_auth.db                   # SQLite on-premise user accounts & audit state
+│   └── outputs/                        # Programmatically generated Word, Excel & PPTX files
 │
 └── scripts/                            # Operational & Setup Scripts
     └── download_and_verify_models.py   # Air-gap model verification script

@@ -2,7 +2,8 @@ import os
 import sys
 import time
 import json
-import sqlite3
+import pymysql
+import pymysql.cursors
 import hashlib
 import secrets
 import datetime
@@ -34,7 +35,7 @@ except ImportError:
     _ph = None
 
 # Tamper-Evident SHA-256 Audit Log integration
-from apps.admin_backend.sovereignty.tamper_log import audit_log
+from apps.shared.sovereignty.tamper_log import audit_log
 
 # ==============================================================================
 # 1. CONFIGURATION & PATH SETUP
@@ -77,9 +78,9 @@ def load_auth_config() -> Dict[str, Any]:
         },
         "jwt": {
             "algorithm": "HS256",
-            "secret_key": "sovereign-mrpl-industrial-pki-hmac-sha256-secret-key-airgap-2026",
-            "token_expiry_minutes": 480,
-            "token_expiry_seconds": 28800, # 8 hours
+            "secret_key": os.environ.get("JWT_SECRET") or os.environ.get("SOVEREIGN_JWT_SECRET") or "sovereign-mrpl-industrial-pki-hmac-sha256-secret-key-airgap-2026",
+            "token_expiry_minutes": int(os.environ.get("JWT_EXPIRY_MINUTES", "480")),
+            "token_expiry_seconds": int(os.environ.get("JWT_EXPIRY_SECONDS", "28800")), # 8 hours
             "issuer": "MRPL_SOVEREIGN_AUTH_ENGINE",
             "audience": "MRPL_SOVEREIGN_WORKBENCH"
         },
@@ -132,13 +133,35 @@ class InsufficientPermissionException(AuthException):
     pass
 
 # ==============================================================================
-# 3. DATABASE INITIALIZATION & LOCAL STORAGE
+# 3. DATABASE INITIALIZATION & LOCAL STORAGE (XAMPP MySQL)
 # ==============================================================================
+MYSQL_HOST = os.environ.get("MYSQL_HOST", "127.0.0.1")
+MYSQL_PORT = int(os.environ.get("MYSQL_PORT", "3306"))
+MYSQL_USER = os.environ.get("MYSQL_USER", "root")
+MYSQL_PASSWORD = os.environ.get("MYSQL_PASSWORD", "")
+MYSQL_DATABASE = os.environ.get("MYSQL_DATABASE", "mrpl_reveal_auth")
+
 def get_db():
-    os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
-    return conn
+    """Connects to XAMPP MySQL server and returns connection with dictionary cursor."""
+    try:
+        conn = pymysql.connect(
+            host=MYSQL_HOST,
+            port=MYSQL_PORT,
+            user=MYSQL_USER,
+            password=MYSQL_PASSWORD,
+            charset='utf8mb4',
+            cursorclass=pymysql.cursors.DictCursor,
+            autocommit=True
+        )
+        with conn.cursor() as cur:
+            cur.execute(f"CREATE DATABASE IF NOT EXISTS `{MYSQL_DATABASE}` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;")
+        conn.select_db(MYSQL_DATABASE)
+        return conn
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"XAMPP MySQL connection error on {MYSQL_HOST}:{MYSQL_PORT}: {str(e)}"
+        )
 
 def hash_password(password: str) -> str:
     """Hashes password using Argon2id with SHA-256 fallback."""
@@ -162,74 +185,90 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
     return hashlib.sha256(plain_password.encode("utf-8")).hexdigest() == hashed_password
 
 def init_auth_db():
-    conn = get_db()
-    cursor = conn.cursor()
-    
-    # 1. Users table
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS users (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            username TEXT UNIQUE NOT NULL,
-            password_hash TEXT NOT NULL,
-            role TEXT NOT NULL DEFAULT 'FIELD_OPERATOR',
-            full_name TEXT,
-            department TEXT,
-            cert_serial TEXT,
-            auth_method TEXT DEFAULT 'LOCAL',
-            created_at REAL NOT NULL
-        )
-    """)
+    try:
+        conn = get_db()
+        with conn.cursor() as cursor:
+            # 1. Users table
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS users (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    username VARCHAR(191) UNIQUE NOT NULL,
+                    password_hash TEXT NOT NULL,
+                    role VARCHAR(64) NOT NULL DEFAULT 'FIELD_OPERATOR',
+                    full_name VARCHAR(191),
+                    department VARCHAR(191),
+                    cert_serial VARCHAR(191),
+                    auth_method VARCHAR(64) DEFAULT 'LOCAL',
+                    created_at DOUBLE NOT NULL
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+            """)
 
-    # 2. Revoked Certificates (Local CRL cache)
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS revoked_certificates (
-            serial_number TEXT PRIMARY KEY,
-            revoked_at REAL NOT NULL,
-            reason TEXT,
-            revoked_by TEXT
-        )
-    """)
+            # 2. Revoked Certificates (Local CRL cache)
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS revoked_certificates (
+                    serial_number VARCHAR(191) PRIMARY KEY,
+                    revoked_at DOUBLE NOT NULL,
+                    reason TEXT,
+                    revoked_by VARCHAR(191)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+            """)
 
-    # 3. Revoked JWT Tokens (Token Blacklist)
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS revoked_tokens (
-            jti TEXT PRIMARY KEY,
-            revoked_at REAL NOT NULL,
-            username TEXT
-        )
-    """)
+            # 3. Revoked JWT Tokens (Token Blacklist)
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS revoked_tokens (
+                    jti VARCHAR(191) PRIMARY KEY,
+                    revoked_at DOUBLE NOT NULL,
+                    username VARCHAR(191)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+            """)
 
-    # 4. Chat Sessions table (16-digit hex session ID)
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS chat_sessions (
-            id TEXT PRIMARY KEY,
-            username TEXT NOT NULL,
-            title TEXT NOT NULL,
-            created_at REAL NOT NULL,
-            updated_at REAL NOT NULL
-        )
-    """)
+            # 4. Chat Sessions table (16-digit hex session ID)
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS chat_sessions (
+                    id VARCHAR(64) PRIMARY KEY,
+                    username VARCHAR(191) NOT NULL,
+                    title VARCHAR(255) NOT NULL,
+                    created_at DOUBLE NOT NULL,
+                    updated_at DOUBLE NOT NULL
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+            """)
 
-    # 5. Chat Messages table
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS chat_messages (
-            id TEXT PRIMARY KEY,
-            session_id TEXT NOT NULL,
-            username TEXT NOT NULL,
-            role TEXT NOT NULL,
-            content TEXT NOT NULL,
-            model_id TEXT,
-            routed_by TEXT,
-            confidence INTEGER,
-            trace_steps_json TEXT,
-            deliverables_json TEXT,
-            created_at REAL NOT NULL,
-            FOREIGN KEY (session_id) REFERENCES chat_sessions(id) ON DELETE CASCADE
-        )
-    """)
-
-    conn.commit()
-    conn.close()
+            # 5. Chat Messages table
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS chat_messages (
+                    id VARCHAR(64) PRIMARY KEY,
+                    session_id VARCHAR(64) NOT NULL,
+                    username VARCHAR(191) NOT NULL,
+                    role VARCHAR(32) NOT NULL,
+                    content LONGTEXT NOT NULL,
+                    model_id VARCHAR(128),
+                    routed_by VARCHAR(64),
+                    confidence INT,
+                    trace_steps_json LONGTEXT,
+                    deliverables_json LONGTEXT,
+                    created_at DOUBLE NOT NULL,
+                    FOREIGN KEY (session_id) REFERENCES chat_sessions(id) ON DELETE CASCADE
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+            """)
+            
+            # 6. Seed default users if table is empty
+            cursor.execute("SELECT COUNT(*) as count FROM users")
+            res = cursor.fetchone()
+            if res and res["count"] == 0:
+                now = time.time()
+                default_users = [
+                    ("admin", hash_password("RefineryAdmin2026!"), "SUPER_ADMIN", "Refinery Compliance Chief", "Executive HSE & CISO", now),
+                    ("operator", hash_password("RefineryPass2026!"), "FIELD_OPERATOR", "Lead Process Operator", "Refinery Operations", now),
+                    ("engineer", hash_password("RefineryEng2026!"), "MAINTENANCE_ENG", "Senior Reliability Engineer", "Mechanical Maintenance", now),
+                    ("lead", hash_password("ProcessLead2026!"), "PROCESS_LEAD", "Chief Process Lead", "Crude Distillation Unit (CDU)", now)
+                ]
+                cursor.executemany(
+                    "INSERT INTO users (username, password_hash, role, full_name, department, created_at) VALUES (%s, %s, %s, %s, %s, %s)",
+                    default_users
+                )
+        conn.close()
+    except Exception as e:
+        print(f"[AUTH_DB_INIT] MySQL initialization notice: {e}")
 
 # Auto-initialize on module load
 init_auth_db()
@@ -543,22 +582,21 @@ class X509PKIValidator:
     def is_serial_revoked(self, serial_hex: str) -> bool:
         """Checks if certificate serial number is registered in local CRL revocation table."""
         conn = get_db()
-        cursor = conn.cursor()
-        cursor.execute("SELECT serial_number FROM revoked_certificates WHERE UPPER(serial_number) = ?", (serial_hex.upper(),))
-        row = cursor.fetchone()
+        with conn.cursor() as cursor:
+            cursor.execute("SELECT serial_number FROM revoked_certificates WHERE UPPER(serial_number) = %s", (serial_hex.upper(),))
+            row = cursor.fetchone()
         conn.close()
         return row is not None
 
     def revoke_certificate(self, serial_hex: str, reason: str = "Admin revocation", revoked_by: str = "SUPER_ADMIN"):
         """Marks certificate serial number as revoked in local air-gapped CRL."""
         conn = get_db()
-        cursor = conn.cursor()
         now = time.time()
-        cursor.execute(
-            "INSERT OR REPLACE INTO revoked_certificates (serial_number, revoked_at, reason, revoked_by) VALUES (?, ?, ?, ?)",
-            (serial_hex.upper(), now, reason, revoked_by)
-        )
-        conn.commit()
+        with conn.cursor() as cursor:
+            cursor.execute(
+                "REPLACE INTO revoked_certificates (serial_number, revoked_at, reason, revoked_by) VALUES (%s, %s, %s, %s)",
+                (serial_hex.upper(), now, reason, revoked_by)
+            )
         conn.close()
 
         # Audit log event
@@ -575,9 +613,9 @@ class X509PKIValidator:
     def get_crl_status(self) -> Dict[str, Any]:
         """Returns statistics on active certificate revocations."""
         conn = get_db()
-        cursor = conn.cursor()
-        cursor.execute("SELECT serial_number, revoked_at, reason, revoked_by FROM revoked_certificates ORDER BY revoked_at DESC")
-        revoked_rows = [dict(r) for r in cursor.fetchall()]
+        with conn.cursor() as cursor:
+            cursor.execute("SELECT serial_number, revoked_at, reason, revoked_by FROM revoked_certificates ORDER BY revoked_at DESC")
+            revoked_rows = cursor.fetchall()
         conn.close()
         return {
             "status": "ACTIVE_ONLINE",
@@ -807,17 +845,16 @@ class EnterpriseAuthManager:
 
     def is_token_revoked(self, jti: str) -> bool:
         conn = get_db()
-        cursor = conn.cursor()
-        cursor.execute("SELECT jti FROM revoked_tokens WHERE jti = ?", (jti,))
-        row = cursor.fetchone()
+        with conn.cursor() as cursor:
+            cursor.execute("SELECT jti FROM revoked_tokens WHERE jti = %s", (jti,))
+            row = cursor.fetchone()
         conn.close()
         return row is not None
 
     def revoke_token(self, jti: str, username: str = "unknown"):
         conn = get_db()
-        cursor = conn.cursor()
-        cursor.execute("INSERT OR REPLACE INTO revoked_tokens (jti, revoked_at, username) VALUES (?, ?, ?)", (jti, time.time(), username))
-        conn.commit()
+        with conn.cursor() as cursor:
+            cursor.execute("REPLACE INTO revoked_tokens (jti, revoked_at, username) VALUES (%s, %s, %s)", (jti, time.time(), username))
         conn.close()
 
     def pki_login(self, raw_cert_data: Union[str, bytes], client_ip: str = "127.0.0.1", pin: Optional[str] = None) -> Dict[str, Any]:
@@ -1051,42 +1088,38 @@ def require_roles(allowed_roles: List[str]):
 # ==============================================================================
 def get_user_by_username(username: str) -> Optional[Dict[str, Any]]:
     conn = get_db()
-    cursor = conn.cursor()
-    cursor.execute("SELECT id, username, role, full_name, department FROM users WHERE username = ?", (username,))
-    row = cursor.fetchone()
+    with conn.cursor() as cursor:
+        cursor.execute("SELECT id, username, role, full_name, department FROM users WHERE username = %s", (username,))
+        row = cursor.fetchone()
     conn.close()
-    if row:
-        return dict(row)
-    return None
+    return row
 
 def authenticate_user(username: str, password: str) -> Optional[Dict[str, Any]]:
     conn = get_db()
-    cursor = conn.cursor()
-    cursor.execute("SELECT id, username, password_hash, role, full_name, department FROM users WHERE username = ?", (username,))
-    row = cursor.fetchone()
+    with conn.cursor() as cursor:
+        cursor.execute("SELECT id, username, password_hash, role, full_name, department FROM users WHERE username = %s", (username,))
+        row = cursor.fetchone()
     conn.close()
     if row:
-        user_dict = dict(row)
-        if verify_password(password, user_dict["password_hash"]):
+        if verify_password(password, row["password_hash"]):
             return {
-                "id": user_dict["id"],
-                "username": user_dict["username"],
-                "role": user_dict["role"],
-                "full_name": user_dict["full_name"],
-                "department": user_dict["department"]
+                "id": row["id"],
+                "username": row["username"],
+                "role": row["role"],
+                "full_name": row["full_name"],
+                "department": row["department"]
             }
     return None
 
 def register_user(username: str, password: str, role: str = "FIELD_OPERATOR", full_name: Optional[str] = None, department: Optional[str] = None) -> Dict[str, Any]:
     conn = get_db()
-    cursor = conn.cursor()
     pwd_hash = hash_password(password)
-    cursor.execute(
-        "INSERT INTO users (username, password_hash, role, full_name, department, created_at) VALUES (?, ?, ?, ?, ?, ?)",
-        (username, pwd_hash, role, full_name or username.title(), department or "Refinery Operations", time.time())
-    )
-    user_id = cursor.lastrowid
-    conn.commit()
+    with conn.cursor() as cursor:
+        cursor.execute(
+            "INSERT INTO users (username, password_hash, role, full_name, department, created_at) VALUES (%s, %s, %s, %s, %s, %s)",
+            (username, pwd_hash, role, full_name or username.title(), department or "Refinery Operations", time.time())
+        )
+        user_id = cursor.lastrowid
     conn.close()
 
     audit_log.append_event(
@@ -1103,18 +1136,17 @@ def register_user(username: str, password: str, role: str = "FIELD_OPERATOR", fu
 
 def list_all_users() -> List[Dict[str, Any]]:
     conn = get_db()
-    cursor = conn.cursor()
-    cursor.execute("SELECT id, username, role, full_name, department, created_at FROM users ORDER BY id ASC")
-    rows = [dict(r) for r in cursor.fetchall()]
+    with conn.cursor() as cursor:
+        cursor.execute("SELECT id, username, role, full_name, department, created_at FROM users ORDER BY id ASC")
+        rows = cursor.fetchall()
     conn.close()
     return rows
 
 def delete_user_by_id(user_id: int) -> bool:
     conn = get_db()
-    cursor = conn.cursor()
-    cursor.execute("DELETE FROM users WHERE id = ?", (user_id,))
-    deleted = cursor.rowcount > 0
-    conn.commit()
+    with conn.cursor() as cursor:
+        cursor.execute("DELETE FROM users WHERE id = %s", (user_id,))
+        deleted = cursor.rowcount > 0
     conn.close()
     return deleted
 
@@ -1122,12 +1154,11 @@ def create_chat_session(username: str = "operator", title: str = "New Chat") -> 
     session_id = secrets.token_hex(8) # 16-digit hex code
     now = time.time()
     conn = get_db()
-    cursor = conn.cursor()
-    cursor.execute(
-        "INSERT INTO chat_sessions (id, username, title, created_at, updated_at) VALUES (?, ?, ?, ?, ?)",
-        (session_id, username, title, now, now)
-    )
-    conn.commit()
+    with conn.cursor() as cursor:
+        cursor.execute(
+            "INSERT INTO chat_sessions (id, username, title, created_at, updated_at) VALUES (%s, %s, %s, %s, %s)",
+            (session_id, username, title, now, now)
+        )
     conn.close()
     return {
         "id": session_id,
@@ -1140,38 +1171,36 @@ def create_chat_session(username: str = "operator", title: str = "New Chat") -> 
 
 def get_user_chat_sessions(username: str = "operator") -> List[Dict[str, Any]]:
     conn = get_db()
-    cursor = conn.cursor()
-    cursor.execute("SELECT id, username, title, created_at, updated_at FROM chat_sessions WHERE username = ? ORDER BY updated_at DESC", (username,))
     sessions = []
-    for row in cursor.fetchall():
-        s = dict(row)
-        cursor.execute("SELECT * FROM chat_messages WHERE session_id = ? ORDER BY created_at ASC", (s["id"],))
-        s["messages"] = [dict(m) for m in cursor.fetchall()]
-        sessions.append(s)
+    with conn.cursor() as cursor:
+        cursor.execute("SELECT id, username, title, created_at, updated_at FROM chat_sessions WHERE username = %s ORDER BY updated_at DESC", (username,))
+        rows = cursor.fetchall()
+        for s in rows:
+            cursor.execute("SELECT * FROM chat_messages WHERE session_id = %s ORDER BY created_at ASC", (s["id"],))
+            s["messages"] = cursor.fetchall()
+            sessions.append(s)
     conn.close()
     return sessions
 
 def get_chat_session_by_id(session_id: str) -> Optional[Dict[str, Any]]:
     conn = get_db()
-    cursor = conn.cursor()
-    cursor.execute("SELECT id, username, title, created_at, updated_at FROM chat_sessions WHERE id = ?", (session_id,))
-    row = cursor.fetchone()
-    if not row:
-        conn.close()
-        return None
-    session = dict(row)
-    cursor.execute("SELECT * FROM chat_messages WHERE session_id = ? ORDER BY created_at ASC", (session_id,))
-    session["messages"] = [dict(m) for m in cursor.fetchall()]
+    with conn.cursor() as cursor:
+        cursor.execute("SELECT id, username, title, created_at, updated_at FROM chat_sessions WHERE id = %s", (session_id,))
+        session = cursor.fetchone()
+        if not session:
+            conn.close()
+            return None
+        cursor.execute("SELECT * FROM chat_messages WHERE session_id = %s ORDER BY created_at ASC", (session_id,))
+        session["messages"] = cursor.fetchall()
     conn.close()
     return session
 
 def delete_chat_session_by_id(session_id: str) -> bool:
     conn = get_db()
-    cursor = conn.cursor()
-    cursor.execute("DELETE FROM chat_messages WHERE session_id = ?", (session_id,))
-    cursor.execute("DELETE FROM chat_sessions WHERE id = ?", (session_id,))
-    deleted = cursor.rowcount > 0
-    conn.commit()
+    with conn.cursor() as cursor:
+        cursor.execute("DELETE FROM chat_messages WHERE session_id = %s", (session_id,))
+        cursor.execute("DELETE FROM chat_sessions WHERE id = %s", (session_id,))
+        deleted = cursor.rowcount > 0
     conn.close()
     return deleted
 
@@ -1189,27 +1218,26 @@ def add_chat_message(
     msg_id = f"msg-{secrets.token_hex(6)}"
     now = time.time()
     conn = get_db()
-    cursor = conn.cursor()
 
     steps_json = json.dumps(trace_steps) if trace_steps else "[]"
     deliv_json = json.dumps(deliverable_ids) if deliverable_ids else "[]"
 
-    cursor.execute(
-        """
-        INSERT INTO chat_messages (
-            id, session_id, username, role, content, model_id, routed_by, confidence, trace_steps_json, deliverables_json, created_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """,
-        (msg_id, session_id, username, role, content, model_id, routed_by, confidence, steps_json, deliv_json, now)
-    )
+    with conn.cursor() as cursor:
+        cursor.execute(
+            """
+            INSERT INTO chat_messages (
+                id, session_id, username, role, content, model_id, routed_by, confidence, trace_steps_json, deliverables_json, created_at
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            """,
+            (msg_id, session_id, username, role, content, model_id, routed_by, confidence, steps_json, deliv_json, now)
+        )
 
-    if role == "user":
-        first_title = content[:35] + ("..." if len(content) > 35 else "")
-        cursor.execute("UPDATE chat_sessions SET updated_at = ?, title = CASE WHEN title = 'New Chat' THEN ? ELSE title END WHERE id = ?", (now, first_title, session_id))
-    else:
-        cursor.execute("UPDATE chat_sessions SET updated_at = ? WHERE id = ?", (now, session_id))
+        if role == "user":
+            first_title = content[:35] + ("..." if len(content) > 35 else "")
+            cursor.execute("UPDATE chat_sessions SET updated_at = %s, title = CASE WHEN title = 'New Chat' THEN %s ELSE title END WHERE id = %s", (now, first_title, session_id))
+        else:
+            cursor.execute("UPDATE chat_sessions SET updated_at = %s WHERE id = %s", (now, session_id))
 
-    conn.commit()
     conn.close()
 
     return {

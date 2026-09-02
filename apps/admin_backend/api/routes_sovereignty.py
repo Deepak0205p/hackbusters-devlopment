@@ -2,9 +2,9 @@ import asyncio
 import time
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from fastapi.responses import JSONResponse
-from apps.admin_backend.sovereignty.watchdog import socket_watchdog
-from apps.admin_backend.sovereignty.tamper_log import audit_log
-from apps.admin_backend.models.manager import model_manager
+from apps.shared.sovereignty.watchdog import socket_watchdog
+from apps.shared.sovereignty.tamper_log import audit_log
+from apps.shared.models.manager import model_manager
 
 router = APIRouter(tags=["Sovereignty & Network Watchdog"])
 

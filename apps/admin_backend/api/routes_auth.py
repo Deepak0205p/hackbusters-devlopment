@@ -19,7 +19,7 @@ from apps.admin_backend.core.auth_manager import (
     CertificateRevokedException,
     LDAPAuthFailedException
 )
-from apps.admin_backend.sovereignty.tamper_log import audit_log
+from apps.shared.sovereignty.tamper_log import audit_log
 
 # Router mounting both /api/v1/auth and /api/auth
 router = APIRouter(tags=["On-Premise Sovereign Authentication & Industrial RBAC"])

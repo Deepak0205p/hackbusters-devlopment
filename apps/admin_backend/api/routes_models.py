@@ -4,13 +4,13 @@ from fastapi import APIRouter, HTTPException, Depends, Request, status
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field, ConfigDict
 
-from apps.admin_backend.models.manager import (
+from apps.shared.models.manager import (
     model_manager,
     ModelMetadata,
     VRAMTelemetry,
     SwapEvent
 )
-from apps.admin_backend.models.compute_backends import (
+from apps.shared.models.compute_backends import (
     get_backend_for_model,
     backend_registry,
     NormalizedResponse
