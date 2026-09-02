@@ -3,24 +3,26 @@
 import React, { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/useAuthStore';
+import { useThemeStore } from '@/store/useThemeStore';
+import { RevealBrand, RevealLogoIcon } from '@/components/RevealLogo';
 import {
   ShieldCheck,
   FileKey,
   Globe,
   ArrowRight,
   Loader2,
-  Cpu,
   Lock,
   CheckCircle2,
   AlertTriangle,
   UploadCloud,
   Eye,
   EyeOff,
-  Building2,
   Sparkles,
   KeyRound,
   Radio,
-  UserCheck
+  UserCheck,
+  Sun,
+  Moon
 } from 'lucide-react';
 
 const SAMPLE_CERT_HSE = `-----BEGIN CERTIFICATE-----
@@ -30,7 +32,7 @@ CU1hbmdhbG9yZTENMAsGA1UECgwETVJQTDE1MDMGA1UECwwsUGxhbnQgQ3liZXJz
 ZWN1cml0eSAmIERlZmVuc2UgSW5mcmFzdHJ1Y3R1cmUxGzAZBgNVBAMMEk1SUEwg
 UGxhbnQgUm9vdCBDQTAeFw0yNjA5MDExMjEyMzdaFw0yNzA5MDIxMjEyMzdaMFMx
 CzAJBgNVBAYTAklOMQ0wCwYDVQQKDARNUlBMMR4wHAYDVQQLDBVFeGVjdXRpdmUg
-SFNFICYgQXVkaXQxFTATBgNVBAMMDFJhamVzaCBLdW1hcjCCASIwDQYJKoZIhvcN
+HSFICYgQXVkaXQxFTATBgNVBAMMDFJhamVzaCBLdW1hcjCCASIwDQYJKoZIhvcN
 AQEBBQADggEPADCCAQoCggEBAJ6bxfHjpNs1mtLIMT51soCUoQSK47F5WX2PPrYm
 tqE4I8ot8TgDVbfyD1ynqkvDpW551quDgTQBXmwhgsJYgygd5tXJ1N7zwJhvz7CD
 gYsXkQ9121+UVCHNn6v0YINP7PRSrJi4NOTuhWPHKpDfCE5ulA3WxSDvc2sVfTJ8
@@ -48,9 +50,11 @@ PcUXZi7z3855kVBqXX4McN8BliSu2CcWbukx4w==
 export default function LoginPage() {
   const router = useRouter();
   const { login } = useAuthStore();
+  const { theme, toggleTheme } = useThemeStore();
+  const isDark = theme === 'dark';
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const [activeTab, setActiveTab] = useState<'smartcard' | 'ldap' | 'quick'>('smartcard');
+  const [activeTab, setActiveTab] = useState<'smartcard' | 'ldap' | 'quick'>('quick');
   const [certificatePem, setCertificatePem] = useState('');
   const [cardPin, setCardPin] = useState('');
   const [smartcardStatus, setSmartcardStatus] = useState<'idle' | 'inserted'>('idle');
@@ -170,39 +174,43 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="relative min-h-[100dvh] w-full flex flex-col justify-between items-center bg-[#07080c] text-slate-100 selection:bg-blue-500/30 overflow-x-hidden overflow-y-auto p-4 sm:p-6 lg:p-8">
-      {/* Background Matrix & Subtle Defense Atmospheric Glow */}
-      <div className="fixed inset-0 pointer-events-none bg-industrial-grid opacity-30 z-0" />
-      <div className="fixed top-[-10%] left-[20%] w-[500px] h-[500px] bg-blue-600/10 rounded-full blur-[140px] pointer-events-none z-0" />
-      <div className="fixed bottom-[-10%] right-[20%] w-[500px] h-[500px] bg-emerald-500/10 rounded-full blur-[140px] pointer-events-none z-0" />
+    <div className="relative min-h-[100dvh] w-full flex flex-col justify-between items-center bg-white text-slate-900 dark:bg-[#000000] dark:text-[#e3e3e3] font-sans antialiased selection:bg-blue-500/20 dark:selection:bg-[#4285f4]/30 overflow-x-hidden overflow-y-auto p-4 sm:p-6 lg:p-8 transition-colors duration-300">
+      
+      {/* Dynamic Ambient Aurora Glow Background */}
+      <div className="fixed inset-0 pointer-events-none z-0">
+        <div className="absolute top-[-10%] left-[20%] w-[500px] h-[500px] bg-blue-500/10 dark:bg-blue-600/15 rounded-full blur-[140px]" />
+        <div className="absolute bottom-[-10%] right-[20%] w-[500px] h-[500px] bg-purple-500/10 dark:bg-purple-600/15 rounded-full blur-[140px]" />
+      </div>
 
       {/* Top Header & Air-gap Status Banner */}
-      <header className="relative z-10 w-full max-w-5xl flex items-center justify-between py-2 border-b border-white/[0.06]">
+      <header className="relative z-10 w-full max-w-5xl flex items-center justify-between py-3 border-b border-slate-200 dark:border-[#1e1e24]">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-700 flex items-center justify-center shadow-md shadow-blue-500/20 border border-blue-400/30">
-            <Building2 className="w-5 h-5 text-white" />
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-bold tracking-widest text-slate-200 uppercase font-mono">
-                MRPL
-              </span>
-              <span className="text-[10px] px-1.5 py-0.5 rounded bg-white/[0.08] text-slate-400 font-mono">
-                ONGC GROUP
-              </span>
-            </div>
-            <p className="text-[11px] text-slate-400 font-medium">Mangalore Refinery & Petrochemicals Limited</p>
+          <RevealBrand size="md" showBadge={true} />
+          <div className="hidden sm:flex items-center gap-1.5 pl-3 border-l border-slate-200 dark:border-[#262634]">
+            <span className="text-[11px] text-slate-500 dark:text-[#8e918f] font-medium">
+              Mangalore Refinery & Petrochemicals Limited (ONGC)
+            </span>
           </div>
         </div>
 
-        {/* Air-gap Badge */}
-        <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-950/40 border border-emerald-500/30 text-emerald-400 text-xs font-mono backdrop-blur-md shadow-[0_0_15px_rgba(16,185,129,0.15)]">
-          <span className="relative flex h-2 w-2">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
-          </span>
-          <span className="hidden sm:inline font-semibold">100% AIR-GAPPED SOVEREIGN</span>
-          <span className="sm:hidden font-semibold">AIR-GAPPED</span>
+        {/* Right Header Actions: Theme Switcher & Air-gap Badge */}
+        <div className="flex items-center gap-2 sm:gap-3">
+          <button
+            onClick={toggleTheme}
+            aria-label="Toggle theme"
+            className="h-9 w-9 rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-[#181820] dark:hover:bg-[#22222c] border border-slate-200 dark:border-[#282834] text-slate-700 dark:text-[#c4c7c5] flex items-center justify-center transition-colors cursor-pointer"
+          >
+            {isDark ? <Sun className="h-4 w-4 text-amber-400" /> : <Moon className="h-4 w-4 text-blue-600" />}
+          </button>
+
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 dark:bg-emerald-500/10 dark:border-emerald-500/30 dark:text-emerald-400 text-xs font-mono backdrop-blur-md shadow-xs">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+            </span>
+            <span className="hidden sm:inline font-semibold">100% AIR-GAPPED SOVEREIGN</span>
+            <span className="sm:hidden font-semibold">AIR-GAPPED</span>
+          </div>
         </div>
       </header>
 
@@ -210,31 +218,44 @@ export default function LoginPage() {
       <main className="relative z-10 w-full max-w-[480px] my-auto py-8">
         {/* Title & System Brand */}
         <div className="text-center mb-6 space-y-2">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-[11px] font-mono tracking-wider uppercase mb-1">
-            <Cpu className="w-3.5 h-3.5" />
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 border border-blue-200 text-blue-700 dark:bg-blue-500/10 dark:border-blue-500/20 dark:text-[#a8c7fa] text-[11px] font-mono tracking-wider uppercase mb-1">
+            <RevealLogoIcon className="w-3.5 h-3.5" />
             Defense-Grade Autonomous Kernel
           </div>
-          <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-white flex items-center justify-center gap-2">
-            REVEAL <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-indigo-300 to-emerald-400">2.0</span>
+          <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-slate-900 dark:text-white flex items-center justify-center gap-2">
+            REVEAL <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 dark:from-[#38bdf8] dark:via-[#818cf8] dark:to-[#c084fc]">2.0</span>
           </h1>
-          <p className="text-xs sm:text-sm text-slate-400 font-normal max-w-sm mx-auto">
+          <p className="text-xs sm:text-sm text-slate-500 dark:text-[#8e918f] font-normal max-w-sm mx-auto">
             Refinery Operations AI Gateway & Sovereign Security Workbench
           </p>
         </div>
 
-        {/* Double-Bezel Hardware Container */}
-        <div className="p-1.5 sm:p-2 rounded-[2rem] bg-gradient-to-b from-white/[0.12] via-white/[0.05] to-white/[0.02] border border-white/[0.12] shadow-2xl backdrop-blur-2xl">
-          <div className="bg-[#0b0d13]/95 rounded-[calc(2rem-6px)] p-5 sm:p-7 border border-white/[0.06] shadow-hardware-core">
+        {/* Double-Bezel Hardware Container matching Chat UI */}
+        <div className="p-1 sm:p-1.5 rounded-[28px] bg-slate-100 dark:bg-[#121216] border border-slate-200 dark:border-[#22222a] shadow-xl dark:shadow-[0_8px_32px_rgba(0,0,0,0.8)] backdrop-blur-2xl">
+          <div className="bg-white dark:bg-[#0c0c0e] rounded-[calc(28px-4px)] p-5 sm:p-7 border border-slate-200/80 dark:border-[#1e1e24]">
             
             {/* Segmented Doppelrand Tab Switcher */}
-            <div className="grid grid-cols-3 p-1 rounded-2xl bg-[#12151f] border border-white/[0.06] mb-6">
+            <div className="grid grid-cols-3 p-1 rounded-2xl bg-slate-100 dark:bg-[#141418] border border-slate-200 dark:border-[#22222a] mb-6">
+              <button
+                type="button"
+                onClick={() => { setActiveTab('quick'); setError(null); }}
+                className={`flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-xl text-xs font-bold transition-all duration-200 cursor-pointer ${
+                  activeTab === 'quick'
+                    ? 'bg-[#0070f3] hover:bg-[#0060df] text-white shadow-md shadow-blue-500/25'
+                    : 'text-slate-600 dark:text-[#8e918f] hover:text-slate-900 dark:hover:text-[#e3e3e3]'
+                }`}
+              >
+                <Sparkles className="w-3.5 h-3.5 shrink-0" />
+                <span>Fast-Track</span>
+              </button>
+
               <button
                 type="button"
                 onClick={() => { setActiveTab('smartcard'); setError(null); }}
-                className={`flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-xl text-xs font-semibold transition-all duration-300 ${
+                className={`flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-xl text-xs font-bold transition-all duration-200 cursor-pointer ${
                   activeTab === 'smartcard'
-                    ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/25 border border-blue-400/30'
-                    : 'text-slate-400 hover:text-slate-200 hover:bg-white/[0.02]'
+                    ? 'bg-[#0070f3] hover:bg-[#0060df] text-white shadow-md shadow-blue-500/25'
+                    : 'text-slate-600 dark:text-[#8e918f] hover:text-slate-900 dark:hover:text-[#e3e3e3]'
                 }`}
               >
                 <FileKey className="w-3.5 h-3.5 shrink-0" />
@@ -244,50 +265,90 @@ export default function LoginPage() {
               <button
                 type="button"
                 onClick={() => { setActiveTab('ldap'); setError(null); }}
-                className={`flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-xl text-xs font-semibold transition-all duration-300 ${
+                className={`flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-xl text-xs font-bold transition-all duration-200 cursor-pointer ${
                   activeTab === 'ldap'
-                    ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/25 border border-blue-400/30'
-                    : 'text-slate-400 hover:text-slate-200 hover:bg-white/[0.02]'
+                    ? 'bg-[#0070f3] hover:bg-[#0060df] text-white shadow-md shadow-blue-500/25'
+                    : 'text-slate-600 dark:text-[#8e918f] hover:text-slate-900 dark:hover:text-[#e3e3e3]'
                 }`}
               >
                 <Globe className="w-3.5 h-3.5 shrink-0" />
                 <span>LDAP / AD</span>
               </button>
-
-              <button
-                type="button"
-                onClick={() => { setActiveTab('quick'); setError(null); }}
-                className={`flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-xl text-xs font-semibold transition-all duration-300 ${
-                  activeTab === 'quick'
-                    ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/25 border border-blue-400/30'
-                    : 'text-slate-400 hover:text-slate-200 hover:bg-white/[0.02]'
-                }`}
-              >
-                <Sparkles className="w-3.5 h-3.5 shrink-0 text-amber-400" />
-                <span>Fast-Track</span>
-              </button>
             </div>
 
             {/* Error Alert Box */}
             {error && (
-              <div className="mb-5 p-3 rounded-xl bg-red-950/40 border border-red-500/40 text-red-200 text-xs flex items-start gap-2.5 animate-in fade-in slide-in-from-top-2 duration-300">
-                <AlertTriangle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
+              <div className="mb-5 p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 dark:bg-red-950/40 dark:border-red-500/40 dark:text-red-200 text-xs flex items-start gap-2.5 animate-in fade-in slide-in-from-top-2 duration-200">
+                <AlertTriangle className="w-4 h-4 text-red-500 shrink-0 mt-0.5" />
                 <div className="flex-1 font-mono leading-relaxed">{error}</div>
               </div>
             )}
 
-            {/* TAB 1: SmartCard PKI (Hardware Token) */}
+            {/* TAB 1: Fast-Track 1-Click Evaluation Profiles */}
+            {activeTab === 'quick' && (
+              <div className="space-y-3 animate-in fade-in duration-200">
+                <p className="text-xs text-slate-500 dark:text-[#8e918f] font-normal">
+                  Select a pre-configured role profile for instantaneous evaluator sign-in:
+                </p>
+
+                {/* Operator Card */}
+                <button
+                  type="button"
+                  onClick={() => handleQuickLogin('operator', 'FIELD_OPERATOR', 'Refinery Operations')}
+                  disabled={isLoading}
+                  className="w-full text-left p-3.5 rounded-2xl bg-slate-50 hover:bg-blue-50/50 dark:bg-[#121216] dark:hover:bg-[#1a1a22] border border-slate-200 dark:border-[#22222a] hover:border-blue-400/50 dark:hover:border-[#a8c7fa]/50 transition-all flex items-center justify-between group cursor-pointer shadow-xs"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-600 dark:text-[#a8c7fa] group-hover:scale-105 transition-transform">
+                      <UserCheck className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <div className="text-xs font-bold text-slate-900 dark:text-[#e3e3e3] flex items-center gap-1.5">
+                        Lead Process Operator
+                        <span className="text-[10px] px-1.5 py-0.2 rounded bg-blue-100 text-blue-800 dark:bg-blue-500/20 dark:text-blue-300 font-mono font-bold">FIELD_OP</span>
+                      </div>
+                      <div className="text-[11px] text-slate-500 dark:text-[#8e918f]">Refinery Operations & Distributed Control</div>
+                    </div>
+                  </div>
+                  <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-blue-600 dark:group-hover:text-[#a8c7fa] group-hover:translate-x-0.5 transition-all" />
+                </button>
+
+                {/* Super Admin Card */}
+                <button
+                  type="button"
+                  onClick={() => handleQuickLogin('admin', 'SUPER_ADMIN', 'Executive HSE & Audit')}
+                  disabled={isLoading}
+                  className="w-full text-left p-3.5 rounded-2xl bg-slate-50 hover:bg-emerald-50/50 dark:bg-[#121216] dark:hover:bg-[#1a1a22] border border-slate-200 dark:border-[#22222a] hover:border-emerald-400/50 dark:hover:border-emerald-500/50 transition-all flex items-center justify-between group cursor-pointer shadow-xs"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-600 dark:text-emerald-400 group-hover:scale-105 transition-transform">
+                      <ShieldCheck className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <div className="text-xs font-bold text-slate-900 dark:text-[#e3e3e3] flex items-center gap-1.5">
+                        Refinery Compliance Chief
+                        <span className="text-[10px] px-1.5 py-0.2 rounded bg-emerald-100 text-emerald-800 dark:bg-emerald-500/20 dark:text-emerald-300 font-mono font-bold">SUPER_ADMIN</span>
+                      </div>
+                      <div className="text-[11px] text-slate-500 dark:text-[#8e918f]">Executive HSE, Safety Audit & PKI Root</div>
+                    </div>
+                  </div>
+                  <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 group-hover:translate-x-0.5 transition-all" />
+                </button>
+              </div>
+            )}
+
+            {/* TAB 2: SmartCard PKI (Hardware Token) */}
             {activeTab === 'smartcard' && (
-              <div className="space-y-4 animate-in fade-in duration-300">
+              <div className="space-y-4 animate-in fade-in duration-200">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-1.5">
-                    <Radio className="w-3.5 h-3.5 text-emerald-400 animate-pulse" />
-                    <span className="text-xs font-medium text-slate-300">Hardware X.509 Token</span>
+                    <Radio className="w-3.5 h-3.5 text-emerald-500 animate-pulse" />
+                    <span className="text-xs font-medium text-slate-700 dark:text-[#c4c7c5]">Hardware X.509 Token</span>
                   </div>
                   <button
                     type="button"
                     onClick={() => handleLoadSampleCert('Rajesh Kumar', SAMPLE_CERT_HSE)}
-                    className="text-[11px] font-mono text-blue-400 hover:text-blue-300 underline underline-offset-4 flex items-center gap-1 transition-colors"
+                    className="text-[11px] font-mono text-blue-600 dark:text-[#a8c7fa] hover:underline flex items-center gap-1 transition-colors cursor-pointer"
                   >
                     <KeyRound className="w-3 h-3" />
                     Load Sample Card
@@ -306,11 +367,11 @@ export default function LoginPage() {
                     }}
                     placeholder={'-----BEGIN CERTIFICATE-----\nPaste PEM X.509 certificate extracted from SmartCard\n-----END CERTIFICATE-----'}
                     rows={4}
-                    className="w-full px-3.5 py-3 text-xs font-mono bg-[#07080d] border border-white/[0.1] rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 text-slate-200 placeholder-slate-600 transition-all resize-none shadow-inner"
+                    className="w-full px-3.5 py-3 text-xs font-mono bg-slate-50 dark:bg-[#121216] border border-slate-200 dark:border-[#22222a] rounded-2xl focus:outline-none focus:border-blue-500 dark:focus:border-[#a8c7fa] text-slate-900 dark:text-[#e3e3e3] placeholder-slate-400 dark:placeholder-[#6e7175] transition-all resize-none shadow-inner"
                   />
                   
                   {certificatePem && (
-                    <div className="absolute top-2 right-2 flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 text-[10px] font-mono">
+                    <div className="absolute top-2 right-2 flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-100 border border-emerald-200 text-emerald-800 dark:bg-emerald-500/20 dark:border-emerald-500/30 dark:text-emerald-300 text-[10px] font-mono">
                       <CheckCircle2 className="w-3 h-3" />
                       X.509 LOADED
                     </div>
@@ -329,16 +390,16 @@ export default function LoginPage() {
                   <button
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
-                    className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-white/[0.03] hover:bg-white/[0.07] border border-dashed border-white/[0.15] hover:border-white/[0.3] text-xs font-mono text-slate-300 transition-all"
+                    className="w-full flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl bg-slate-50 hover:bg-slate-100 dark:bg-[#141418] dark:hover:bg-[#1e1e24] border border-dashed border-slate-300 dark:border-[#2e2e3a] text-xs font-mono text-slate-700 dark:text-[#c4c7c5] transition-all cursor-pointer"
                   >
-                    <UploadCloud className="w-3.5 h-3.5 text-blue-400" />
+                    <UploadCloud className="w-3.5 h-3.5 text-blue-600 dark:text-[#a8c7fa]" />
                     Upload SmartCard .pem / .crt file
                   </button>
                 </div>
 
                 {/* SmartCard PIN Code */}
                 <div>
-                  <label className="block text-[11px] font-medium text-slate-400 mb-1.5">
+                  <label className="block text-[11px] font-medium text-slate-600 dark:text-[#8e918f] mb-1.5">
                     Hardware Token PIN (Optional)
                   </label>
                   <div className="relative">
@@ -348,23 +409,23 @@ export default function LoginPage() {
                       value={cardPin}
                       onChange={(e) => setCardPin(e.target.value)}
                       placeholder="Enter 4-8 digit Token PIN"
-                      className="w-full px-3.5 py-2.5 text-xs font-mono bg-[#07080d] border border-white/[0.1] rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-slate-200 placeholder-slate-600"
+                      className="w-full px-3.5 py-2.5 text-xs font-mono bg-slate-50 dark:bg-[#121216] border border-slate-200 dark:border-[#22222a] rounded-xl focus:outline-none focus:border-blue-500 dark:focus:border-[#a8c7fa] text-slate-900 dark:text-[#e3e3e3] placeholder-slate-400 dark:placeholder-[#6e7175]"
                     />
-                    <Lock className="w-3.5 h-3.5 absolute right-3.5 top-3 text-slate-500" />
+                    <Lock className="w-3.5 h-3.5 absolute right-3.5 top-3 text-slate-400 dark:text-[#6e7175]" />
                   </div>
                 </div>
 
-                {/* Submit Button (Button-in-Button pattern) */}
+                {/* Submit Button */}
                 <button
                   type="button"
                   onClick={handleSmartCardLogin}
                   disabled={isLoading}
-                  className="group relative w-full flex items-center justify-between p-1.5 pl-6 bg-gradient-to-r from-blue-600 via-blue-500 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 active:scale-[0.98] disabled:opacity-50 text-white font-medium text-sm rounded-full shadow-lg shadow-blue-500/30 transition-all duration-300 mt-2"
+                  className="group relative w-full flex items-center justify-between p-1.5 pl-6 bg-[#0070f3] hover:bg-[#0060df] active:scale-[0.98] disabled:opacity-50 text-white font-bold text-xs sm:text-sm rounded-full shadow-lg shadow-blue-500/25 transition-all duration-200 mt-2 cursor-pointer"
                 >
-                  <span className="font-semibold tracking-wide">
+                  <span className="tracking-wide">
                     {isLoading ? 'Verifying X.509 Cryptography...' : 'Authenticate via SmartCard PKI'}
                   </span>
-                  <div className="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center text-white transition-transform group-hover:scale-105 group-hover:translate-x-0.5">
+                  <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-white transition-transform group-hover:scale-105">
                     {isLoading ? (
                       <Loader2 className="w-4 h-4 animate-spin" />
                     ) : (
@@ -375,17 +436,17 @@ export default function LoginPage() {
               </div>
             )}
 
-            {/* TAB 2: Corporate LDAP / Active Directory */}
+            {/* TAB 3: Corporate LDAP / Active Directory */}
             {activeTab === 'ldap' && (
-              <div className="space-y-4 animate-in fade-in duration-300">
+              <div className="space-y-4 animate-in fade-in duration-200">
                 <div className="space-y-1.5">
-                  <label className="block text-[11px] font-medium text-slate-400">
+                  <label className="block text-[11px] font-medium text-slate-600 dark:text-[#8e918f]">
                     Corporate Active Directory Domain
                   </label>
                   <select
                     value={ldapDomain}
                     onChange={(e) => setLdapDomain(e.target.value)}
-                    className="w-full px-3 py-2.5 text-xs font-mono bg-[#07080d] border border-white/[0.1] rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-slate-200"
+                    className="w-full px-3 py-2.5 text-xs font-mono bg-slate-50 dark:bg-[#121216] border border-slate-200 dark:border-[#22222a] rounded-xl focus:outline-none focus:border-blue-500 dark:focus:border-[#a8c7fa] text-slate-900 dark:text-[#e3e3e3]"
                   >
                     <option value="MRPL.INTERNAL">MRPL.INTERNAL (Refinery Plant LAN)</option>
                     <option value="ONGC.CORP">ONGC.CORP (Corporate HQ Intranet)</option>
@@ -395,13 +456,13 @@ export default function LoginPage() {
 
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between">
-                    <label className="block text-[11px] font-medium text-slate-400">
+                    <label className="block text-[11px] font-medium text-slate-600 dark:text-[#8e918f]">
                       User Principal / sAMAccountName
                     </label>
                     <button
                       type="button"
                       onClick={() => { setLdapUsername('operator'); setLdapPassword('RefineryPass2026!'); }}
-                      className="text-[10px] font-mono text-blue-400 hover:text-blue-300 underline underline-offset-2"
+                      className="text-[10px] font-mono text-blue-600 dark:text-[#a8c7fa] hover:underline cursor-pointer"
                     >
                       Fill Default User
                     </button>
@@ -412,13 +473,13 @@ export default function LoginPage() {
                       value={ldapUsername}
                       onChange={(e) => setLdapUsername(e.target.value)}
                       placeholder="e.g. rajesh.kumar or operator"
-                      className="w-full px-3.5 py-2.5 text-xs font-mono bg-[#07080d] border border-white/[0.1] rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-slate-200 placeholder-slate-600"
+                      className="w-full px-3.5 py-2.5 text-xs font-mono bg-slate-50 dark:bg-[#121216] border border-slate-200 dark:border-[#22222a] rounded-xl focus:outline-none focus:border-blue-500 dark:focus:border-[#a8c7fa] text-slate-900 dark:text-[#e3e3e3] placeholder-slate-400 dark:placeholder-[#6e7175]"
                     />
                   </div>
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="block text-[11px] font-medium text-slate-400">
+                  <label className="block text-[11px] font-medium text-slate-600 dark:text-[#8e918f]">
                     Intranet Domain Password
                   </label>
                   <div className="relative">
@@ -427,12 +488,12 @@ export default function LoginPage() {
                       value={ldapPassword}
                       onChange={(e) => setLdapPassword(e.target.value)}
                       placeholder="••••••••••••"
-                      className="w-full px-3.5 py-2.5 text-xs font-mono bg-[#07080d] border border-white/[0.1] rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-slate-200 placeholder-slate-600 pr-10"
+                      className="w-full px-3.5 py-2.5 text-xs font-mono bg-slate-50 dark:bg-[#121216] border border-slate-200 dark:border-[#22222a] rounded-xl focus:outline-none focus:border-blue-500 dark:focus:border-[#a8c7fa] text-slate-900 dark:text-[#e3e3e3] placeholder-slate-400 dark:placeholder-[#6e7175] pr-10"
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-2.5 text-slate-500 hover:text-slate-300"
+                      className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600 dark:text-[#6e7175] dark:hover:text-[#c4c7c5] cursor-pointer"
                     >
                       {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
@@ -444,12 +505,12 @@ export default function LoginPage() {
                   type="button"
                   onClick={handleLdapLogin}
                   disabled={isLoading}
-                  className="group relative w-full flex items-center justify-between p-1.5 pl-6 bg-gradient-to-r from-blue-600 via-blue-500 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 active:scale-[0.98] disabled:opacity-50 text-white font-medium text-sm rounded-full shadow-lg shadow-blue-500/30 transition-all duration-300 mt-2"
+                  className="group relative w-full flex items-center justify-between p-1.5 pl-6 bg-[#0070f3] hover:bg-[#0060df] active:scale-[0.98] disabled:opacity-50 text-white font-bold text-xs sm:text-sm rounded-full shadow-lg shadow-blue-500/25 transition-all duration-200 mt-2 cursor-pointer"
                 >
-                  <span className="font-semibold tracking-wide">
+                  <span className="tracking-wide">
                     {isLoading ? 'Verifying Active Directory...' : 'Sign in via Corporate LDAP'}
                   </span>
-                  <div className="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center text-white transition-transform group-hover:scale-105 group-hover:translate-x-0.5">
+                  <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-white transition-transform group-hover:scale-105">
                     {isLoading ? (
                       <Loader2 className="w-4 h-4 animate-spin" />
                     ) : (
@@ -460,73 +521,20 @@ export default function LoginPage() {
               </div>
             )}
 
-            {/* TAB 3: Fast-Track 1-Click Evaluation Profiles */}
-            {activeTab === 'quick' && (
-              <div className="space-y-3 animate-in fade-in duration-300">
-                <p className="text-xs text-slate-400 font-normal">
-                  Select a pre-configured role profile for instantaneous evaluator sign-in:
-                </p>
-
-                {/* Operator Card */}
-                <button
-                  type="button"
-                  onClick={() => handleQuickLogin('operator', 'FIELD_OPERATOR', 'Refinery Operations')}
-                  disabled={isLoading}
-                  className="w-full text-left p-3 rounded-2xl bg-[#07080d] hover:bg-white/[0.04] border border-white/[0.08] hover:border-blue-500/40 transition-all flex items-center justify-between group"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400 group-hover:scale-105 transition-transform">
-                      <UserCheck className="w-4 h-4" />
-                    </div>
-                    <div>
-                      <div className="text-xs font-semibold text-slate-200 flex items-center gap-1.5">
-                        Lead Process Operator
-                        <span className="text-[10px] px-1.5 py-0.2 rounded bg-blue-500/20 text-blue-300 font-mono">FIELD_OP</span>
-                      </div>
-                      <div className="text-[11px] text-slate-500">Refinery Operations & Distributed Control</div>
-                    </div>
-                  </div>
-                  <ArrowRight className="w-4 h-4 text-slate-500 group-hover:text-blue-400 group-hover:translate-x-0.5 transition-all" />
-                </button>
-
-                {/* Super Admin Card */}
-                <button
-                  type="button"
-                  onClick={() => handleQuickLogin('admin', 'SUPER_ADMIN', 'Executive HSE & Audit')}
-                  disabled={isLoading}
-                  className="w-full text-left p-3 rounded-2xl bg-[#07080d] hover:bg-white/[0.04] border border-white/[0.08] hover:border-emerald-500/40 transition-all flex items-center justify-between group"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 group-hover:scale-105 transition-transform">
-                      <ShieldCheck className="w-4 h-4" />
-                    </div>
-                    <div>
-                      <div className="text-xs font-semibold text-slate-200 flex items-center gap-1.5">
-                        Refinery Compliance Chief
-                        <span className="text-[10px] px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300 font-mono">SUPER_ADMIN</span>
-                      </div>
-                      <div className="text-[11px] text-slate-500">Executive HSE, Safety Audit & PKI Root</div>
-                    </div>
-                  </div>
-                  <ArrowRight className="w-4 h-4 text-slate-500 group-hover:text-emerald-400 group-hover:translate-x-0.5 transition-all" />
-                </button>
-              </div>
-            )}
-
           </div>
         </div>
 
         {/* Live Enclave Telemetry Badges */}
-        <div className="mt-6 flex flex-wrap items-center justify-center gap-2 sm:gap-4 text-[10px] font-mono text-slate-500">
-          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/[0.02] border border-white/[0.06]">
+        <div className="mt-6 flex flex-wrap items-center justify-center gap-2 sm:gap-4 text-[10px] font-mono text-slate-500 dark:text-[#8e918f]">
+          <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 dark:bg-[#141418] border border-slate-200 dark:border-[#22222a]">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
             TLS 1.3 / mTLS
           </div>
-          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/[0.02] border border-white/[0.06]">
+          <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 dark:bg-[#141418] border border-slate-200 dark:border-[#22222a]">
             <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
             TPM 2.0 ROOT OF TRUST
           </div>
-          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/[0.02] border border-white/[0.06]">
+          <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 dark:bg-[#141418] border border-slate-200 dark:border-[#22222a]">
             <span className="w-1.5 h-1.5 rounded-full bg-purple-500" />
             SHA-256 AUDIT LOGGED
           </div>
@@ -534,11 +542,11 @@ export default function LoginPage() {
       </main>
 
       {/* Enterprise Footer */}
-      <footer className="relative z-10 w-full max-w-5xl flex flex-col sm:flex-row items-center justify-between py-3 border-t border-white/[0.06] text-[11px] text-slate-500 gap-2">
+      <footer className="relative z-10 w-full max-w-5xl flex flex-col sm:flex-row items-center justify-between py-3 border-t border-slate-200 dark:border-[#1e1e24] text-[11px] text-slate-500 dark:text-[#8e918f] gap-2">
         <div>
           <span>MRPL Sovereign AI Workbench &mdash; SIH26117</span>
         </div>
-        <div className="flex items-center gap-4 text-slate-400">
+        <div className="flex items-center gap-4 text-slate-500 dark:text-[#8e918f]">
           <span>ISA/IEC 62443 Certified</span>
           <span>&bull;</span>
           <span>Zero Cloud Telemetry</span>
@@ -549,3 +557,4 @@ export default function LoginPage() {
     </div>
   );
 }
+
