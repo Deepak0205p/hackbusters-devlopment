@@ -58,7 +58,7 @@ export default function LoginPage() {
   const isDark = theme === 'dark';
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const [activeTab, setActiveTab] = useState<'quick' | 'smartcard' | 'ldap'>('quick');
+  const [activeTab, setActiveTab] = useState<'smartcard' | 'ldap'>('smartcard');
   const [certificatePem, setCertificatePem] = useState('');
   const [cardPin, setCardPin] = useState('');
   const [smartcardStatus, setSmartcardStatus] = useState<'idle' | 'inserted'>('idle');
@@ -156,27 +156,6 @@ export default function LoginPage() {
     }
   };
 
-  const handleQuickLogin = async (username: string, role: string, dept: string) => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const mockUser = {
-        username,
-        full_name: username === 'admin' ? 'Refinery Compliance Chief' : 'Lead Process Operator',
-        department: dept,
-        role,
-        auth_method: 'FAST_TRACK_EVALUATOR',
-        cert_serial: 'E47A9B113098C7'
-      };
-      login(mockUser, `sovereign-token-${username}-${Date.now()}`);
-      router.replace('/');
-    } catch (err: any) {
-      setError(err.message || 'Fast-track login failed.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   return (
     <div className="relative min-h-[100dvh] w-full flex flex-col justify-between bg-slate-50 text-slate-900 dark:bg-[#08080a] dark:text-[#e3e3e3] font-sans antialiased selection:bg-blue-500/20 dark:selection:bg-[#4285f4]/30 overflow-x-hidden transition-colors duration-300">
       
@@ -241,45 +220,32 @@ export default function LoginPage() {
         {/* Clean Modern Card Container */}
         <div className="w-full bg-white dark:bg-[#101115] rounded-3xl border border-slate-200/90 dark:border-white/[0.08] shadow-[0_4px_24px_rgba(0,0,0,0.04),0_12px_48px_rgba(0,0,0,0.04)] dark:shadow-[0_8px_40px_rgba(0,0,0,0.6)] p-6 sm:p-7 backdrop-blur-xl">
           
-          {/* Refined Segmented Pill Navigation */}
-          <div className="grid grid-cols-3 p-1 rounded-2xl bg-slate-100/80 dark:bg-[#18191f] border border-slate-200/80 dark:border-white/[0.06] mb-6">
-            <button
-              type="button"
-              onClick={() => { setActiveTab('quick'); setError(null); }}
-              className={`flex items-center justify-center gap-1.5 py-2 px-1 rounded-xl text-xs font-semibold transition-all duration-200 cursor-pointer ${
-                activeTab === 'quick'
-                  ? 'bg-white dark:bg-[#25262f] text-blue-600 dark:text-white shadow-xs'
-                  : 'text-slate-500 dark:text-[#8e918f] hover:text-slate-900 dark:hover:text-[#e3e3e3]'
-              }`}
-            >
-              <Sparkles className="w-3.5 h-3.5 text-blue-600 dark:text-[#a8c7fa]" />
-              <span>Fast-Track</span>
-            </button>
-
+          {/* Dual Segmented Pill Navigation (SmartCard / LDAP) */}
+          <div className="grid grid-cols-2 p-1 rounded-2xl bg-slate-100/80 dark:bg-[#18191f] border border-slate-200/80 dark:border-white/[0.06] mb-6">
             <button
               type="button"
               onClick={() => { setActiveTab('smartcard'); setError(null); }}
-              className={`flex items-center justify-center gap-1.5 py-2 px-1 rounded-xl text-xs font-semibold transition-all duration-200 cursor-pointer ${
+              className={`flex items-center justify-center gap-2 py-2.5 px-2 rounded-xl text-xs font-bold transition-all duration-200 cursor-pointer ${
                 activeTab === 'smartcard'
                   ? 'bg-white dark:bg-[#25262f] text-blue-600 dark:text-white shadow-xs'
                   : 'text-slate-500 dark:text-[#8e918f] hover:text-slate-900 dark:hover:text-[#e3e3e3]'
               }`}
             >
-              <FileKey className="w-3.5 h-3.5 text-blue-600 dark:text-[#a8c7fa]" />
-              <span>SmartCard</span>
+              <FileKey className="w-4 h-4 text-blue-600 dark:text-[#a8c7fa]" />
+              <span>SmartCard PKI</span>
             </button>
 
             <button
               type="button"
               onClick={() => { setActiveTab('ldap'); setError(null); }}
-              className={`flex items-center justify-center gap-1.5 py-2 px-1 rounded-xl text-xs font-semibold transition-all duration-200 cursor-pointer ${
+              className={`flex items-center justify-center gap-2 py-2.5 px-2 rounded-xl text-xs font-bold transition-all duration-200 cursor-pointer ${
                 activeTab === 'ldap'
                   ? 'bg-white dark:bg-[#25262f] text-blue-600 dark:text-white shadow-xs'
                   : 'text-slate-500 dark:text-[#8e918f] hover:text-slate-900 dark:hover:text-[#e3e3e3]'
               }`}
             >
-              <Globe className="w-3.5 h-3.5 text-blue-600 dark:text-[#a8c7fa]" />
-              <span>LDAP / AD</span>
+              <Globe className="w-4 h-4 text-blue-600 dark:text-[#a8c7fa]" />
+              <span>Active Directory / LDAP</span>
             </button>
           </div>
 
@@ -288,67 +254,6 @@ export default function LoginPage() {
             <div className="mb-5 p-3 rounded-2xl bg-red-50 border border-red-200/80 text-red-700 dark:bg-red-950/30 dark:border-red-500/30 dark:text-red-300 text-xs flex items-start gap-2.5 animate-in fade-in duration-200">
               <AlertCircle className="w-4 h-4 text-red-500 shrink-0 mt-0.5" />
               <div className="flex-1 leading-relaxed font-medium">{error}</div>
-            </div>
-          )}
-
-          {/* TAB 1: Fast-Track Evaluation Profiles */}
-          {activeTab === 'quick' && (
-            <div className="space-y-3 animate-in fade-in duration-200">
-              <div className="text-[11px] font-medium text-slate-400 dark:text-[#8e918f] uppercase tracking-wider px-1">
-                Select Evaluator Identity
-              </div>
-
-              {/* Operator Card */}
-              <button
-                type="button"
-                onClick={() => handleQuickLogin('operator', 'FIELD_OPERATOR', 'Refinery Operations')}
-                disabled={isLoading}
-                className="w-full text-left p-3.5 rounded-2xl bg-slate-50 hover:bg-slate-100/80 dark:bg-[#15161c] dark:hover:bg-[#1c1d24] border border-slate-200/80 dark:border-white/[0.06] hover:border-blue-300 dark:hover:border-blue-500/40 transition-all flex items-center justify-between group cursor-pointer"
-              >
-                <div className="flex items-center gap-3.5">
-                  <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-500/10 border border-blue-200/80 dark:border-blue-500/20 flex items-center justify-center text-blue-600 dark:text-[#a8c7fa] group-hover:scale-105 transition-transform shrink-0">
-                    <UserCheck className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <div className="text-xs font-bold text-slate-900 dark:text-[#e3e3e3] flex items-center gap-1.5">
-                      Lead Process Operator
-                      <span className="text-[9.5px] px-1.5 py-0.2 rounded font-mono font-bold bg-blue-100 text-blue-800 dark:bg-blue-500/20 dark:text-blue-300">
-                        FIELD_OP
-                      </span>
-                    </div>
-                    <div className="text-[11px] text-slate-500 dark:text-[#8e918f] mt-0.5">
-                      Refinery Operations & Distributed Control
-                    </div>
-                  </div>
-                </div>
-                <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-blue-600 dark:group-hover:text-[#a8c7fa] group-hover:translate-x-0.5 transition-all" />
-              </button>
-
-              {/* Super Admin Card */}
-              <button
-                type="button"
-                onClick={() => handleQuickLogin('admin', 'SUPER_ADMIN', 'Executive HSE & Audit')}
-                disabled={isLoading}
-                className="w-full text-left p-3.5 rounded-2xl bg-slate-50 hover:bg-slate-100/80 dark:bg-[#15161c] dark:hover:bg-[#1c1d24] border border-slate-200/80 dark:border-white/[0.06] hover:border-emerald-300 dark:hover:border-emerald-500/40 transition-all flex items-center justify-between group cursor-pointer"
-              >
-                <div className="flex items-center gap-3.5">
-                  <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200/80 dark:border-emerald-500/20 flex items-center justify-center text-emerald-600 dark:text-emerald-400 group-hover:scale-105 transition-transform shrink-0">
-                    <ShieldCheck className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <div className="text-xs font-bold text-slate-900 dark:text-[#e3e3e3] flex items-center gap-1.5">
-                      Refinery Compliance Chief
-                      <span className="text-[9.5px] px-1.5 py-0.2 rounded font-mono font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-500/20 dark:text-emerald-300">
-                        SUPER_ADMIN
-                      </span>
-                    </div>
-                    <div className="text-[11px] text-slate-500 dark:text-[#8e918f] mt-0.5">
-                      Executive HSE, Safety Audit & PKI Root
-                    </div>
-                  </div>
-                </div>
-                <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 group-hover:translate-x-0.5 transition-all" />
-              </button>
             </div>
           )}
 
