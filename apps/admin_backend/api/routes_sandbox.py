@@ -19,8 +19,12 @@ class ASTScreenRequest(BaseModel):
 
 class SandboxStatusResponse(BaseModel):
     status: str
-    docker_daemon_active: bool
+    docker_available: bool
+    image_present: bool
+    image_name: str
+    isolation_mode: str
     active_backend: str
+    resource_limits: Dict[str, str]
     network_isolation: str
     memory_limit: str
     cpu_quota: float

@@ -1,47 +1,66 @@
+# syntax=docker/dockerfile:1
 # ==============================================================================
 # MRPL SOVEREIGN AI WORKBENCH - HARDENED AIR-GAPPED PYTHON SANDBOX (SIH PS 26117)
+# Multi-stage build: minimal attack surface, non-root, no network tools
 # ==============================================================================
-FROM python:3.11-slim-bookworm
 
-# 1. Prevent Python from writing .pyc files and enable unbuffered output
+# --------------------------------------------------------------
+# Stage 1: Builder — install Python packages into isolated prefix
+# --------------------------------------------------------------
+FROM python:3.11-slim-bookworm AS builder
+
+WORKDIR /install
+
+RUN pip install --no-cache-dir --prefix=/install \
+    numpy==1.26.4 \
+    scipy==1.12.0 \
+    pandas==2.2.1 \
+    sympy==1.12 \
+    pint==0.23 \
+    openpyxl==3.1.2
+
+# --------------------------------------------------------------
+# Stage 2: Runtime — stripped, rootless, hardened
+# --------------------------------------------------------------
+FROM python:3.11-slim-bookworm AS runtime
+
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PYTHONNOUSERSITE=1 \
-    PYTHONFAULTHANDLER=1 \
-    PIP_NO_CACHE_DIR=1 \
-    PIP_DISABLE_PIP_VERSION_CHECK=1
+    PYTHONFAULTHANDLER=1
 
-# 2. Install Mathematical, Scientific & Industrial Engineering Packages
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential \
-    libopenblas-dev \
-    && pip install --no-cache-dir \
-        numpy==1.26.4 \
-        scipy==1.13.1 \
-        pandas==2.2.2 \
-        sympy==1.13.2 \
-        pint==0.24.3 \
-        openpyxl==3.1.5 \
-    && apt-get purge -y --auto-remove build-essential \
-    && rm -rf /var/lib/apt/lists/* \
-    && rm -rf /root/.cache
+# Copy pre-built Python packages from builder (no compilers in final image)
+COPY --from=builder /install /usr/local
 
-# 3. Security Hardening: Remove network utilities and package managers
-RUN rm -f /usr/bin/curl /usr/bin/wget /usr/bin/nc /usr/bin/netcat /usr/bin/telnet /usr/bin/ftp || true
+# Security Hardening: remove package managers and network utilities
+RUN rm -rf /var/lib/apt/lists/* \
+    /usr/bin/apt* \
+    /usr/bin/dpkg* \
+    /usr/bin/curl* \
+    /usr/bin/wget* \
+    /usr/bin/nc* \
+    /usr/bin/netcat* \
+    /usr/bin/telnet* \
+    /usr/bin/ftp* \
+    /usr/bin/ssh* \
+    /usr/bin/scp* \
+    /usr/bin/rsync* \
+    || true
 
-# 4. Create Non-Root Industrial Sandbox User (UID/GID 10001)
+# Create dedicated non-root sandbox user (UID/GID 10001)
 RUN groupadd -g 10001 sandboxgroup && \
-    useradd -u 10001 -g sandboxgroup -s /sbin/nologin -M -d /workspace sandboxuser
+    useradd -u 10001 -g sandboxgroup -s /sbin/nologin -M -d /home/sandboxuser sandboxuser
 
-# 5. Create Isolated Execution Workspace
-WORKDIR /workspace
+# Create isolated execution workspace with restricted permissions
 RUN mkdir -p /workspace && \
     chown -R sandboxuser:sandboxgroup /workspace && \
-    chmod 700 /workspace
+    chmod 750 /workspace
 
-# 6. Switch to Unprivileged Non-Root User
+WORKDIR /workspace
+
+# Switch to unprivileged non-root user
 USER 10001:10001
 
-# 7. Default Entrypoint in Isolated Mode (-I: isolate from user environment/site-packages)
+# Enforce isolated Python interpreter mode (-I: ignore env vars and user site-packages)
 ENTRYPOINT ["python", "-I"]
 CMD ["-c", "print('MRPL Sovereign Air-Gapped Sandbox Ready')"]

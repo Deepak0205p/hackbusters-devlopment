@@ -1,204 +1,221 @@
-﻿# HackBuster: Sovereign On-Premise Agentic AI Workbench (SIH26117)
+# REVEAL 2.0: MRPL Sovereign AI Workbench (SIH26117)
 
-[![Python](https://img.shields.io/badge/Python-3.11-3776AB.svg?style=flat&logo=python&logoColor=white)](https://www.python.org/)
+[![Python](https://img.shields.io/badge/Python-3.11%20%7C%203.12-3776AB.svg?style=flat&logo=python&logoColor=white)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.111.0-009688.svg?style=flat&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
 [![Next.js](https://img.shields.io/badge/Next.js-14.2.5-000000.svg?style=flat&logo=next.js&logoColor=white)](https://nextjs.org/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.4.4-38B2AC.svg?style=flat&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
 [![Docker](https://img.shields.io/badge/Docker-24.0+-2496ED.svg?style=flat&logo=docker&logoColor=white)](https://www.docker.com/)
 [![Ollama](https://img.shields.io/badge/Ollama-Local_LLM-black.svg?style=flat&logo=ollama&logoColor=white)](https://ollama.com/)
-[![Compliance](https://img.shields.io/badge/Compliance-100%25%20Air--Gapped-success.svg?style=flat)]()
+[![Security](https://img.shields.io/badge/Security-ISA%2FIEC%2062443%20Ready-blue.svg?style=flat)]()
+[![Compliance](https://img.shields.io/badge/Compliance-100%25%20Air--Gapped%20Sovereign-success.svg?style=flat)]()
 
-An enterprise-grade, **100% air-gapped, on-premise agentic AI workstation** built for industrial operations (e.g., MRPL / ONGC / critical infrastructure). It runs completely offline on standard hardware ($\le 6.0\text{ GB}$ VRAM) with zero external internet egress.
+**REVEAL 2.0** is an enterprise defense-grade, **100% air-gapped on-premise agentic AI workbench** engineered for industrial operations at **Mangalore Refinery and Petrochemicals Limited (MRPL — ONGC Group Company)**.
+
+Operating in complete cryptographic isolation with **zero WAN internet egress**, REVEAL 2.0 combines SmartCard PKI authentication, Corporate Active Directory / LDAP integration, multi-model GPU VRAM orchestration ($\le 6.0\text{ GB}$), two-stage query routing, offline RAG over refinery SOPs, automated multi-format deliverable synthesis (Word, Excel, PowerPoint), and isolated Docker code execution.
 
 ---
 
-## 🌐 Port Allocation & Access Rules (Fixed Standard)
+## 🌐 Port Allocation & Service Map
 
-| Service | Port | Local URL | Role |
+| Service | Port | Local URL | Role / Description |
 | :--- | :--- | :--- | :--- |
-| **Public Chat UI** | `3000` | [`http://localhost:3000/`](http://localhost:3000/) | Next.js Chat Frontend (Client interaction) |
-| **Admin Observatory UI** | `3001` | [`http://localhost:3001/`](http://localhost:3001/) | Next.js Admin Dashboard (Telemetry & Hardware Observatory) |
-| **Python Backend Gateway** | `8000` | [`http://localhost:8000/`](http://localhost:8000/) | FastAPI Application, Agent loop, RAG & WebSocket APIs |
-| **Local LLM Engine** | `11434` | [`http://localhost:11434/`](http://localhost:11434/) | Ollama Daemon |
+| **Public Chat & Canvas UI** | `3000` | [`http://localhost:3000/`](http://localhost:3000/) | Executive Chat UI, Document Canvas (UniverJS / Monaco), and Deliverable Explorer |
+| **Admin Observatory UI** | `3001` | [`http://localhost:3001/`](http://localhost:3001/) | Real-time System Observatory, VRAM telemetry, RAG manager, and Audit Watchdog |
+| **Python Backend Gateway** | `8000` | [`http://localhost:8000/`](http://localhost:8000/) | FastAPI Application, ReAct Agent loop, ChromaDB RAG, and WebSocket streams |
+| **Local LLM Daemon** | `11434` | [`http://localhost:11434/`](http://localhost:11434/) | Local Ollama / GGUF model serving engine |
 
 ---
 
 ## 📑 Table of Contents
-1. [Architecture Overview](#-architecture-overview)
-2. [Complete Tech Stack](#-complete-tech-stack)
-3. [Project Directory & File Structure](#-project-directory--file-structure)
-4. [Folder-by-Folder Guide](#-folder-by-folder-guide)
-5. [Prerequisites](#-prerequisites)
-6. [Step-by-Step Setup & How to Run](#-step-by-step-setup--how-to-run)
-7. [Developer Guidelines & Contribution Workflow](#-developer-guidelines--contribution-workflow)
+1. [Core Features & Architecture](#-core-features--architecture)
+2. [Enterprise Security & PKI Authentication](#-enterprise-security--pki-authentication)
+3. [Complete Tech Stack](#-complete-tech-stack)
+4. [Directory & Repository Structure](#-directory--repository-structure)
+5. [Subsystems Deep Dive](#-subsystems-deep-dive)
+6. [Prerequisites](#-prerequisites)
+7. [Step-by-Step Setup & Running Locally](#-step-by-step-setup--running-locally)
+8. [Demo / Fast-Track Evaluation Guide](#-demo--fast-track-evaluation-guide)
+9. [Developer Standards & Air-Gap Invariants](#-developer-standards--air-gap-invariants)
 
 ---
 
-## 🏛 Architecture Overview
+## 🏛 Core Features & Architecture
 
 ```mermaid
 graph TD
-    User["👤 Public User / Operator"] -->|Port 3000| ChatUI["🎨 Public Chat UI (apps/chat-frontend)"]
-    Admin["🛡 System Admin / Jury"] -->|Port 3001| AdminUI["📊 Admin Observatory UI (apps/admin-frontend)"]
+    User["👤 Refinery Operator / Engineer"] -->|Port 3000| ChatUI["🎨 Public Chat & Document Canvas (apps/chat-frontend)"]
+    Admin["🛡 Security Officer / Jury"] -->|Port 3001| AdminUI["📊 Admin Observatory UI (apps/admin-frontend)"]
     
-    ChatUI -->|REST / WebSocket Proxy :8000| Backend["⚡ Python FastAPI Backend (apps/admin_backend)"]
-    AdminUI -->|REST / WebSocket Proxy :8000| Backend
+    ChatUI -->|REST / WebSocket :8000| Backend["⚡ FastAPI Intelligence Gateway (apps/admin_backend)"]
+    AdminUI -->|REST / WebSocket :8000| Backend
     
-    subgraph Intelligence_Layer ["🧠 Backend Intelligence & Agent Core (:8000)"]
-        Router["Two-Stage Router (Regex + Semantic)"]
-        Agent["LangChain ReAct Engine"]
-        VRAMMgr["LRU Dynamic Dual-Slot VRAM Manager"]
-        ChromaStore["ChromaDB Vector Store (BAAI/bge-small-en-v1.5)"]
-        OCR["Local OCR Pipeline (PaddleOCR / Tesseract)"]
-        OfficeGen["Office Generator (Docx, Xlsx, PPTX)"]
+    subgraph Auth_Layer ["🔐 Industrial Identity & RBAC"]
+        PKI["Hardware SmartCard (X.509 / mTLS)"]
+        LDAP["Active Directory / LDAP Binding"]
+        RBAC["6-Tier Industrial RBAC Engine"]
     end
     
-    Backend --> Router --> Agent
-    Agent --> VRAMMgr --> Ollama["Local Ollama Service (:11434)"]
-    Agent --> ChromaStore
-    Agent --> OCR
-    Agent --> OfficeGen
-    Agent --> Sandbox["Docker Sandbox (--network none)"]
-    
-    subgraph Sovereignty_Daemon ["🛡 Air-Gap & Sovereignty Daemon"]
-        Watchdog["Socket Watchdog (psutil - WAN Egress = 0)"]
-        AuditLedger["SHA-256 Tamper-Evident Audit Ledger"]
+    subgraph Intelligence_Core ["🧠 Agentic AI Core (:8000)"]
+        Router["Two-Stage Query Router (<2ms Regex + <25ms Semantic)"]
+        ReAct["LangChain ReAct Reasoning Loop"]
+        VRAMMgr["Dynamic Dual-Slot LRU VRAM Manager (<6GB)"]
+        RAG["ChromaDB Sovereign RAG (BAAI/bge-small-en-v1.5)"]
+        OCR["Multimodal OCR & ISA 5.1 P&ID Graph Extractor"]
+        OfficeGen["Office Document Synthesizer (.docx, .xlsx, .pptx)"]
+        DockerSandbox["Isolated Docker Execution Sandbox (--network none)"]
     end
-    Backend --> Watchdog
-    Backend --> AuditLedger
+    
+    subgraph Sovereignty_Enclave ["🛡 Air-Gap Sovereignty Daemon"]
+        SocketWatchdog["psutil Network Egress Watchdog (WAN = 0B)"]
+        TamperLedger["SHA-256 Tamper-Evident Blockchain Ledger"]
+    end
+    
+    Backend --> Auth_Layer
+    Backend --> Router --> ReAct
+    ReAct --> VRAMMgr --> Ollama["Local LLM Daemon (:11434)"]
+    ReAct --> RAG
+    ReAct --> OCR
+    ReAct --> OfficeGen
+    ReAct --> DockerSandbox
+    Backend --> SocketWatchdog
+    Backend --> TamperLedger
 ```
+
+---
+
+## 🔐 Enterprise Security & PKI Authentication
+
+REVEAL 2.0 incorporates defense-grade authentication meeting **ISA/IEC 62443** critical infrastructure cybersecurity standards:
+
+1. **Hardware SmartCard PKI (X.509 / mTLS)**:
+   - Cryptographic verification against the sovereign **MRPL Plant Root CA**.
+   - Real-time CRL (Certificate Revocation List) checking with immediate serial revocation.
+   - Built-in `.pem`/`.crt` file upload, interactive card reader simulation, and valid test presets.
+2. **Corporate Active Directory / Intranet LDAP**:
+   - Secure directory binding with domain mapping (`MRPL.INTERNAL`, `ONGC.CORP`, `REFINERY-WEST.LOCAL`).
+   - Automatic `memberOf` group deduction mapping to industrial roles.
+3. **6-Tier Industrial Role-Based Access Control (RBAC)**:
+   - `SUPER_ADMIN` (Executive HSE, Plant CISO, Full Override)
+   - `PLANT_SECURITY_OFFICER` (CRL Management, Tamper Audit, User Governance)
+   - `PROCESS_LEAD` (Production Planning, AST Sandbox Override, RAG Ingestion)
+   - `MAINTENANCE_ENG` (Equipment P&ID Extraction, Work Order Synthesis)
+   - `HSE_AUDITOR` (Safety Compliance, Regulatory Incident Review)
+   - `FIELD_OPERATOR` (Real-time Operations, SOP Queries, Incident Logging)
+4. **SHA-256 Tamper-Evident Audit Ledger**:
+   - Every login event, permission verification, model invocation, and CRL update is appended to a cryptographic hash-chained audit log with local database persistence.
 
 ---
 
 ## 🛠 Complete Tech Stack
 
-| Domain | Technology / Library | Version | Description / Role |
+| Domain | Technology | Version | Purpose |
 | :--- | :--- | :--- | :--- |
-| **Backend Framework** | **Python / FastAPI** | `3.11` / `0.111.0` | Asynchronous API, WebSocket streaming & agent gateway |
-| **ASGI Server** | **Uvicorn** | `0.30.1` | ASGI server running backend on `0.0.0.0:8000` |
-| **Agent Framework** | **LangChain** | `0.2.11` | Strict ReAct (Reason + Act) loop execution |
-| **Model Runtime** | **Ollama** | Latest | Local GGUF open-weight model serving & dynamic VRAM swapping |
-| **Vector DB & RAG** | **ChromaDB** | `0.5.4` | Embedded local vector store in `data/chroma_db/` |
-| **Embeddings** | **Sentence-Transformers** | `3.0.1` | Local `BAAI/bge-small-en-v1.5` embeddings (384-dim) |
-| **OCR & Parsing** | **PaddleOCR / Tesseract** | `2.8.1` / `5.3+` | Offline multimodal document and P&ID schematic parsing |
-| **Deliverables** | **python-docx / openpyxl / pptx**| `1.1.2` / `3.1.5` / `0.6.23`| Auto-generates `.docx`, `.xlsx`, and `.pptx` documents |
-| **Execution Sandbox** | **Docker Engine** | `24.0+` | `python:3.11-slim` container with `--network none` |
-| **Sovereignty Daemon**| **psutil** | `6.0.0` | Real-time network socket auditor & SHA-256 audit ledger |
-| **Chat Frontend** | **Next.js 14 (Port 3000)** | `14.2.5` | End-user conversational interface |
-| **Admin Frontend** | **Next.js 14 (Port 3001)** | `14.2.5` | Real-time system observatory dashboard |
-| **Styling & Icons** | **Tailwind CSS / Lucide** | `3.4.4` / `0.395.0` | Dark industrial design theme (`#020617`, `#0f172a`, emerald/amber) |
-| **State Management** | **Zustand** | `4.5.4` | In-memory reactive state stores (Chat, Model, Sovereignty) |
+| **Backend Core** | **Python / FastAPI** | `3.11+` / `0.111.0` | Asynchronous REST & WebSocket intelligence gateway |
+| **ASGI Server** | **Uvicorn** | `0.30.1` | High-throughput asynchronous server on `0.0.0.0:8000` |
+| **Agent Framework** | **LangChain** | `0.2.11` | Strict ReAct reasoning loop with tool execution |
+| **Model Runtime** | **Ollama / GGUF** | Latest | Local GPU model serving with dynamic LRU dual-slot swapping |
+| **Vector Store** | **ChromaDB** | `0.5.4` | On-premise vector store with source citation attribution |
+| **Embeddings** | **Sentence-Transformers** | `3.0.1` | Local `BAAI/bge-small-en-v1.5` embeddings (384-dimensional) |
+| **OCR & Vision** | **PaddleOCR / Tesseract** | `2.8.1` / `5.3+` | Multimodal schematic extraction & ISA 5.1 P&ID parsing |
+| **Office Automation**| **python-docx / openpyxl / pptx**| `1.1.2` / `3.1.5` / `0.6.23` | Programmatic generation of Word, Excel, and PowerPoint files |
+| **Execution Sandbox**| **Docker Engine** | `24.0+` | `python:3.11-slim` container runner with `--network none` |
+| **Sovereignty Daemon**| **psutil / Cryptography** | `6.0.0` / `42.0+` | Real-time socket watchdog & X.509 PKI validator |
+| **Chat Frontend** | **Next.js 14 / React 18** | `14.2.5` / `18.3.1` | Main conversational interface + UniverJS Document Canvas |
+| **Admin Frontend** | **Next.js 14 / React 18** | `14.2.5` / `18.3.1` | 9-Subsystem telemetry observatory dashboard |
+| **Styling & UI** | **Tailwind CSS / Lucide** | `3.4.4` / `0.395.0` | Industrial dark aesthetic with "Double-Bezel" hardware chassis |
+| **State Management** | **Zustand** | `4.5.4` | High-performance reactive stores for chat, theme, and telemetry |
 
 ---
 
-## 📂 Project Directory & File Structure
+## 📂 Directory & Repository Structure
 
 ```text
 G:/SIH/p/
-├── .gitignore                          # Excludes node_modules, build artifacts, logs & envs
-├── README.md                           # Master project guide for developers & setup
-├── AGENT.md                            # Binding operational and engineering rules for AI/devs
+├── .gitignore                          # Excludes build caches, logs, node_modules, and models
+├── README.md                           # Master documentation & deployment guide
+├── package.json                        # Root repository metadata & Prisma scripts
 │
-├── apps/                               # Application Core Layer
-│   ├── chat-frontend/                  # Public Conversational Chat Interface (Port 3000)
-│   │   ├── src/                        # React components, pages & Zustand stores
-│   │   ├── package.json                # Scripts: "dev": "next dev -p 3000"
-│   │   └── next.config.mjs             # Next.js configuration & API proxying
+├── apps/                               # Application Core
+│   ├── chat-frontend/                  # Public Chat Interface & Document Canvas (Port 3000)
+│   │   ├── src/
+│   │   │   ├── app/
+│   │   │   │   ├── login/              # Redesigned Enterprise SmartCard/LDAP Login UI
+│   │   │   │   ├── page.tsx            # Main Chat Engine with Perplexity-style reasoning
+│   │   │   │   └── globals.css         # Industrial mesh grids & hardware chassis styles
+│   │   │   ├── components/
+│   │   │   │   ├── canvas/             # UniverJS Sheets, Slides, Docs & Monaco Editor
+│   │   │   │   ├── sidebar/            # App sidebar with operator profile & session list
+│   │   │   │   └── MarkdownContent.tsx # GFM renderer with syntax highlighting & tables
+│   │   │   └── store/                  # Zustand state stores (Chat, Auth, Canvas, Theme)
+│   │   ├── package.json                # Next.js scripts ("dev:http": "next dev -p 3000")
+│   │   └── server-https.js             # Optional HTTPS server for mobile microphone access
 │   │
 │   ├── admin-frontend/                 # Admin Observatory Dashboard (Port 3001)
-│   │   ├── src/                        # 6-Screen observatory components & live charts
-│   │   ├── package.json                # Scripts: "dev": "next dev -p 3001"
-│   │   └── next.config.mjs             # Next.js configuration
+│   │   ├── src/
+│   │   │   ├── app/                    # Multi-screen observatory pages (/models, /rag, /ocr, etc.)
+│   │   │   ├── components/             # OverviewDeck, VRAM gauges, and Telemetry cards
+│   │   │   └── store/                  # Admin stores (Models, Sovereignty, RAG, Network)
+│   │   └── package.json                # Next.js scripts ("dev": "next dev -p 3001")
 │   │
 │   └── admin_backend/                  # Unified FastAPI Gateway (Port 8000)
-│       ├── main.py                     # App entry point, CORS, WebSockets & APIs
-│       ├── requirements.txt            # Python dependencies
-│       ├── config/                     # Settings & environment configurations
-│       ├── models/                     # Dual-slot LRU VRAM memory manager & Ollama client
-│       ├── core/                       # Two-stage query routing engine (Regex + Semantic)
-│       ├── agent/                      # LangChain ReAct reasoning loop & tool orchestrator
+│       ├── main.py                     # Entry point, 100% offline env setup & router mounts
+│       ├── requirements.txt            # Python backend dependencies
+│       ├── api/                        # Route handlers (auth, chat, files, models, ocr, rag, sandbox)
+│       ├── core/                       # Enterprise auth manager, PKI validator & RBAC engine
+│       ├── agent/                      # LangChain ReAct reasoning loop & tool definitions
+│       ├── models/                     # Dual-slot LRU VRAM memory manager & compute backends
 │       ├── rag/                        # ChromaDB ingestion, retrieval & citation linking
-│       ├── ocr/                        # PaddleOCR / Tesseract PDF & CAD schematic pipeline
-│       ├── deliverables/               # Word (.docx), Excel (.xlsx), and PPTX generators
-│       ├── sovereignty/                # Socket watchdog & SHA-256 tamper-evident log
-│       ├── api/                        # REST & WebSocket route handlers
-│       └── tests/                      # Unit & integration regression test suites
+│       ├── ocr/                        # PaddleOCR / Tesseract pipeline & P&ID graph extraction
+│       ├── sovereignty/                # Network socket inspector & SHA-256 tamper-evident log
+│       └── config/                     # auth_config.yaml, hardware_profiles.yaml, models.yaml
 │
-├── data/                               # Air-Gapped Persistent Data Storage
-│   ├── chroma_db/                      # ChromaDB SQLite & vector index files
-│   ├── annual_reports/                 # Industrial annual reports (ONGC, MRPL, etc.)
-│   ├── mrpl_documents/                 # Safety policies, CSB reports, and refinery SOPs
-│   ├── ongc_policies/                  # Corporate governance & procurement guidelines
-│   ├── uploads/                          # User-uploaded documents & engineering drawings
-│   └── outputs/                        # Generated Word/Excel/PPTX deliverable files
+├── data/                               # Air-Gapped Persistent Storage
+│   ├── chroma_db/                      # Embedded ChromaDB vector indices
+│   ├── mrpl_documents/                 # Refinery SOPs, safety guidelines & CSB reports
+│   ├── uploads/                        # User-uploaded documents and P&ID drawings
+│   ├── outputs/                        # Programmatically generated Word, Excel & PPTX files
+│   └── users_auth.db                   # SQLite on-premise user accounts & audit state
 │
-├── docs/                               # System Specs, PRD & Evaluation Runbooks
-│   ├── PRD.md                          # Product Requirements Document & statutory mappings
-│   ├── architecture.md                 # System architecture & memory topologies
-│   ├── tech_stack.md                   # Locked technology stack specifications
-│   ├── file_structure.md               # Detailed directory topology
-│   ├── DEMO_DAY_RUNBOOK.md             # 10-Minute live jury presentation script
-│   └── tasks.md                        # Milestone & subtask progress tracker
-│
-├── models/                             # Declarative Model Configurations
-│   └── models.yaml                     # YAML schema defining VRAM limits, roles & GGUF weights
-│
-├── sandbox/                            # Ephemeral volume mount for Docker container executions
-└── scripts/                            # Automation, environment check & hotspot setup scripts
+└── scripts/                            # Operational & Setup Scripts
+    └── download_and_verify_models.py   # Air-gap model verification script
 ```
 
 ---
 
-## 🔍 Folder-by-Folder Guide
+## 🔍 Subsystems Deep Dive
 
-### 1. `apps/chat-frontend/` (Port 3000)
-- **Role:** The primary end-user conversational interaction interface.
-- **Port:** Runs on **`http://localhost:3000/`**
-- **Key Modules:**
-  - `src/components/chat/`: Message bubbles, streaming markdown renderer, tool execution cards.
-  - `src/components/deliverables/`: In-browser preview & download cards for `.docx`, `.xlsx`, and `.pptx`.
-  - `src/store/useChatStore.ts`: Manages chat history, active websocket stream, and UI state.
+### 1. Dual-Slot LRU VRAM Memory Manager
+Allows hosting multiple specialized LLMs (General Agent, Math/Code, Safety RAG, Vision) on consumer workstations with **$\le 6.0\text{ GB}$ VRAM**:
+* **Slot 1**: Fixed lightweight embeddings model (`BAAI/bge-small-en-v1.5`, ~130MB).
+* **Slot 2**: Dynamic single-model execution slot with automated LRU unload/load cycles.
 
-### 2. `apps/admin-frontend/` (Port 3001)
-- **Role:** Operator & Jury technical observatory showing real-time under-the-hood engine state.
-- **Port:** Runs on **`http://localhost:3001/`**
-- **Key Screens:**
-  1. **VRAM Status Panel:** Live dual-slot VRAM memory gauges & LRU swapping metrics.
-  2. **Code Sandbox Monitor:** Real-time Docker AST execution logs and resource caps.
-  3. **Multimodal Ingestion Hub:** OCR extraction logs, P&ID tag detections, and bounding boxes.
-  4. **Network Sovereignty Terminal:** Real-time socket watchdog showing **0 WAN egress** and SHA-256 hash chains.
-  5. **Model Registry Manager:** Inspect and hot-reload `models.yaml`.
-  6. **Jury Connect:** Live QR code generator for multi-device LAN/Hotspot pairing.
+### 2. Two-Stage Query Router
+* **Stage 1 (Regex Classifier, $<2\text{ms}$)**: Instant pattern matching for direct calculations, unit conversions, and standard deliverable requests.
+* **Stage 2 (Semantic Vector Router, $<25\text{ms}$)**: High-accuracy intent categorization routing to Domain RAG, Code Sandbox, or Direct Synthesis.
 
-### 3. `apps/admin_backend/` (Port 8000)
-- **Role:** Single unified Python FastAPI server hosting the intelligence loop, agent tools, RAG, and APIs.
-- **Port:** Runs on **`http://localhost:8000/`**
-- **Key Sub-packages:**
-  - `models/`: Manages model swapping in GPU memory so VRAM never exceeds 6.0 GB.
-  - `core/`: Routes user queries (Direct Chat vs RAG Search vs Python Calculation vs Deliverable Synthesis).
-  - `agent/`: LangChain ReAct agent executing thoughts, actions, and observations.
-  - `rag/`: Queries ChromaDB embeddings with strict source citation matching.
-  - `ocr/`: Offline PaddleOCR and Tesseract document extraction.
-  - `deliverables/`: Templated programmatic generation of Word documents, spreadsheets, and slides.
-  - `sovereignty/`: Background socket watchdog auditing network interfaces to prove 100% air-gap compliance.
+### 3. In-Browser Document Canvas Panel
+Provides live interactive editing and preview for synthesized outputs:
+* **UniverJS Sheets**: Interactive spreadsheets with formula calculation and chart rendering.
+* **UniverJS Docs & Slides**: Rich text document inspection and slide decks.
+* **Monaco Code Editor**: Real-time syntax highlighting for generated Python/SQL scripts.
 
-### 4. `data/` (Air-Gapped Data Repository)
-- Holds all persistent offline assets: pre-indexed ChromaDB embeddings, refinery SOPs, annual reports, test blueprints, and generated outputs.
+### 4. Multimodal OCR & P&ID Tag Extraction
+* Offline extraction of text from scanned engineering drawings, PDF manuals, and P&ID piping diagrams.
+* Detects ISA 5.1 instrumentation tags (`FT-101`, `PT-202`, `XV-301`) and builds an interactive topological connection graph.
 
 ---
 
 ## ⚡ Prerequisites
 
-Before running the project, ensure your workstation has:
-1. **OS:** Windows 10/11 (64-bit) or Ubuntu 22.04 LTS
-2. **Python:** Version `3.11.x` (`python --version`)
-3. **Node.js:** Version `18.x` or `20.x` with `npm` (`node -v`)
-4. **Ollama:** Installed and running locally ([ollama.ai](https://ollama.ai/))
-5. **Docker Engine / Desktop:** Running for sandboxed Python code execution
+1. **Operating System:** Windows 10/11 (64-bit) or Ubuntu 22.04 LTS
+2. **Python:** Version `3.11.x` or `3.12.x`
+3. **Node.js:** Version `18.x` or `20.x` (`node -v`)
+4. **Ollama:** Installed and running locally ([ollama.com](https://ollama.com/))
+5. **Docker Desktop:** (Optional) for sandboxed Python code execution
 
 ---
 
-## 🚀 Step-by-Step Setup & How to Run
+## 🚀 Step-by-Step Setup & Running Locally
 
 ### Step 1: Clone Repository
 ```bash
@@ -208,71 +225,74 @@ cd hackbusters-devlopment
 
 ---
 
-### Step 2: Set Up Python Backend (Port 8000)
-
+### Step 2: Start Python Backend (Port 8000)
 ```bash
 # Windows (PowerShell)
-python -m venv venv
-.\venv\Scripts\Activate.ps1
+$env:PYTHONPATH = "G:\SIH\p"
+python -m uvicorn apps.admin_backend.main:app --host 0.0.0.0 --port 8000 --reload
 
 # Linux / macOS
-python3 -m venv venv
-source venv/bin/activate
-
-# Install backend dependencies
-pip install -r apps/admin_backend/requirements.txt
-
-# Run FastAPI Backend Server
-python -m uvicorn apps.admin_backend.main:app --host 0.0.0.0 --port 8000 --reload
+export PYTHONPATH="."
+python3 -m uvicorn apps.admin_backend.main:app --host 0.0.0.0 --port 8000 --reload
 ```
+👉 Backend API Docs: **`http://localhost:8000/api/docs`**
 
 ---
 
-### Step 3: Start Ollama Local Service (Port 11434)
-
-1. Start the Ollama daemon:
-   ```bash
-   ollama serve
-   ```
-2. Verify models from `models/models.yaml` are loaded:
-   ```bash
-   ollama list
-   ```
-
----
-
-### Step 4: Run Public Chat Frontend (Port 3000)
-
-In a new terminal window:
+### Step 3: Run Public Chat Frontend (Port 3000)
+In a new terminal:
 ```bash
 cd apps/chat-frontend
-npm install
-npm run dev
+npm.cmd install    # (or npm install)
+npm.cmd run dev:http
 ```
-👉 Open **`http://localhost:3000`** in your browser.
+👉 Access Public Chat UI: **`http://localhost:3000`**
 
 ---
 
-### Step 5: Run Admin Observatory Frontend (Port 3001)
-
-In another new terminal window:
+### Step 4: Run Admin Observatory Frontend (Port 3001)
+In a new terminal:
 ```bash
 cd apps/admin-frontend
-npm install
-npm run dev
+npm.cmd install    # (or npm install)
+npm.cmd run dev
 ```
-👉 Open **`http://localhost:3001`** in your browser.
+👉 Access Admin Observatory: **`http://localhost:3001`**
 
 ---
 
-## 🤝 Developer Guidelines & Contribution Workflow
+## 🎯 Demo / Fast-Track Evaluation Guide
 
-1. **Port Separation Invariant:**
-   - Public Chat: **Port 3000**
-   - Admin Observatory: **Port 3001**
-   - Python Backend: **Port 8000**
-2. **Zero External API Calls at Runtime:** Never add imports or calls to remote AI APIs (OpenAI, Anthropic, Gemini API, Azure). All intelligence must run via local Ollama or local embedded models.
-3. **Strict Folder Boundary:**
-   - Python code belongs strictly in `apps/admin_backend/`.
-   - React/TypeScript code belongs strictly in `apps/chat-frontend/` or `apps/admin-frontend/`.
-4. **Commit Clean Code:** Do not commit `node_modules`, `.next/`, or `.env` files.
+When presenting to evaluators or juries, navigate to **`http://localhost:3000/login`**:
+
+1. **Option A: SmartCard PKI (Recommended for Demo)**
+   - Click the **SmartCard** tab.
+   - Click **"Load Sample Card"** to auto-load a valid X.509 certificate signed by the MRPL Plant Root CA (`Rajesh Kumar - Executive HSE & Audit`).
+   - Click **Authenticate via SmartCard PKI**.
+2. **Option B: Corporate LDAP / Active Directory**
+   - Click the **LDAP / AD** tab.
+   - Click **"Fill Default User"** (`operator` / `RefineryPass2026!`).
+   - Click **Sign in via Corporate LDAP**.
+3. **Option C: 1-Click Fast-Track**
+   - Click the **Fast-Track** tab.
+   - Click **Lead Process Operator** (`FIELD_OP`) or **Refinery Compliance Chief** (`SUPER_ADMIN`) to sign in instantly.
+
+---
+
+## 🛡 Developer Standards & Air-Gap Invariants
+
+1. **Zero External Telemetry Invariant:**
+   - No runtime calls to OpenAI, Anthropic, Gemini, Azure, or remote analytics.
+   - `HF_HUB_OFFLINE=1` and `CHROMA_TELEMETRY=False` are strictly enforced at startup.
+2. **Port Separation Invariant:**
+   - **Port 3000:** Public Chat & Canvas Interface
+   - **Port 3001:** Admin Observatory Dashboard
+   - **Port 8000:** FastAPI Intelligence Gateway
+   - **Port 11434:** Ollama / Local Model Daemon
+3. **Clean Git Hygiene:**
+   - Exclude `.next/`, `node_modules/`, `*.tsbuildinfo`, `*.db-wal`, `__pycache__/`, and `.env` files.
+
+---
+
+**MRPL Sovereign AI Workbench — SIH26117**  
+*Mangalore Refinery and Petrochemicals Limited (ONGC Group Company)*

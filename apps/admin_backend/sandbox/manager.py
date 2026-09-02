@@ -257,13 +257,51 @@ class DockerSandboxManager:
         self.subprocess_backend = HardenedSubprocessBackend()
         self.custom_backend = custom_backend
 
+        # Cached image presence check (populated on first get_status / execute)
+        self._image_present: Optional[bool] = None
+
+    # ------------------------------------------------------------------
+    # Docker Image Presence Check (cached to avoid repeated subprocess)
+    # ------------------------------------------------------------------
+    def is_docker_image_available(self, image_name: str = "mrpl-sandbox-runtime:latest") -> bool:
+        """
+        Checks if the hardened sandbox image exists on the local Docker daemon.
+        Result is cached after first call to prevent repeated docker CLI spawning.
+        """
+        if self._image_present is not None:
+            return self._image_present
+
+        if not self.docker_backend.is_available():
+            self._image_present = False
+            return False
+
+        try:
+            self.docker_backend.client.images.get(image_name)
+            self._image_present = True
+        except Exception:
+            self._image_present = False
+
+        return self._image_present
+
     def get_status(self) -> Dict[str, Any]:
-        """Returns sandbox telemetry, active backends, and isolation parameters."""
+        """Returns sandbox telemetry, active backends, isolation parameters, and image status."""
         docker_live = self.docker_backend.is_available()
+        image_present = self.is_docker_image_available()
+        active_backend = "docker_container" if (docker_live and image_present) else "hardened_isolated_subprocess"
+        isolation_mode = "CONTAINER_ROOTLESS_AIRGAP" if active_backend == "docker_container" else "SUBPROCESS_ISOLATED"
+
         return {
             "status": "ONLINE",
-            "docker_daemon_active": docker_live,
-            "active_backend": "docker_container" if docker_live else "hardened_isolated_subprocess",
+            "docker_available": docker_live,
+            "image_present": image_present,
+            "image_name": "mrpl-sandbox-runtime:latest",
+            "isolation_mode": isolation_mode,
+            "active_backend": active_backend,
+            "resource_limits": {
+                "memory": self.memory_limit.upper(),
+                "cpus": str(self.cpu_quota),
+                "network": "NONE"
+            },
             "network_isolation": "STRICT_NONE",
             "memory_limit": self.memory_limit,
             "cpu_quota": self.cpu_quota,
@@ -307,16 +345,32 @@ class DockerSandboxManager:
             )
 
         # Step 2: Pluggable Backend Execution (Custom -> Docker -> Subprocess)
+        # Verify image presence before attempting Docker execution
+        docker_available = self.docker_backend.is_available()
+        image_present = self.is_docker_image_available()
+
         result: SandboxExecutionResult
         if self.custom_backend and self.custom_backend.is_available():
             result = self.custom_backend.run_script(
                 script_code, self.memory_limit, self.cpu_quota, effective_timeout
             )
-        elif self.docker_backend.is_available():
+        elif docker_available and image_present:
             result = self.docker_backend.run_script(
                 script_code, self.memory_limit, self.cpu_quota, effective_timeout
             )
         else:
+            # Log prominent warning on fallback to host subprocess
+            fallback_reason = "Docker daemon offline" if not docker_available else "Sandbox image missing"
+            warning_msg = (
+                f"⚠ SANDBOX FALLBACK: {fallback_reason}. "
+                f"Executing in hardened host subprocess (--network none not enforced at container level). "
+                f"Run 'python scripts/build_sandbox_image.py' to build mrpl-sandbox-runtime:latest."
+            )
+            print(f"\033[93m{warning_msg}\033[0m")
+            audit_log.append_event(
+                event_type="SANDBOX_FALLBACK_WARNING",
+                details=f"{fallback_reason}. Falling back to hardened subprocess for code SHA256: {code_sha256[:16]}..."
+            )
             result = self.subprocess_backend.run_script(
                 script_code, self.memory_limit, self.cpu_quota, effective_timeout
             )
