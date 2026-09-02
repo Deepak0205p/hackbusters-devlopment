@@ -67,6 +67,34 @@ graph TD
     Shared_Core --> Ollama["Local LLM Daemon (:11434)"]
 ```
 
+### 🌟 High-Level Architectural Pillars
+
+1. **Decoupled Gateway Layer (`apps/user_backend` & `apps/admin_backend`)**:
+   - Dedicated User Gateway for low-latency streaming chat, OCR extraction, file downloads, and sandbox execution.
+   - Dedicated Admin Observatory Gateway for telemetry monitoring, VRAM swapping, PKI X.509 auth, and RAG administrative indexing.
+
+2. **Shared Sovereign Core Enclave (`apps/shared`)**:
+   - Centralized ReAct reasoning engine, model orchestration, and sovereign RAG pipeline shared across gateways with zero code duplication.
+
+3. **Multi-Model GPU VRAM Orchestrator ($\le 6.0\text{ GB}$ VRAM)**:
+   - Dynamic Dual-Slot LRU Memory Manager enabling multiple specialized local LLMs (General Agent, Math/Code, Safety RAG, Vision) on standard refinery laptops and edge workstations.
+
+4. **Two-Stage Ultra-Fast Query Router**:
+   - **Stage 1 (<2ms)**: Regex-based classification for immediate formulas, unit conversions, and direct report generation.
+   - **Stage 2 (<25ms)**: Semantic vector routing directing specialized queries to Domain RAG, Isolated Docker Sandbox, or Direct Synthesis.
+
+5. **Multi-Format Industrial Deliverable Generator**:
+   - Automated programmatic synthesis of defense-grade Word reports (`.docx`), Excel calculation workbooks (`.xlsx`), and executive slide presentations (`.pptx`).
+
+6. **Interactive In-Browser Document Canvas Panel**:
+   - Real-time in-browser workspace powered by **UniverJS** (Sheets, Docs, Slides) and **Monaco Editor** for inspecting and editing synthesized artifacts with live formula computation.
+
+7. **Multimodal OCR & ISA 5.1 P&ID Graph Extraction**:
+   - Offline parsing of complex engineering schematics and piping drawings, detecting ISA 5.1 tags (`FT-101`, `PT-202`, `XV-301`) and building interactive topological connection graphs.
+
+8. **100% Air-Gapped Egress Watchdog & Blockchain Audit Ledger**:
+   - Real-time `psutil` network socket monitor guaranteeing $0\text{ B}$ WAN egress and SHA-256 cryptographic hash-chained audit persistence in **XAMPP MySQL**.
+
 ---
 
 ## 🔐 Enterprise Security & PKI Authentication
