@@ -68,4 +68,34 @@
   .safe-area-inset-bottom {
     padding-bottom: env(safe-area-inset-bottom, 0px);
   }
+
+  /* Enterprise Mesh & Grid Backgrounds */
+  .bg-industrial-grid {
+    background-size: 32px 32px;
+    background-image: 
+      linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+  }
+
+  .bg-industrial-dots {
+    background-size: 24px 24px;
+    background-image: radial-gradient(rgba(255, 255, 255, 0.07) 1px, transparent 1px);
+  }
+
+  /* Hardware Chassis Inset Highlights */
+  .shadow-hardware-core {
+    box-shadow: 
+      0 0 0 1px rgba(255, 255, 255, 0.08),
+      0 1px 2px 0 rgba(0, 0, 0, 0.4),
+      0 20px 40px -15px rgba(0, 0, 0, 0.7),
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.1);
+  }
+
+  .shadow-glow-emerald {
+    box-shadow: 0 0 40px -10px rgba(16, 185, 129, 0.25);
+  }
+
+  .shadow-glow-blue {
+    box-shadow: 0 0 40px -10px rgba(59, 130, 246, 0.3);
+  }
 }
