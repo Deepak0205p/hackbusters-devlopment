@@ -43,42 +43,28 @@ Operating in complete cryptographic isolation with **zero WAN internet egress**,
 
 ```mermaid
 graph TD
-    User["👤 Refinery Operator / Engineer"] -->|Port 3000| ChatUI["🎨 Public Chat & Document Canvas (apps/chat-frontend)"]
-    Admin["🛡 Security Officer / Jury"] -->|Port 3001| AdminUI["📊 Admin Observatory UI (apps/admin-frontend)"]
+    User["👤 Refinery Operator / Engineer"] -->|Port 3000| ChatUI["🎨 Public Chat & Canvas UI (apps/chat-frontend)"]
+    Admin["🛡 Security Officer / CISO / Jury"] -->|Port 3001| AdminUI["📊 Admin Observatory UI (apps/admin-frontend)"]
     
-    ChatUI -->|REST / WebSocket :8000| Backend["⚡ FastAPI Intelligence Gateway (apps/admin_backend)"]
-    AdminUI -->|REST / WebSocket :8000| Backend
+    ChatUI -->|Chat, Upload, OCR, Sandbox :8000| UserBackend["⚡ User Gateway (apps/user_backend)"]
+    AdminUI -->|Models, RAG Admin, Sovereignty, Auth :8000| AdminBackend["🛡 Admin Gateway (apps/admin_backend)"]
     
-    subgraph Auth_Layer ["🔐 Industrial Identity & RBAC"]
-        PKI["Hardware SmartCard (X.509 / mTLS)"]
-        LDAP["Active Directory / LDAP Binding"]
-        RBAC["6-Tier Industrial RBAC Engine"]
-    end
-    
-    subgraph Intelligence_Core ["🧠 Agentic AI Core (:8000)"]
+    subgraph Shared_Core ["🧠 Sovereign Core & Intelligence Enclave (apps/shared)"]
         Router["Two-Stage Query Router (<2ms Regex + <25ms Semantic)"]
-        ReAct["LangChain ReAct Reasoning Loop"]
+        ReAct["LangChain ReAct Reasoning Loop & Tools"]
         VRAMMgr["Dynamic Dual-Slot LRU VRAM Manager (<6GB)"]
         RAG["ChromaDB Sovereign RAG (BAAI/bge-small-en-v1.5)"]
         OCR["Multimodal OCR & ISA 5.1 P&ID Graph Extractor"]
         OfficeGen["Office Document Synthesizer (.docx, .xlsx, .pptx)"]
         DockerSandbox["Isolated Docker Execution Sandbox (--network none)"]
-    end
-    
-    subgraph Sovereignty_Enclave ["🛡 Air-Gap Sovereignty Daemon"]
         SocketWatchdog["psutil Network Egress Watchdog (WAN = 0B)"]
         TamperLedger["SHA-256 Tamper-Evident Blockchain Ledger"]
+        MySQL_DB[("🗄 XAMPP MySQL Database (mrpl_reveal_auth)")]
     end
     
-    Backend --> Auth_Layer
-    Backend --> Router --> ReAct
-    ReAct --> VRAMMgr --> Ollama["Local LLM Daemon (:11434)"]
-    ReAct --> RAG
-    ReAct --> OCR
-    ReAct --> OfficeGen
-    ReAct --> DockerSandbox
-    Backend --> SocketWatchdog
-    Backend --> TamperLedger
+    UserBackend --> Shared_Core
+    AdminBackend --> Shared_Core
+    Shared_Core --> Ollama["Local LLM Daemon (:11434)"]
 ```
 
 ---
@@ -102,7 +88,11 @@ REVEAL 2.0 incorporates defense-grade authentication meeting **ISA/IEC 62443** c
    - `HSE_AUDITOR` (Safety Compliance, Regulatory Incident Review)
    - `FIELD_OPERATOR` (Real-time Operations, SOP Queries, Incident Logging)
 4. **SHA-256 Tamper-Evident Audit Ledger**:
-   - Every login event, permission verification, model invocation, and CRL update is appended to a cryptographic hash-chained audit log with local database persistence.
+   - Every login event, permission verification, model invocation, and CRL update is appended to a cryptographic hash-chained audit log persisted to XAMPP MySQL.
+5. **Enterprise Defense Middleware**:
+   - In-memory sliding-window rate limiting on all authentication and query endpoints.
+   - Strict path traversal regex filtering (`../`, `..\`) and 50MB request size boundaries.
+   - NIST & OWASP recommended HTTP hardening headers (`X-Frame-Options: DENY`, `nosniff`, `HSTS`, `Permissions-Policy`).
 
 ---
 
@@ -110,9 +100,10 @@ REVEAL 2.0 incorporates defense-grade authentication meeting **ISA/IEC 62443** c
 
 | Domain | Technology | Version | Purpose |
 | :--- | :--- | :--- | :--- |
-| **Backend Core** | **Python / FastAPI** | `3.11+` / `0.111.0` | Asynchronous REST & WebSocket intelligence gateway |
+| **User Gateway** | **Python / FastAPI** | `3.11+` / `0.111.0` | Chat, document upload, OCR & Docker sandbox gateway |
+| **Admin Gateway** | **Python / FastAPI** | `3.11+` / `0.111.0` | System telemetry, VRAM manager, RAG admin & RBAC API |
 | **ASGI Server** | **Uvicorn** | `0.30.1` | High-throughput asynchronous server on `0.0.0.0:8000` |
-| **Database Layer** | **XAMPP MySQL / PyMySQL** | `8.0+` / `1.1.1` | On-premise relational store for users, RBAC, chat sessions & CRLs |
+| **Database Layer** | **XAMPP MySQL / PyMySQL** | `8.0+` / `1.1.1` | On-premise relational store for users, RBAC, chat sessions, response cache & CRLs |
 | **Security Layer** | **Argon2id / OWASP Middleware** | `23.8.0` / Custom | Memory-hard password hashing, sliding-window rate limiting & security headers |
 | **Agent Framework** | **LangChain** | `0.2.11` | Strict ReAct reasoning loop with tool execution |
 | **Model Runtime** | **Ollama / GGUF** | Latest | Local GPU model serving with dynamic LRU dual-slot swapping |
@@ -137,7 +128,7 @@ G:/SIH/p/
 ├── README.md                           # Master documentation & deployment guide
 ├── package.json                        # Root repository metadata & Prisma scripts
 │
-├── apps/                               # Application Core
+├── apps/                               # Application Core & Microservices
 │   ├── chat-frontend/                  # Public Chat Interface & Document Canvas (Port 3000)
 │   │   ├── src/
 │   │   │   ├── app/
@@ -148,7 +139,7 @@ G:/SIH/p/
 │   │   │   │   ├── canvas/             # UniverJS Sheets, Slides, Docs & Monaco Editor
 │   │   │   │   ├── sidebar/            # App sidebar with operator profile & session list
 │   │   │   │   └── MarkdownContent.tsx # GFM renderer with syntax highlighting & tables
-│   │   │   └── store/                  # Zustand state stores (Chat, Auth with auto-lock, Canvas, Theme)
+│   │   │   └── store/                  # Zustand state stores (Chat, Auth with 45-min idle auto-lock, Canvas, Theme)
 │   │   ├── package.json                # Next.js scripts ("dev:http": "next dev -p 3000")
 │   │   └── server-https.js             # Optional HTTPS server for mobile microphone access
 │   │
@@ -159,19 +150,28 @@ G:/SIH/p/
 │   │   │   └── store/                  # Admin stores (Models, Sovereignty, RAG, Network)
 │   │   └── package.json                # Next.js scripts ("dev": "next dev -p 3001")
 │   │
-│   └── admin_backend/                  # Unified FastAPI Gateway (Port 8000)
-│       ├── main.py                     # Entry point, 100% offline env setup, OWASP middleware & router mounts
-│       ├── requirements.txt            # Python backend dependencies
-│       ├── api/                        # Route handlers (auth, chat, files, models, ocr, rag, sandbox)
-│       ├── core/                       # Enterprise auth manager, XAMPP MySQL backend, PKI validator & RBAC engine
-│       │   ├── auth_manager.py         # PyMySQL repository, Argon2id hasher & session manager
-│       │   └── security_middleware.py  # Rate limiter (DDoS shield), path sanitizers & security headers
-│       ├── agent/                      # LangChain ReAct reasoning loop & tool definitions
+│   ├── user_backend/                   # User & Chat Backend Gateway (Port 8000)
+│   │   ├── main.py                     # Entry point for chat, uploads, OCR & sandbox
+│   │   ├── requirements.txt            # Python dependencies
+│   │   └── api/                        # Route handlers (routes_chat, routes_upload, routes_files, routes_ocr, routes_sandbox)
+│   │
+│   ├── admin_backend/                  # Admin & Observatory Backend Gateway (Port 8000)
+│   │   ├── main.py                     # Entry point for models, RAG, sovereignty & PKI auth
+│   │   ├── requirements.txt            # Python dependencies
+│   │   ├── api/                        # Route handlers (routes_auth, routes_models, routes_rag_admin, routes_sovereignty)
+│   │   ├── core/                       # Enterprise auth manager, XAMPP MySQL backend & OWASP middleware
+│   │   │   ├── auth_manager.py         # PyMySQL repository, Argon2id hasher & session manager
+│   │   │   └── security_middleware.py  # Rate limiter, path sanitizers & security headers
+│   │   └── config/                     # auth_config.yaml, hardware_profiles.yaml, models.yaml
+│   │
+│   └── shared/                         # Shared Sovereign Core Intelligence Enclave
+│       ├── agent/                      # LangChain ReAct reasoning loop, tools & self-correction
 │       ├── models/                     # Dual-slot LRU VRAM memory manager & compute backends
-│       ├── rag/                        # ChromaDB ingestion, retrieval & citation linking
+│       ├── rag/                        # ChromaDB vector store, BGE embeddings, grounding & MySQL response cache
 │       ├── ocr/                        # PaddleOCR / Tesseract pipeline & P&ID graph extraction
-│       ├── sovereignty/                # Network socket inspector & SHA-256 tamper-evident log
-│       └── config/                     # auth_config.yaml (MySQL), hardware_profiles.yaml, models.yaml
+│       ├── sandbox/                    # Docker container manager & AST screener
+│       ├── sovereignty/                # Socket watchdog, air-gap classifier & SHA-256 tamper ledger
+│       └── config/                     # Shared certificates, hardware profiles & models config
 │
 ├── data/                               # Air-Gapped Persistent Storage
 │   ├── chroma_db/                      # Embedded ChromaDB vector indices
@@ -211,10 +211,11 @@ Provides live interactive editing and preview for synthesized outputs:
 ## ⚡ Prerequisites
 
 1. **Operating System:** Windows 10/11 (64-bit) or Ubuntu 22.04 LTS
-2. **Python:** Version `3.11.x` or `3.12.x`
-3. **Node.js:** Version `18.x` or `20.x` (`node -v`)
-4. **Ollama:** Installed and running locally ([ollama.com](https://ollama.com/))
-5. **Docker Desktop:** (Optional) for sandboxed Python code execution
+2. **Database:** XAMPP MySQL running on `127.0.0.1:3306`
+3. **Python:** Version `3.11.x` or `3.12.x`
+4. **Node.js:** Version `18.x` or `20.x` (`node -v`)
+5. **Ollama:** Installed and running locally ([ollama.com](https://ollama.com/))
+6. **Docker Desktop:** (Optional) for sandboxed Python code execution
 
 ---
 
@@ -229,14 +230,16 @@ cd hackbusters-devlopment
 ---
 
 ### Step 2: Start Python Backend (Port 8000)
+Start either the Admin Gateway or the User Gateway:
+
 ```bash
-# Windows (PowerShell)
+# Start Admin Observatory Gateway
 $env:PYTHONPATH = "G:\SIH\p"
 python -m uvicorn apps.admin_backend.main:app --host 0.0.0.0 --port 8000 --reload
 
-# Linux / macOS
-export PYTHONPATH="."
-python3 -m uvicorn apps.admin_backend.main:app --host 0.0.0.0 --port 8000 --reload
+# OR Start User Chat Gateway
+$env:PYTHONPATH = "G:\SIH\p"
+python -m uvicorn apps.user_backend.main:app --host 0.0.0.0 --port 8000 --reload
 ```
 👉 Backend API Docs: **`http://localhost:8000/api/docs`**
 
