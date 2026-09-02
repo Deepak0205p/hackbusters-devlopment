@@ -129,6 +129,6 @@ export const useDeliverableStore = create<DeliverableState>((set, get) => ({
 
     // Client-side download fallback
     const sanitizedFilename = item.filename.replace(/[^a-zA-Z0-9._-]/g, '_');
-    set({ validationError: `Backend unavailable. Cannot download ${sanitizedFilename}.` });
+    console.warn(`[useDeliverableStore] Backend unavailable. Cannot download ${sanitizedFilename}.`);
   }
 }));

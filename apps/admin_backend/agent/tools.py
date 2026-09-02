@@ -181,7 +181,7 @@ def execute_ocr_extraction(params: Dict[str, Any]) -> str:
 )
 def analyze_pid_drawing(params: Dict[str, Any]) -> str:
     from apps.admin_backend.ocr.pid_graph_extractor import pid_extractor
-    pid_id = params.get("pid_id", "PID-MRPL-CDU-01")
+    pid_id = params.get("pid_id", "")
     graph = pid_extractor.get_graph(pid_id) or pid_extractor.build_synthetic_demo_pid(pid_id)
     return json.dumps({
         "pid_id": graph.pid_id,
@@ -200,9 +200,9 @@ def analyze_pid_drawing(params: Dict[str, Any]) -> str:
 )
 def trace_pid_connectivity(params: Dict[str, Any]) -> str:
     from apps.admin_backend.ocr.pid_graph_extractor import pid_extractor
-    source = params.get("source_asset") or params.get("source", "TK-101")
-    target = params.get("target_asset") or params.get("target", "C-101")
-    pid_id = params.get("pid_id", "PID-MRPL-CDU-01")
+    source = params.get("source_asset") or params.get("source", "")
+    target = params.get("target_asset") or params.get("target", "")
+    pid_id = params.get("pid_id", "")
 
     graph = pid_extractor.get_graph(pid_id) or pid_extractor.build_synthetic_demo_pid(pid_id)
     trace_res = pid_extractor.find_path(graph, source, target)
@@ -214,8 +214,8 @@ def trace_pid_connectivity(params: Dict[str, Any]) -> str:
 )
 def get_pid_upstream_isolation(params: Dict[str, Any]) -> str:
     from apps.admin_backend.ocr.pid_graph_extractor import pid_extractor
-    asset_tag = params.get("asset_tag") or params.get("tag", "FV-1002")
-    pid_id = params.get("pid_id", "PID-MRPL-CDU-01")
+    asset_tag = params.get("asset_tag") or params.get("tag", "")
+    pid_id = params.get("pid_id", "")
 
     graph = pid_extractor.get_graph(pid_id) or pid_extractor.build_synthetic_demo_pid(pid_id)
     iso_res = pid_extractor.get_upstream_isolation_valves(graph, asset_tag)
@@ -227,7 +227,7 @@ def get_pid_upstream_isolation(params: Dict[str, Any]) -> str:
 )
 def export_pid_asset_matrix(params: Dict[str, Any]) -> str:
     from apps.admin_backend.ocr.pid_graph_extractor import pid_extractor
-    pid_id = params.get("pid_id", "PID-MRPL-CDU-01")
+    pid_id = params.get("pid_id", "")
     graph = pid_extractor.get_graph(pid_id) or pid_extractor.build_synthetic_demo_pid(pid_id)
     file_path = pid_extractor.export_asset_matrix_excel(graph)
     return json.dumps({

@@ -228,24 +228,6 @@ def init_auth_db():
         )
     """)
 
-    # Seed default sovereign operator user if not exists
-    cursor.execute("SELECT id FROM users WHERE username = 'operator'")
-    if not cursor.fetchone():
-        pwd_hash = hash_password("reveal2026")
-        cursor.execute(
-            "INSERT INTO users (username, password_hash, role, full_name, department, created_at) VALUES (?, ?, ?, ?, ?, ?)",
-            ("operator", pwd_hash, "FIELD_OPERATOR", "Lead Process Operator", "Refinery Operations", time.time())
-        )
-
-    # Seed default sovereign admin user if not exists
-    cursor.execute("SELECT id FROM users WHERE username = 'admin'")
-    if not cursor.fetchone():
-        pwd_hash = hash_password("admin2026")
-        cursor.execute(
-            "INSERT INTO users (username, password_hash, role, full_name, department, created_at) VALUES (?, ?, ?, ?, ?, ?)",
-            ("admin", pwd_hash, "SUPER_ADMIN", "Refinery Compliance Chief", "Executive HSE & Audit", time.time())
-        )
-
     conn.commit()
     conn.close()
 

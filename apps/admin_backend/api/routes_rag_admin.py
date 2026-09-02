@@ -276,7 +276,7 @@ async def list_available_documents():
     }
 
 @router.get("/search")
-async def search_rag_knowledge(q: str = "MRPL furnace emergency shutdown", top_k: int = 4):
+async def search_rag_knowledge(q: str = "", top_k: int = 4):
     """
     Executes live semantic search on ChromaDB collections with BGE-small embeddings.
     """

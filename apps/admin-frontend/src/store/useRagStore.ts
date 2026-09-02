@@ -87,7 +87,7 @@ export const useRagStore = create<RagState>((set, get) => ({
 
   fetchVectorStats: async () => {
     try {
-      const data = await api.get<any>('/api/v1/rag/admin/stats');
+      const data = await api.get<any>('/api/rag-admin/stats');
       if (data && data.total_chunks) {
         set({
           vectorStats: {
@@ -149,7 +149,7 @@ export const useRagStore = create<RagState>((set, get) => ({
       formData.append('enable_bm25', String(config.enableBM25));
 
       try {
-        await api.post('/api/v1/rag/admin/reindex', formData);
+        await api.post('/api/rag-admin/ingest-file', formData);
       } catch {
         // Fallback progress completion if backend runs in dev sandbox
       }

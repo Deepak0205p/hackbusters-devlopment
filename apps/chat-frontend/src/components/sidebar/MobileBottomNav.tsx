@@ -19,7 +19,7 @@ export function MobileBottomNav({ onOpenSearch }: MobileBottomNavProps) {
   const isChat = pathname === '/' || pathname === '/chat';
   const isArtifacts = pathname === '/artifacts';
 
-  const tabs = [
+  const tabs: Array<{ label: string; href?: string; action?: () => void; active: boolean; icon: React.ReactNode; badge?: number }> = [
     {
       label: 'Chats',
       href: '/chat',
@@ -31,6 +31,7 @@ export function MobileBottomNav({ onOpenSearch }: MobileBottomNavProps) {
       href: '/artifacts',
       active: isArtifacts,
       icon: <FileText className="h-5 w-5" />,
+      badge: deliverables.length > 0 ? deliverables.length : undefined,
     },
     {
       label: 'Search',

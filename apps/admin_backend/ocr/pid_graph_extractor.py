@@ -43,8 +43,8 @@ class PIDEdge(BaseModel):
 
 class PIDGraphPayload(BaseModel):
     pid_id: str
-    drawing_title: str = "MRPL Process & Instrumentation Diagram"
-    drawing_number: str = "MRPL-PID-001"
+    drawing_title: str = ""
+    drawing_number: str = ""
     nodes: List[PIDNode] = Field(default_factory=list)
     edges: List[PIDEdge] = Field(default_factory=list)
     total_equipment: int = 0
@@ -116,187 +116,8 @@ class PIDTopologicalGraphExtractor:
         return G
 
     def build_synthetic_demo_pid(self, pid_id: str = "PID-MRPL-CDU-01") -> PIDGraphPayload:
-        """
-        Builds a canonical, high-fidelity industrial P&ID topological model for CDU Crude Pre-Flash:
-        Tank TK-101 -> Line 6"-HC-1001 -> Gate Valve V-101 -> Crude Pump P-101A -> Check Valve CV-101
-        -> Flow Control Valve FV-1002 (with FT-1002, PT-1002) -> Pre-Flash Column C-101.
-        """
-        nodes = [
-            PIDNode(
-                id="node_tk101",
-                tag="TK-101",
-                type="TANK",
-                category="EQUIPMENT",
-                description="Crude Oil Feed Storage Tank (Capacity: 50,000 m³)",
-                bbox=[50, 150, 180, 320],
-                center=(115, 235),
-                specs={"service": "Crude Oil", "design_pressure": "Atmospheric"}
-            ),
-            PIDNode(
-                id="node_v101",
-                tag="V-101",
-                type="GATE_VALVE",
-                category="VALVE",
-                description="Manual Suction Isolation Gate Valve (6 inch, 150#)",
-                bbox=[240, 220, 270, 250],
-                center=(255, 235),
-                specs={"size": "6 inch", "type": "Manual Gate Valve", "rating": "150#"}
-            ),
-            PIDNode(
-                id="node_p101a",
-                tag="P-101A",
-                type="PUMP",
-                category="EQUIPMENT",
-                description="Primary Crude Charge Centrifugal Pump (Flow: 350 m³/h, Head: 120m)",
-                bbox=[330, 200, 420, 270],
-                center=(375, 235),
-                specs={"motor_kw": 250, "flow_m3h": 350, "head_m": 120, "service": "Crude Oil"}
-            ),
-            PIDNode(
-                id="node_cv101",
-                tag="CV-101",
-                type="CHECK_VALVE",
-                category="VALVE",
-                description="Pump Discharge Non-Return Check Valve (NRV)",
-                bbox=[470, 220, 500, 250],
-                center=(485, 235),
-                specs={"size": "4 inch", "type": "Non-Return Check Valve"}
-            ),
-            PIDNode(
-                id="node_pt1002",
-                tag="PT-1002",
-                type="PRESSURE_TRANSMITTER",
-                category="INSTRUMENT",
-                description="Discharge Line Pressure Transmitter (Range: 0-25 bar)",
-                bbox=[540, 140, 580, 180],
-                center=(560, 160),
-                specs={"range": "0-25 bar", "signal": "4-20mA HART"}
-            ),
-            PIDNode(
-                id="node_ft1002",
-                tag="FT-1002",
-                type="FLOW_TRANSMITTER",
-                category="INSTRUMENT",
-                description="Crude Charge Orifice Flow Transmitter",
-                bbox=[620, 140, 660, 180],
-                center=(640, 160),
-                specs={"range": "0-500 m3/h", "signal": "4-20mA HART"}
-            ),
-            PIDNode(
-                id="node_fv1002",
-                tag="FV-1002",
-                type="CONTROL_VALVE",
-                category="VALVE",
-                description="Pneumatic Diaphragm Flow Control Valve (Fail Closed - FC)",
-                bbox=[690, 215, 735, 255],
-                center=(712, 235),
-                specs={"size": "4 inch", "actuator": "Pneumatic Diaphragm", "fail_state": "FC"}
-            ),
-            PIDNode(
-                id="node_esdv101",
-                tag="ESDV-101",
-                type="ESDV",
-                category="VALVE",
-                description="Emergency Column Infeed Shutdown Valve (SIL-3 Actuated)",
-                bbox=[790, 215, 835, 255],
-                center=(812, 235),
-                specs={"size": "6 inch", "type": "SIL-3 Hydraulic Actuated", "fail_state": "FC"}
-            ),
-            PIDNode(
-                id="node_c101",
-                tag="C-101",
-                type="COLUMN",
-                category="EQUIPMENT",
-                description="Crude Atmospheric Distillation / Pre-Flash Column (Trays: 48)",
-                bbox=[910, 100, 1050, 380],
-                center=(980, 240),
-                specs={"height_m": 42.5, "diameter_m": 4.8, "trays": 48}
-            )
-        ]
-
-        edges = [
-            PIDEdge(
-                source_id="node_tk101",
-                target_id="node_v101",
-                line_tag='6"-HC-1001-CS-150#',
-                line_type="PROCESS",
-                flow_direction="FORWARD",
-                pipe_size="6 inch",
-                fluid_service="HYDROCARBON"
-            ),
-            PIDEdge(
-                source_id="node_v101",
-                target_id="node_p101a",
-                line_tag='6"-HC-1001-CS-150#',
-                line_type="PROCESS",
-                flow_direction="FORWARD",
-                pipe_size="6 inch",
-                fluid_service="HYDROCARBON"
-            ),
-            PIDEdge(
-                source_id="node_p101a",
-                target_id="node_cv101",
-                line_tag='4"-HC-1002-CS-300#',
-                line_type="PROCESS",
-                flow_direction="FORWARD",
-                pipe_size="4 inch",
-                fluid_service="HYDROCARBON"
-            ),
-            PIDEdge(
-                source_id="node_cv101",
-                target_id="node_fv1002",
-                line_tag='4"-HC-1002-CS-300#',
-                line_type="PROCESS",
-                flow_direction="FORWARD",
-                pipe_size="4 inch",
-                fluid_service="HYDROCARBON"
-            ),
-            PIDEdge(
-                source_id="node_ft1002",
-                target_id="node_fv1002",
-                line_tag="PNEUMATIC_CONTROL_LOOP_1002",
-                line_type="PNEUMATIC_SIGNAL",
-                flow_direction="FORWARD",
-                pipe_size=None,
-                fluid_service="INSTRUMENT_AIR"
-            ),
-            PIDEdge(
-                source_id="node_fv1002",
-                target_id="node_esdv101",
-                line_tag='6"-HC-1003-CS-300#',
-                line_type="PROCESS",
-                flow_direction="FORWARD",
-                pipe_size="6 inch",
-                fluid_service="HYDROCARBON"
-            ),
-            PIDEdge(
-                source_id="node_esdv101",
-                target_id="node_c101",
-                line_tag='6"-HC-1003-CS-300#',
-                line_type="PROCESS",
-                flow_direction="FORWARD",
-                pipe_size="6 inch",
-                fluid_service="HYDROCARBON"
-            )
-        ]
-
-        adjacency = {}
-        for e in edges:
-            adjacency.setdefault(e.source_id, []).append(e.target_id)
-
-        payload = PIDGraphPayload(
-            pid_id=pid_id,
-            drawing_title="CDU-2 Crude Feed Pre-Flash & Charge P&ID",
-            drawing_number="MRPL-CDU-0012-REV4",
-            nodes=nodes,
-            edges=edges,
-            total_equipment=len([n for n in nodes if n.category == "EQUIPMENT"]),
-            total_valves=len([n for n in nodes if n.category == "VALVE"]),
-            total_instruments=len([n for n in nodes if n.category == "INSTRUMENT"]),
-            total_lines=len(edges),
-            adjacency=adjacency
-        )
-
+        """Returns an empty P&ID graph payload. No hardcoded demo data."""
+        payload = PIDGraphPayload(pid_id=pid_id)
         self.register_graph(payload)
         return payload
 
@@ -548,5 +369,3 @@ class PIDTopologicalGraphExtractor:
 
 # Global Singleton
 pid_extractor = PIDTopologicalGraphExtractor()
-# Preload canonical demo P&ID
-pid_extractor.build_synthetic_demo_pid("PID-MRPL-CDU-01")

@@ -3,11 +3,12 @@
 import React, { useEffect, useState } from 'react';
 import { useSovereigntyStore } from '@/store/useSovereigntyStore';
 import { useModelStore } from '@/store/useModelStore';
-import { 
-  Shield, 
-  Cpu, 
-  Database, 
-  Box, 
+import { api } from '@/lib/api';
+import {
+  Shield,
+  Cpu,
+  Database,
+  Box,
   ArrowUpRight,
   HardDrive
 } from 'lucide-react';
@@ -22,11 +23,9 @@ export function OverviewDeck({ onNavigate }: OverviewDeckProps) {
   const [ragStats, setRagStats] = useState({ documents: 0, chunks: 0, collections: 0 });
 
   useEffect(() => {
-    // Fetch live dynamic RAG stats from backend
-    fetch('http://localhost:8000/api/rag-admin/stats')
-      .then(res => res.json())
+    api.get<any>('/api/rag-admin/stats')
       .then(data => {
-        if (data.success) {
+        if (data && data.success) {
           setRagStats({
             documents: data.documents,
             chunks: data.chunks,

@@ -108,8 +108,8 @@ async def get_network_status():
         "port": port,
         "connect_url": connect_url,
         "hotspot_instructions": {
-            "ssid": "MRPL-SOVEREIGN-AI",
-            "password": "MRPL2026Sovereign",
+            "ssid": "",
+            "password": "",
             "internet_sharing": "OFF (Enforced Air-Gap)"
         },
         "qr_code_payload": connect_url

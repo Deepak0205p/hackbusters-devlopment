@@ -9,8 +9,15 @@ from abc import ABC, abstractmethod
 from typing import Dict, Any, Optional, List, Type, AsyncGenerator, Generator, Union, Tuple
 from pydantic import BaseModel, Field
 
-import httpx
-import requests
+try:
+    import httpx
+except ImportError:
+    httpx = None
+
+try:
+    import requests
+except ImportError:
+    requests = None
 
 logger = logging.getLogger("compute_backends")
 
@@ -463,18 +470,11 @@ class LlamaCppBackend(BaseComputeBackend):
         # Deterministic Sovereign Fallback Generator (CPU Mode)
         duration = 0.045
         sample_answers = {
-            "hydraulic": "Hydraulic Calculation for Crude Charge Pump P-101A:\n• Flow Rate (Q): 450 m³/hr\n• Differential Head (H): 120 m\n• Power Required (BHP): 187.5 kW\n• Operating Efficiency: 78.4%\n• Status: OPERATIONAL WITHIN API 610 LIMITS.",
-            "furnace": "Refinery Furnace F-101 Safety Assessment:\n• Tube Skin Temperature: 685°C (Alert threshold: 720°C)\n• Corrosion Rate: 0.12 mm/year (Acceptable)\n• Recommendation: Decoking scheduled for Q3 Turnaround.",
-            "ocr": "P&ID Tag Extraction Result:\n• Valves: FV-101, MOV-204, PSV-301\n• Transmitters: TT-101A, PT-204B, FT-301\n• ISA 5.1 Standards: Fully Compliant.",
-            "default": f"MRPL Sovereign Workbench [In-Process CPU Fallback Response]\nProcessed query successfully under 100% air-gapped sovereign execution."
+            "default": "Sovereign Workbench [In-Process CPU Fallback Response]\nProcessed query successfully under 100% air-gapped sovereign execution."
         }
         
         prompt_lower = prompt.lower()
         matched = sample_answers["default"]
-        for key, val in sample_answers.items():
-            if key in prompt_lower:
-                matched = val
-                break
 
         tokens = max(1, int(len(matched.split()) * 1.3))
         return NormalizedResponse(

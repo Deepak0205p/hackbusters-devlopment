@@ -80,7 +80,7 @@ class SwapEvent(BaseModel):
     to_model: str
     duration_ms: int
     status: str  # "SUCCESS" | "FAILED" | "OOM_FALLBACK"
-    trigger: str  # "LRU_EVICTION" | "MANUAL_HOTSWAP" | "DEMO_PRELOAD" | "CIRCUIT_BREAKER"
+    trigger: str  # "LRU_EVICTION" | "MANUAL_HOTSWAP" | "CIRCUIT_BREAKER"
     target_met: bool = True
     freed_vram_mb: int = 0
     allocated_vram_mb: int = 0

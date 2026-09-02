@@ -1,6 +1,7 @@
 import { create } from 'zustand';
+import { DeploymentMode } from '@/types/sovereignty';
 
-export type DeploymentMode = 'STANDALONE_LOCAL' | 'LAN_OPTION_A' | 'HOTSPOT_OPTION_B';
+export type { DeploymentMode };
 
 export interface SocketRecord {
   id: string;

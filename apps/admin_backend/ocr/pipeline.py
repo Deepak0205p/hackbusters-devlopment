@@ -264,33 +264,6 @@ class MultimodalOCRPipeline:
                     highlight=False
                 ))
 
-        # Guarantee minimum 4 structured inspection findings for standard documents
-        if len(findings) < 4:
-            if not any(f.key == "Inspection Document Status" for f in findings):
-                findings.append(ExtractedFinding(
-                    key="Inspection Document Status",
-                    value="Verified Genuine Engineering Payload",
-                    category="compliance",
-                    confidence=98,
-                    highlight=False
-                ))
-            if not any(f.key == "ISA-5.1 Compliance Standard" for f in findings):
-                findings.append(ExtractedFinding(
-                    key="ISA-5.1 Compliance Standard",
-                    value="MRPL Industrial Instrumentation & P&ID Standard Active",
-                    category="standard",
-                    confidence=99,
-                    highlight=False
-                ))
-            if not any(f.key == "P&ID Topological Connectivity" for f in findings):
-                findings.append(ExtractedFinding(
-                    key="P&ID Topological Connectivity",
-                    value="NetworkX MultiDiGraph Ready",
-                    category="topology",
-                    confidence=97,
-                    highlight=False
-                ))
-
         return findings
 
     def process_document(self, filename: str, file_bytes: bytes) -> DocumentProcessingResult:

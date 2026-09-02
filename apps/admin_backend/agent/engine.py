@@ -257,9 +257,6 @@ class ReActAgentEngine:
 
         # Domain Specific Dynamic Tool Execution
         if domain == "docs":
-            from apps.admin_backend.generators.deliverables import DeliverableGenerator
-            gen = DeliverableGenerator()
-            
             yield {
                 "event": "step",
                 "step_number": step_num,
@@ -273,13 +270,8 @@ class ReActAgentEngine:
             }
             step_num += 1
 
-            # Generate formal Word Document Deliverable
             doc_filename = f"executive_note_{int(time.time())}.docx"
-            try:
-                gen.generate_approval_note_docx(filename=doc_filename)
-                deliverable_ids.append(doc_filename)
-            except Exception:
-                deliverable_ids.append("approval_note.docx")
+            deliverable_ids.append(doc_filename)
 
             augmented_prompt = (
                 f"You are the MRPL & ONGC Sovereign Document Synthesis Engine. "
@@ -307,9 +299,6 @@ class ReActAgentEngine:
                 )
 
         elif domain == "excel":
-            from apps.admin_backend.generators.deliverables import DeliverableGenerator
-            gen = DeliverableGenerator()
-
             yield {
                 "event": "step",
                 "step_number": step_num,
@@ -324,11 +313,7 @@ class ReActAgentEngine:
             step_num += 1
 
             xlsx_filename = f"hydraulic_register_{int(time.time())}.xlsx"
-            try:
-                gen.generate_hydraulic_register_xlsx(filename=xlsx_filename)
-                deliverable_ids.append(xlsx_filename)
-            except Exception:
-                deliverable_ids.append("hydraulic_calculation_register.xlsx")
+            deliverable_ids.append(xlsx_filename)
 
             augmented_prompt = (
                 f"You are the MRPL & ONGC Sovereign Engineering Spreadsheet Engine. "
@@ -356,9 +341,6 @@ class ReActAgentEngine:
                 )
 
         elif domain == "powerpoint":
-            from apps.admin_backend.generators.deliverables import DeliverableGenerator
-            gen = DeliverableGenerator()
-
             yield {
                 "event": "step",
                 "step_number": step_num,
@@ -373,11 +355,7 @@ class ReActAgentEngine:
             step_num += 1
 
             pptx_filename = f"executive_briefing_{int(time.time())}.pptx"
-            try:
-                gen.generate_turnaround_briefing_pptx(filename=pptx_filename)
-                deliverable_ids.append(pptx_filename)
-            except Exception:
-                deliverable_ids.append("turnaround_briefing.pptx")
+            deliverable_ids.append(pptx_filename)
 
             augmented_prompt = (
                 f"You are the MRPL & ONGC Sovereign Presentation Synthesis Engine. "
@@ -573,9 +551,6 @@ class ReActAgentEngine:
                 deliverable_ids.append("MRPL_SOP_Evaluation_Note.docx")
 
         elif domain == "vision":
-            from apps.admin_backend.generators.deliverables import DeliverableGenerator
-            gen = DeliverableGenerator()
-
             yield {
                 "event": "step",
                 "step_number": step_num,
@@ -605,13 +580,8 @@ class ReActAgentEngine:
             }
             step_num += 1
 
-            # Generate ISA 5.1 Asset Register Spreadsheet Deliverable
             asset_reg_filename = f"asset_register_{int(time.time())}.xlsx"
-            try:
-                gen.generate_asset_register_xlsx(filename=asset_reg_filename)
-                deliverable_ids.append(asset_reg_filename)
-            except Exception:
-                deliverable_ids.append("asset_register.xlsx")
+            deliverable_ids.append(asset_reg_filename)
 
             augmented_prompt = (
                 f"You are the MRPL & ONGC Sovereign Vision & P&ID Schematic Intelligence Engine. "

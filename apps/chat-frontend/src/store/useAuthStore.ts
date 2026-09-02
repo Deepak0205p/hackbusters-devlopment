@@ -25,15 +25,9 @@ interface AuthState {
 export const useAuthStore = create<AuthState>()(
   persist(
     (set, get) => ({
-      user: {
-        id: 1,
-        username: 'operator',
-        role: 'operator',
-        full_name: 'Lead Process Operator',
-        department: 'Refinery Operations'
-      },
-      token: 'sovereign-session-default-token',
-      isAuthenticated: true,
+      user: null,
+      token: null,
+      isAuthenticated: false,
       isLoading: false,
       initialize: () => {
         set({ isLoading: false });

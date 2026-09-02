@@ -1,7 +1,7 @@
 import os
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import FileResponse
-from apps.admin_backend.generators.deliverables import OUTPUT_DIR, deliverable_generator
+OUTPUT_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "data", "outputs")
 
 import hashlib
 import time
@@ -65,15 +65,15 @@ async def list_deliverables():
                 sha_hash = h.hexdigest()
                 
                 # Context summary
-                summary = f"Sovereign {dtype.upper()} document generated for MRPL refinery operations."
+                summary = f"Generated {dtype.upper()} document."
                 if dtype == "docx":
-                    summary = "Official PSU Executive Note Sheet & Statutory Compliance Record."
+                    summary = "Official compliance document."
                 elif dtype == "xlsx":
-                    summary = "API 610 / API 570 Hydraulic & Engineering Calculation Register."
+                    summary = "Engineering calculation register."
                 elif dtype == "pptx":
-                    summary = "16:9 Widescreen Executive Operations Review & Decoking Deck."
+                    summary = "Executive operations review deck."
                 elif dtype == "py":
-                    summary = "AST Sandboxed Python Calculation Script."
+                    summary = "Sandboxed Python calculation script."
 
                 results.append({
                     "id": f"disk-{fname}",
@@ -81,8 +81,8 @@ async def list_deliverables():
                     "type": dtype,
                     "size_bytes": size_b,
                     "size_formatted": size_fmt,
-                    "source_scenario": "MRPL Operational Repository",
-                    "source_requirement": "Sovereign AI Deliverable",
+                    "source_scenario": "",
+                    "source_requirement": "",
                     "generating_model": default_model,
                     "generated_timestamp": time_str,
                     "sha256_hash": f"SHA256:{sha_hash[:16]}...",
@@ -91,7 +91,7 @@ async def list_deliverables():
                         {"label": "File Status", "value": "Stored On Disk"},
                         {"label": "Integrity", "value": "Verified SHA-256"}
                     ],
-                    "sop_citations": ["SOP-MRPL-GEN-01", "OISD-STD-105"]
+                    "sop_citations": []
                 })
             except Exception as e:
                 print(f"[routes_files] Error reading {full_path}: {e}")

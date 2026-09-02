@@ -52,6 +52,7 @@ import { AppSidebar } from '@/components/sidebar/AppSidebar';
 import { useSidebarStore } from '@/store/useSidebarStore';
 import { useAuthStore } from '@/store/useAuthStore';
 import { PerplexityReasoningAccordion } from '@/components/chat/PerplexityReasoningAccordion';
+import { MarkdownContent } from '@/components/MarkdownContent';
 
 // Ultra-Modern Fluent / Glowing Brand 3D-Style Icon Components
 function ExcelIcon({ className = "h-7 w-7" }: { className?: string }) {
