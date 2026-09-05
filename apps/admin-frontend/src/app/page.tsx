@@ -17,62 +17,55 @@ import {
   Shield, 
   FileText, 
   MessageSquare, 
-  QrCode,
   Users,
   ArrowRight
 } from 'lucide-react';
 
 const subsystemTiles = [
   {
-    title: '1. Models & VRAM Memory',
+    title: 'Models & VRAM Memory',
     href: '/models',
     icon: Cpu,
     description: 'Dynamic dual-slot LRU VRAM memory manager, active GGUF models, and swap logs.'
   },
   {
-    title: '2. Two-Stage Query Router',
+    title: 'Two-Stage Query Router',
     href: '/router',
     icon: GitFork,
     description: 'Interactive route tester (<2ms Regex vs <25ms BGE-small semantic fallback).'
   },
   {
-    title: '3. Docker Code Sandbox',
+    title: 'Code Sandbox',
     href: '/sandbox',
     icon: Box,
     description: 'Isolated python:3.11 container runner with --network none and AST security filter.'
   },
   {
-    title: '4. RAG Knowledge & Converter',
+    title: 'RAG Knowledge & Converter',
     href: '/rag',
     icon: Database,
     description: 'Upload SOP/MOP to build ChromaDB embeddings + universal document format converter.'
   },
   {
-    title: '5. Multimodal OCR Hub',
+    title: 'OCR Hub',
     href: '/ocr',
     icon: UploadCloud,
     description: 'Offline PaddleOCR & Tesseract pipeline with ISA 5.1 P&ID tag extraction.'
   },
   {
-    title: '6. Air-Gap Sovereignty Watchdog',
+    title: 'Sovereignty Watchdog',
     href: '/sovereignty',
     icon: Shield,
     description: 'psutil real-time socket inspection & SHA-256 tamper-evident blockchain ledger.'
   },
   {
-    title: '7. Enterprise Deliverables',
+    title: 'Enterprise Deliverables',
     href: '/deliverables',
     icon: FileText,
     description: 'Programmatic synthesis of Word (.docx), Excel (.xlsx), and PowerPoint (.pptx).'
   },
   {
-    title: '8. Remote Access & QR Pairing',
-    href: '/connect',
-    icon: QrCode,
-    description: 'Pair evaluator devices over closed host Wi-Fi hotspot without internet gateway.'
-  },
-  {
-    title: '9. Operator & User Accounts',
+    title: 'Operator & User Accounts',
     href: '/users',
     icon: Users,
     description: 'Provision and manage operator logins with XAMPP MySQL and air-gapped sovereign SQLite sync.'
@@ -107,8 +100,7 @@ export default function WorkbenchHomePage() {
             upload: '/ocr',
             sovereignty: '/sovereignty',
             deliverables: '/deliverables',
-            chat: '/chat',
-            connect: '/connect'
+            chat: '/chat'
           };
           router.push(mapping[tab] || '/');
         }} />
@@ -117,11 +109,9 @@ export default function WorkbenchHomePage() {
         <div className="space-y-3 pt-2">
           <div className="flex items-center justify-between">
             <h2 className="text-xs font-semibold uppercase tracking-wider text-gray-500">
-              Subsystem Observatories & Modules
+              Modules
             </h2>
-            <span className="text-[11px] text-gray-400 font-mono">
-              Select module to open dedicated workspace
-            </span>
+            
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">

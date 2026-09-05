@@ -197,8 +197,19 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         return false;
       }
 
-      const token = data.access_token;
+      const token = data.token || data.access_token;
       const user = data.user;
+
+      // Restrict access: Strictly verify the user's role from database
+      const userRole = (user?.role || '').trim().toUpperCase();
+      const allowedAdminRoles = ['SUPER_ADMIN', 'ADMIN', 'PLANT_SECURITY_OFFICER'];
+      if (!allowedAdminRoles.includes(userRole)) {
+        set({
+          error: `Access Denied: Account with role '${user?.role || 'UNKNOWN'}' is not authorized. The Admin Observatory requires an Administrator role.`,
+          isLoading: false
+        });
+        return false;
+      }
 
       if (typeof window !== 'undefined') {
         localStorage.setItem('reveal_auth_token', token);
@@ -230,8 +241,15 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) {
-        const user = await res.json();
-        set({ user, isAuthenticated: true });
+        const data = await res.json();
+        const userData = data.user || data;
+        const userRole = (userData?.role || '').trim().toUpperCase();
+        const allowedAdminRoles = ['SUPER_ADMIN', 'ADMIN', 'PLANT_SECURITY_OFFICER'];
+        if (!allowedAdminRoles.includes(userRole)) {
+          get().logout();
+          return;
+        }
+        set({ user: userData, isAuthenticated: true });
       } else if (res.status === 401) {
         get().logout();
       }

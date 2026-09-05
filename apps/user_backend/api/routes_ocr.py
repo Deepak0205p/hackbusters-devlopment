@@ -79,7 +79,7 @@ async def upload_pid_drawing(
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"P&ID Graph Extraction failed: {str(e)}"
+            detail="Schematic Processing Error: Unable to extract topological graph and ISA-5.1 tags from the provided P&ID drawing. Please ensure the schematic format is valid and legible."
         )
 
 @router.get("/pid/{pid_id}/graph", response_model=PIDGraphPayload)

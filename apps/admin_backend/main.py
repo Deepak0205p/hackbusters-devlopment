@@ -23,6 +23,7 @@ from apps.admin_backend.api.routes_models import router as models_router
 from apps.admin_backend.api.routes_sovereignty import router as sovereignty_router
 from apps.admin_backend.api.routes_rag_admin import router as rag_admin_router
 from apps.admin_backend.api.routes_auth import router as auth_router
+from apps.user_backend.api.routes_sandbox import router as sandbox_router
 
 from apps.admin_backend.core.security_middleware import EnterpriseSecurityMiddleware
 
@@ -52,6 +53,7 @@ app.include_router(auth_router)
 app.include_router(models_router)
 app.include_router(sovereignty_router)
 app.include_router(rag_admin_router)
+app.include_router(sandbox_router)
 
 # 4. Mount Admin Observatory Static Export
 ADMIN_FRONTEND_OUT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "admin-frontend", "out"))

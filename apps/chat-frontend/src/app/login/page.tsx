@@ -84,13 +84,8 @@ export default function LoginPage() {
       <header className="relative z-10 w-full max-w-7xl mx-auto flex items-center justify-between px-6 py-4 border-b border-slate-200/80 dark:border-white/[0.06] backdrop-blur-md">
         <div className="flex items-center gap-4">
           <RevealBrand size="md" showBadge={true} />
-          <span className="hidden sm:inline-block h-4 w-[1px] bg-slate-300 dark:bg-white/10" />
-          <div className="hidden sm:flex items-center gap-2">
-            <Building2 className="w-3.5 h-3.5 text-slate-400 dark:text-[#8e918f]" />
-            <span className="text-xs text-slate-500 dark:text-[#8e918f] font-medium tracking-tight">
-              Mangalore Refinery and Petrochemicals Limited
-            </span>
-          </div>
+          
+
         </div>
 
         {/* Right Header Actions: Theme Switcher & Air-gap Badge */}
@@ -103,14 +98,7 @@ export default function LoginPage() {
             {isDark ? <Sun className="h-4 w-4 text-amber-400" /> : <Moon className="h-4 w-4 text-blue-600" />}
           </button>
 
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-50 border border-emerald-200/80 text-emerald-700 dark:bg-emerald-500/10 dark:border-emerald-500/25 dark:text-emerald-400 text-xs font-mono backdrop-blur-md shadow-xs">
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
-            </span>
-            <span className="hidden sm:inline font-semibold">100% AIR-GAPPED</span>
-            <span className="sm:hidden font-semibold">AIR-GAP</span>
-          </div>
+          
         </div>
       </header>
 
@@ -119,11 +107,7 @@ export default function LoginPage() {
         
         {/* Brand Hero Greeting */}
         <div className="text-center mb-8 space-y-3 flex flex-col items-center">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white dark:bg-[#141418] border border-slate-200 dark:border-white/10 text-slate-700 dark:text-[#a8c7fa] text-xs font-mono shadow-xs">
-            <RevealLogoIcon className="w-3.5 h-3.5" />
-            <span>Industrial AI Gateway & Security Workbench</span>
-          </div>
-          
+                
           <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 dark:from-[#4285f4] dark:via-[#9b72cf] dark:to-[#d96570] bg-clip-text text-transparent">
             Sign In to REVEAL 2.0
           </h1>
@@ -190,27 +174,6 @@ export default function LoginPage() {
               </div>
             </div>
 
-            {/* Preset Helper Pills */}
-            <div className="pt-1 flex items-center justify-between text-[11px]">
-              <span className="text-slate-400 dark:text-[#8e918f]">Default Accounts:</span>
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => fillQuickUser('operator', 'RefineryPass2026!')}
-                  className="px-2 py-0.5 rounded-md bg-slate-100 hover:bg-slate-200 dark:bg-white/[0.06] dark:hover:bg-white/[0.1] text-blue-600 dark:text-[#a8c7fa] font-mono font-medium transition-colors cursor-pointer"
-                >
-                  operator
-                </button>
-                <button
-                  type="button"
-                  onClick={() => fillQuickUser('admin', 'AdminPass2026!')}
-                  className="px-2 py-0.5 rounded-md bg-slate-100 hover:bg-slate-200 dark:bg-white/[0.06] dark:hover:bg-white/[0.1] text-emerald-600 dark:text-emerald-400 font-mono font-medium transition-colors cursor-pointer"
-                >
-                  admin
-                </button>
-              </div>
-            </div>
-
             {/* Submit CTA */}
             <button
               type="submit"
@@ -224,7 +187,7 @@ export default function LoginPage() {
                 </>
               ) : (
                 <>
-                  <span>Sign In to Enclave</span>
+                  <span>Sign In</span>
                   <ArrowRight className="w-4 h-4" />
                 </>
               )}
@@ -233,38 +196,10 @@ export default function LoginPage() {
 
         </div>
 
-        {/* Security Compliance Badges */}
-        <div className="mt-8 flex flex-wrap items-center justify-center gap-3 text-[11px] font-mono text-slate-400 dark:text-[#8e918f]">
-          <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-white dark:bg-[#121216] border border-slate-200 dark:border-white/[0.06] shadow-xs">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-            Argon2id Encrypted
-          </div>
-          <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-white dark:bg-[#121216] border border-slate-200 dark:border-white/[0.06] shadow-xs">
-            <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
-            XAMPP MySQL
-          </div>
-          <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-white dark:bg-[#121216] border border-slate-200 dark:border-white/[0.06] shadow-xs">
-            <span className="w-1.5 h-1.5 rounded-full bg-purple-500" />
-            SHA-256 Audited
-          </div>
-        </div>
+        
       </main>
 
-      {/* Enterprise Footer */}
-      <footer className="relative z-10 w-full max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between px-6 py-4 border-t border-slate-200/80 dark:border-white/[0.06] text-xs text-slate-400 dark:text-[#8e918f] gap-2">
-        <div className="flex items-center gap-2 font-medium">
-          <span>MRPL Sovereign AI Workbench</span>
-          <span>&bull;</span>
-          <span className="font-mono">SIH26117</span>
-        </div>
-        <div className="flex items-center gap-4 text-[11px]">
-          <span>ISA/IEC 62443 Certified</span>
-          <span>&bull;</span>
-          <span>Zero External Egress</span>
-          <span>&bull;</span>
-          <span>Air-Gapped Sovereign Mesh</span>
-        </div>
-      </footer>
+      
     </div>
   );
 }

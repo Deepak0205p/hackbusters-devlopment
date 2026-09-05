@@ -113,14 +113,20 @@ async def swap_model(request: SwapRequest):
         event = model_manager.swap_secondary_model(request.model_id)
         return event
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(
+            status_code=400,
+            detail=f"Model Allocation Error: Unable to swap model into active VRAM. {str(e)}"
+        )
 
 @router.post("/api/v1/models/unload")
 @router.post("/api/models/unload")
 async def unload_model(request: UnloadRequest):
     """Explicitly unloads a model from active VRAM residency."""
     if request.model_id not in model_manager.models:
-        raise HTTPException(status_code=404, detail=f"Model '{request.model_id}' not found.")
+        raise HTTPException(
+            status_code=404,
+            detail=f"Model Not Found: The specified model '{request.model_id}' is not registered in the hardware profile catalog."
+        )
     
     success = model_manager.unload_model(request.model_id)
     return {
@@ -194,7 +200,10 @@ async def generate_completion(req: GenerateRequest):
 async def set_model_endpoint(model_id: str, request: SetEndpointRequest):
     """Dynamically assigns a LAN node endpoint for a model."""
     if model_id not in model_manager.models:
-        raise HTTPException(status_code=404, detail=f"Model '{model_id}' not found.")
+        raise HTTPException(
+            status_code=404,
+            detail=f"Model Not Found: The specified model '{model_id}' is not registered in the hardware profile catalog."
+        )
     
     clean_url = request.endpoint_url.strip().rstrip("/")
     if not clean_url.startswith("http://") and not clean_url.startswith("https://"):
@@ -212,7 +221,10 @@ async def set_model_endpoint(model_id: str, request: SetEndpointRequest):
 async def check_node_health(model_id: str):
     """Probes whether the assigned node endpoint is currently online."""
     if model_id not in model_manager.models:
-        raise HTTPException(status_code=404, detail=f"Model '{model_id}' not found.")
+        raise HTTPException(
+            status_code=404,
+            detail=f"Model Not Found: The specified model '{model_id}' is not registered in the hardware profile catalog."
+        )
     
     backend, meta = get_backend_for_model(model_id)
     t0 = time.time()
@@ -226,3 +238,44 @@ async def check_node_health(model_id: str):
         status="ONLINE" if is_online else "OFFLINE_FALLBACK_LOCAL",
         latency_ms=latency
     )
+
+# ==============================================================================
+# 5. INTELLIGENT ROUTER EVALUATION
+# ==============================================================================
+class RouteEvalRequest(BaseModel):
+    query: str
+    has_attachments: Optional[bool] = False
+
+@router.post("/api/v1/router/evaluate")
+@router.post("/api/router/evaluate")
+async def evaluate_router_query(request: RouteEvalRequest):
+    """
+    Live 2-stage hybrid query router evaluation against on-premise industrial models.
+    """
+    from apps.shared.core.router import intelligent_router
+    t0 = time.perf_counter()
+    decision = intelligent_router.route(request.query, has_attachments=request.has_attachments or False)
+    total_latency_ms = round((time.perf_counter() - t0) * 1000, 2)
+    
+    # Infer required tools based on domain
+    domain = decision.get("domain", "general")
+    tools = []
+    if domain in ("code", "calculation"):
+        tools = ["python_sandbox_runner", "sympy_math_engine"]
+    elif domain in ("rag", "compliance"):
+        tools = ["chromadb_sop_search", "provenance_citation_formatter"]
+    elif domain in ("vision", "cad"):
+        tools = ["paddleocr_extractor", "isa_5_1_tag_parser"]
+
+    return {
+        "success": True,
+        "domain": domain.upper(),
+        "targetModel": decision.get("model_id", "qwen3-4b"),
+        "stage1Match": decision.get("routed_by") == "stage1_regex",
+        "routedBy": decision.get("routed_by", "stage2_semantic"),
+        "confidence": (decision.get("confidence", 85)) / 100.0 if decision.get("confidence", 85) > 1 else decision.get("confidence", 0.85),
+        "totalLatencyMs": total_latency_ms,
+        "isInScope": decision.get("is_in_scope", True),
+        "department": decision.get("department"),
+        "requiredTools": tools
+    }

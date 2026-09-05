@@ -1,65 +1,30 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ShieldCheck,
-  CreditCard,
-  Building2,
   Lock,
   User,
-  Key,
-  UploadCloud,
-  FileCheck,
   AlertCircle,
-  Cpu,
-  CheckCircle2,
   ArrowRight,
   RefreshCw,
+  Eye,
+  EyeOff,
   Sparkles,
+  Server,
+  Activity
 } from 'lucide-react';
 import { useAuthStore } from '@/store/useAuthStore';
 
-// Sample pre-configured test certificate for 1-click hardware smartcard simulation
-const SAMPLE_SMARTCARD_CERT = `-----BEGIN CERTIFICATE-----
-MIICljCCAX4CCQD6mH5S9q4t4TANBgkqhkiG9w0BAQsFADBLMQswCQYDVQQGEwJJ
-TjESMBAGA1UECAwJS2FybmF0YWthMREwDwYDVQQHDAhNYW5nYWxvcmUxGDAWBgNV
-BAoMD01SUEwgUmVmaW5lcnkgQ0EwHhcNMjYwOTAxMDAwMDAwWhcNMjcwOTAxMDAw
-MDAwWjBBMQswCQYDVQQGEwJJTjESMBAGA1UECgwJTVJQTF9QU1UxFDASBgNVBAsM
-C1NFQ19BRE1JTlMxEzARBgNVBAMMCm1ycGxfYWRtaW4wggEiMA0GCSqGSIb3DQEB
-AQUAA4IBDwAwggEKAoIBAQC8uS8k9lCj1m2u5vX2h5j+0k3x7n9m8v1x2y4z6a8b
-0c2d4e6f8a0b2c4d6e8f0a2b4c6d8e0f1a3b5c7d9e1f3a5b7c9d1e3f5a7b9c1d
-3e5f7a9b1c3d5e7f9a1b3c5d7e9f1a3b5c7d9e1f3a5b7c9d1e3f5a7b9c1d3e5f
-7a9b1c3d5e7f9a1b3c5d7e9f1a3b5c7d9e1f3a5b7c9d1e3f5a7b9c1d3e5f7a9b
-AgMBAAEwDQYJKoZIhvcNAQELBQADggEBAJH7x6y5k4l3m2n1o0p9q8r7s6t5u4v3
-w2x1y0z9a8b7c6d5e4f3a2b1c0d9e8f7a6b5c4d3e2f1a0b9c8d7e6f5a4b3c2d1
-e0f9a8b7c6d5e4f3a2b1c0d9e8f7a6b5c4d3e2f1a0b9c8d7e6f5a4b3c2d1e0f9
-a8b7c6d5e4f3a2b1c0d9e8f7a6b5c4d3e2f1a0b9c8d7e6f5a4b3c2d1e0f9a8b7
-c6d5e4f3a2b1c0d9e8f7a6b5c4d3e2f1a0b9c8d7e6f5a4b3c2d1e0f9a8b7c6d5
------END CERTIFICATE-----`;
-
 export default function LoginPage() {
   const router = useRouter();
-  const { loginWithCert, loginWithLdap, loginWithStandard, isAuthenticated, isLoading, error, clearError } =
-    useAuthStore();
+  const { loginWithStandard, isAuthenticated, isLoading, error, clearError } = useAuthStore();
 
-  const [activeTab, setActiveTab] = useState<'cert' | 'ldap' | 'local'>('cert');
-  const [certPem, setCertPem] = useState('');
-  const [certPin, setCertPin] = useState('');
-  const [parsedCertInfo, setParsedCertInfo] = useState<{ cn?: string; ou?: string; serial?: string } | null>(null);
-
-  // LDAP form state
-  const [ldapUsername, setLdapUsername] = useState('');
-  const [ldapPassword, setLdapPassword] = useState('');
-  const [department, setDepartment] = useState('MRPL_SEC_ADMINS');
-
-  // Local form state
-  const [localUsername, setLocalUsername] = useState('');
-  const [localPassword, setLocalPassword] = useState('');
-
-  const [isDragging, setIsDragging] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -67,496 +32,172 @@ export default function LoginPage() {
     }
   }, [isAuthenticated, router]);
 
-  // Parse certificate information client-side for feedback
-  useEffect(() => {
-    if (!certPem) {
-      setParsedCertInfo(null);
-      return;
-    }
-    try {
-      let cn = 'MRPL Authorized Engineer';
-      let ou = 'Plant Operations';
-      let serial = '0x' + Math.abs(hashCode(certPem)).toString(16).toUpperCase().padStart(8, '0');
-
-      if (certPem.includes('CN=')) {
-        const match = certPem.match(/CN=([^,/\\n]+)/i);
-        if (match) cn = match[1];
-      }
-      if (certPem.includes('OU=')) {
-        const match = certPem.match(/OU=([^,/\\n]+)/i);
-        if (match) ou = match[1];
-      }
-      setParsedCertInfo({ cn, ou, serial });
-    } catch {
-      setParsedCertInfo(null);
-    }
-  }, [certPem]);
-
-  function hashCode(str: string): number {
-    let hash = 0;
-    for (let i = 0; i < str.length; i++) {
-      hash = (hash << 5) - hash + str.charCodeAt(i);
-      hash |= 0;
-    }
-    return hash;
-  }
-
-  const handleFileDrop = (e: React.DragEvent<HTMLDivElement>) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsDragging(false);
-    clearError();
-    const file = e.dataTransfer.files[0];
-    if (file) {
-      readCertFile(file);
-    }
-  };
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    clearError();
-    const file = e.target.files?.[0];
-    if (file) {
-      readCertFile(file);
-    }
-  };
-
-  const readCertFile = (file: File) => {
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const content = event.target?.result as string;
-      if (content) {
-        setCertPem(content);
-      }
-    };
-    reader.readAsText(file);
-  };
-
-  const handleCertSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!certPem.trim()) return;
-    const success = await loginWithCert(certPem, certPin);
+    if (!username.trim() || !password.trim()) return;
+    const success = await loginWithStandard(username.trim(), password.trim());
     if (success) {
       router.push('/');
     }
-  };
-
-  const handleLdapSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!ldapUsername.trim() || !ldapPassword.trim()) return;
-    const success = await loginWithLdap(ldapUsername, ldapPassword);
-    if (success) {
-      router.push('/');
-    }
-  };
-
-  const handleLocalSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!localUsername.trim() || !localPassword.trim()) return;
-    const success = await loginWithStandard(localUsername, localPassword);
-    if (success) {
-      router.push('/');
-    }
-  };
-
-  const handleSimulateSmartCard = () => {
-    clearError();
-    setCertPem(SAMPLE_SMARTCARD_CERT);
-    setCertPin('9421');
-  };
-
-  const handleFillDemoLdap = (user: string, role: string) => {
-    clearError();
-    setLdapUsername(user);
-    setLdapPassword('MRPL#Secure2026');
-    setDepartment(role);
   };
 
   return (
-    <div className="min-h-screen bg-[#0a0c10] text-[#ededed] flex flex-col justify-center items-center px-4 py-8 relative overflow-hidden font-sans selection:bg-cyan-500/20 selection:text-cyan-300">
-      {/* Background Subtle Gradient Grid */}
-      <div className="absolute inset-0 bg-[linear-gradient(to_right,#1f24300a_1px,transparent_1px),linear-gradient(to_bottom,#1f24300a_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none" />
-      <div className="absolute -top-40 -left-40 w-96 h-96 bg-cyan-500/10 rounded-full blur-[128px] pointer-events-none" />
-      <div className="absolute -bottom-40 -right-40 w-96 h-96 bg-emerald-500/10 rounded-full blur-[128px] pointer-events-none" />
+    <div className="min-h-screen bg-[#060709] text-[#e3e5e8] flex flex-col justify-center items-center px-4 py-12 relative overflow-hidden font-sans selection:bg-cyan-500/20 selection:text-cyan-300">
+      {/* Dynamic Animated Ambient Orbs */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden select-none">
+        <motion.div
+          animate={{
+            scale: [1, 1.2, 1],
+            x: [0, 40, 0],
+            y: [0, -30, 0],
+          }}
+          transition={{ duration: 18, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute -top-32 -left-32 w-[480px] h-[480px] bg-gradient-to-tr from-cyan-600/15 via-blue-600/10 to-indigo-600/10 rounded-full blur-[130px] opacity-70"
+        />
+        <motion.div
+          animate={{
+            scale: [1.1, 0.9, 1.1],
+            x: [0, -30, 0],
+            y: [0, 40, 0],
+          }}
+          transition={{ duration: 22, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute -bottom-32 -right-32 w-[520px] h-[520px] bg-gradient-to-bl from-emerald-500/15 via-cyan-500/10 to-blue-500/10 rounded-full blur-[140px] opacity-60"
+        />
+        {/* Subtle Tech Grid overlay */}
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff05_1px,transparent_1px),linear-gradient(to_bottom,#ffffff05_1px,transparent_1px)] bg-[size:32px_32px]" />
+      </div>
 
-      {/* Main Container */}
-      <div className="w-full max-w-md z-10 space-y-6">
-        {/* Header Branding */}
-        <div className="text-center space-y-2">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-950/40 border border-cyan-800/50 text-cyan-400 text-xs font-mono mb-1 shadow-inner">
-            <Cpu className="w-3.5 h-3.5" />
-            <span>MRPL Sovereign AI Workbench (SIH PS 26117)</span>
-          </div>
-          <h1 className="text-2xl font-bold tracking-tight text-white flex items-center justify-center gap-2">
-            <ShieldCheck className="w-7 h-7 text-emerald-400" />
-            <span>Industrial Security Gateway</span>
-          </h1>
-          <p className="text-xs text-gray-400 font-mono">
-            Air-Gapped Sovereign Authentication &amp; Hardware PKI
-          </p>
+      {/* Main Glassmorphic Container */}
+      <div className="w-full max-w-[420px] z-10 space-y-7">
+        
+        {/* Top Header & Floating Tech Pill */}
+        <div className="text-center space-y-3">
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/[0.04] border border-white/[0.08] backdrop-blur-md text-[11px] font-mono text-cyan-400/90 shadow-sm"
+          >
+            
+            
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.05 }}
+          >
+            <div className="inline-flex p-3 rounded-2xl bg-gradient-to-b from-white/[0.08] to-white/[0.02] border border-white/[0.1] shadow-2xl mb-3">
+              <ShieldCheck className="w-8 h-8 text-cyan-400" />
+            </div>
+            <h1 className="text-2xl font-bold tracking-tight text-white">
+              Admin Observatory
+            </h1>
+            
+          </motion.div>
         </div>
 
-        {/* Tabbed Login Card */}
-        <div className="bg-[#11141c] border border-gray-800/80 rounded-xl shadow-2xl p-6 backdrop-blur-md relative overflow-hidden">
-          {/* Mode Selector Tabs */}
-          <div className="grid grid-cols-3 gap-1.5 p-1 bg-[#090b10] border border-gray-800/60 rounded-lg mb-6">
-            <button
-              type="button"
-              onClick={() => {
-                setActiveTab('cert');
-                clearError();
-              }}
-              className={`flex items-center justify-center gap-1.5 py-2 px-2 rounded-md text-xs font-medium transition-all ${
-                activeTab === 'cert'
-                  ? 'bg-gradient-to-r from-emerald-600/20 to-cyan-600/20 text-cyan-300 border border-cyan-500/30 shadow-sm'
-                  : 'text-gray-400 hover:text-gray-200 hover:bg-gray-800/30'
-              }`}
-            >
-              <CreditCard className="w-3.5 h-3.5" />
-              <span>SmartCard PKI</span>
-            </button>
+        {/* Floating Glassmorphic Login Card */}
+        <motion.div
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1, duration: 0.25 }}
+          className="bg-[#0c0d12]/80 border border-white/[0.09] rounded-3xl shadow-[0_24px_64px_-12px_rgba(0,0,0,0.8)] p-7 backdrop-blur-2xl relative"
+        >
+          {/* Subtle glowing rim */}
+          <div className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-cyan-500/50 to-transparent rounded-t-3xl" />
 
-            <button
-              type="button"
-              onClick={() => {
-                setActiveTab('ldap');
-                clearError();
-              }}
-              className={`flex items-center justify-center gap-1.5 py-2 px-2 rounded-md text-xs font-medium transition-all ${
-                activeTab === 'ldap'
-                  ? 'bg-gradient-to-r from-blue-600/20 to-indigo-600/20 text-blue-300 border border-blue-500/30 shadow-sm'
-                  : 'text-gray-400 hover:text-gray-200 hover:bg-gray-800/30'
-              }`}
-            >
-              <Building2 className="w-3.5 h-3.5" />
-              <span>Intranet LDAP</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => {
-                setActiveTab('local');
-                clearError();
-              }}
-              className={`flex items-center justify-center gap-1.5 py-2 px-2 rounded-md text-xs font-medium transition-all ${
-                activeTab === 'local'
-                  ? 'bg-gradient-to-r from-purple-600/20 to-pink-600/20 text-purple-300 border border-purple-500/30 shadow-sm'
-                  : 'text-gray-400 hover:text-gray-200 hover:bg-gray-800/30'
-              }`}
-            >
-              <Key className="w-3.5 h-3.5" />
-              <span>Local Auth</span>
-            </button>
-          </div>
-
-          {/* Error Banner */}
+          {/* Error Alert Box */}
           <AnimatePresence>
             {error && (
               <motion.div
-                initial={{ opacity: 0, y: -8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -8 }}
-                className="mb-4 p-3 rounded-lg bg-rose-950/40 border border-rose-800/60 text-rose-300 text-xs flex items-start gap-2.5"
+                initial={{ opacity: 0, height: 0, y: -6 }}
+                animate={{ opacity: 1, height: 'auto', y: 0 }}
+                exit={{ opacity: 0, height: 0, y: -6 }}
+                className="mb-5 p-3.5 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs flex items-start gap-2.5 overflow-hidden font-medium"
               >
                 <AlertCircle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
-                <div className="flex-1 font-mono text-[11px] leading-relaxed">{error}</div>
+                <div className="flex-1 text-[12px] leading-relaxed">{error}</div>
               </motion.div>
             )}
           </AnimatePresence>
 
-          {/* TAB 1: SmartCard / X.509 PKI Certificate */}
-          {activeTab === 'cert' && (
-            <form onSubmit={handleCertSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <label className="text-xs font-medium text-gray-300 flex items-center gap-1.5">
-                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-                    <span>X.509 Client Certificate (PEM)</span>
-                  </label>
-                  <button
-                    type="button"
-                    onClick={handleSimulateSmartCard}
-                    className="text-[11px] font-mono text-cyan-400 hover:text-cyan-300 flex items-center gap-1 underline transition-colors"
-                  >
-                    <Sparkles className="w-3 h-3" />
-                    <span>Simulate Token Injection</span>
-                  </button>
-                </div>
-
-                {/* Dropzone / Upload Area */}
-                <div
-                  onDragOver={(e) => {
-                    e.preventDefault();
-                    setIsDragging(true);
-                  }}
-                  onDragLeave={() => setIsDragging(false)}
-                  onDrop={handleFileDrop}
-                  onClick={() => fileInputRef.current?.click()}
-                  className={`border border-dashed rounded-lg p-3 text-center cursor-pointer transition-all ${
-                    isDragging
-                      ? 'border-cyan-400 bg-cyan-950/20'
-                      : certPem
-                      ? 'border-emerald-500/50 bg-emerald-950/10'
-                      : 'border-gray-700/80 bg-[#0c0e14] hover:border-gray-600'
-                  }`}
-                >
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept=".crt,.pem,.cer"
-                    onChange={handleFileChange}
-                    className="hidden"
-                  />
-                  {certPem ? (
-                    <div className="flex items-center justify-center gap-2 text-emerald-400 text-xs font-mono">
-                      <FileCheck className="w-4 h-4" />
-                      <span>Certificate Loaded ({certPem.length} bytes)</span>
-                    </div>
-                  ) : (
-                    <div className="flex flex-col items-center gap-1 text-gray-400 text-xs">
-                      <UploadCloud className="w-5 h-5 text-gray-500" />
-                      <span>Drop .crt / .pem certificate file here, or click to browse</span>
-                    </div>
-                  )}
-                </div>
-
-                {/* Raw PEM Textarea */}
-                <textarea
-                  value={certPem}
-                  onChange={(e) => {
-                    setCertPem(e.target.value);
-                    clearError();
-                  }}
-                  placeholder="-----BEGIN CERTIFICATE-----&#10;...&#10;-----END CERTIFICATE-----"
-                  rows={3}
-                  className="w-full px-3 py-2 bg-[#090b10] border border-gray-800 rounded-lg text-[11px] font-mono text-gray-300 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/50 resize-none transition-all placeholder:text-gray-600"
-                />
-              </div>
-
-              {/* Parsed Certificate Identity Feedback Card */}
-              {parsedCertInfo && (
-                <div className="p-2.5 rounded-lg bg-cyan-950/20 border border-cyan-800/40 text-xs space-y-1 font-mono">
-                  <div className="text-cyan-300 font-semibold flex items-center justify-between text-[11px]">
-                    <span>CN: {parsedCertInfo.cn}</span>
-                    <span className="text-[10px] text-cyan-400/80 bg-cyan-950/60 px-1.5 py-0.5 rounded border border-cyan-700/40">
-                      SERIAL: {parsedCertInfo.serial}
-                    </span>
-                  </div>
-                  <div className="text-gray-400 text-[10px]">OU: {parsedCertInfo.ou}</div>
-                </div>
-              )}
-
-              {/* SmartCard Hardware PIN */}
-              <div className="space-y-1.5">
-                <label className="text-xs font-medium text-gray-300 flex items-center gap-1.5">
-                  <Lock className="w-3.5 h-3.5 text-gray-400" />
-                  <span>SmartCard Hardware PIN (Optional)</span>
-                </label>
-                <input
-                  type="password"
-                  value={certPin}
-                  onChange={(e) => setCertPin(e.target.value)}
-                  placeholder="Enter 4-8 digit hardware PIN"
-                  className="w-full px-3 py-2 bg-[#090b10] border border-gray-800 rounded-lg text-xs font-mono text-gray-200 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/50 transition-all placeholder:text-gray-600"
-                />
-              </div>
-
-              <button
-                type="submit"
-                disabled={isLoading || !certPem.trim()}
-                className="w-full py-2.5 px-4 rounded-lg bg-gradient-to-r from-emerald-600 to-cyan-600 hover:from-emerald-500 hover:to-cyan-500 text-white font-medium text-xs flex items-center justify-center gap-2 shadow-lg shadow-cyan-950/40 transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-              >
-                {isLoading ? (
-                  <>
-                    <RefreshCw className="w-4 h-4 animate-spin" />
-                    <span>Verifying mTLS Certificate...</span>
-                  </>
-                ) : (
-                  <>
-                    <ShieldCheck className="w-4 h-4" />
-                    <span>Authenticate via SmartCard</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </>
-                )}
-              </button>
-            </form>
-          )}
-
-          {/* TAB 2: Corporate Intranet LDAP / Active Directory */}
-          {activeTab === 'ldap' && (
-            <form onSubmit={handleLdapSubmit} className="space-y-4">
-              <div className="space-y-1.5">
-                <label className="text-xs font-medium text-gray-300 flex items-center gap-1.5">
-                  <User className="w-3.5 h-3.5 text-blue-400" />
-                  <span>sAMAccountName / Corporate ID</span>
-                </label>
+          {/* Form */}
+          <form onSubmit={handleSubmit} className="space-y-4">
+            
+            {/* Username Input */}
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-semibold tracking-wide uppercase text-slate-400 flex items-center gap-1.5">
+                <User className="w-3.5 h-3.5 text-cyan-400/80" />
+                <span>Admin ID</span>
+              </label>
+              <div className="relative group">
                 <input
                   type="text"
-                  value={ldapUsername}
+                  value={username}
                   onChange={(e) => {
-                    setLdapUsername(e.target.value);
+                    setUsername(e.target.value);
                     clearError();
                   }}
-                  placeholder="e.g. mrpl_admin or emp_9421"
-                  className="w-full px-3 py-2 bg-[#090b10] border border-gray-800 rounded-lg text-xs font-mono text-gray-200 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 transition-all placeholder:text-gray-600"
+                  placeholder="Enter authorized account"
+                  autoFocus
+                  required
+                  className="w-full px-4 py-3 bg-white/[0.03] hover:bg-white/[0.05] focus:bg-white/[0.06] border border-white/[0.08] focus:border-cyan-500/60 rounded-xl text-sm font-mono text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/20 transition-all"
                 />
               </div>
+            </div>
 
-              <div className="space-y-1.5">
-                <label className="text-xs font-medium text-gray-300 flex items-center gap-1.5">
-                  <Lock className="w-3.5 h-3.5 text-blue-400" />
-                  <span>Active Directory Password</span>
-                </label>
+            {/* Password Input */}
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-semibold tracking-wide uppercase text-slate-400 flex items-center gap-1.5">
+                <Lock className="w-3.5 h-3.5 text-cyan-400/80" />
+                <span>Password</span>
+              </label>
+              <div className="relative group">
                 <input
-                  type="password"
-                  value={ldapPassword}
+                  type={showPassword ? 'text' : 'password'}
+                  value={password}
                   onChange={(e) => {
-                    setLdapPassword(e.target.value);
+                    setPassword(e.target.value);
                     clearError();
                   }}
                   placeholder="••••••••••••"
-                  className="w-full px-3 py-2 bg-[#090b10] border border-gray-800 rounded-lg text-xs font-mono text-gray-200 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 transition-all placeholder:text-gray-600"
+                  required
+                  className="w-full pl-4 pr-11 py-3 bg-white/[0.03] hover:bg-white/[0.05] focus:bg-white/[0.06] border border-white/[0.08] focus:border-cyan-500/60 rounded-xl text-sm font-mono text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/20 transition-all"
                 />
-              </div>
-
-              {/* Department Group Quick Presets */}
-              <div className="space-y-1.5">
-                <label className="text-[11px] font-mono text-gray-400">Intranet Role Presets:</label>
-                <div className="grid grid-cols-2 gap-1.5">
-                  <button
-                    type="button"
-                    onClick={() => handleFillDemoLdap('mrpl_admin', 'MRPL_SEC_ADMINS')}
-                    className="py-1 px-2 text-[10px] font-mono rounded bg-gray-900 border border-gray-800 text-gray-300 hover:border-blue-500/50 hover:text-blue-300 text-left transition-colors"
-                  >
-                    👑 Security Admin
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleFillDemoLdap('lead_ops', 'MRPL_PROCESS_LEADS')}
-                    className="py-1 px-2 text-[10px] font-mono rounded bg-gray-900 border border-gray-800 text-gray-300 hover:border-blue-500/50 hover:text-blue-300 text-left transition-colors"
-                  >
-                    ⚙️ Process Lead
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleFillDemoLdap('hse_auditor', 'MRPL_HSE_AUDITORS')}
-                    className="py-1 px-2 text-[10px] font-mono rounded bg-gray-900 border border-gray-800 text-gray-300 hover:border-blue-500/50 hover:text-blue-300 text-left transition-colors"
-                  >
-                    🦺 HSE Auditor
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleFillDemoLdap('field_op', 'MRPL_OPERATORS')}
-                    className="py-1 px-2 text-[10px] font-mono rounded bg-gray-900 border border-gray-800 text-gray-300 hover:border-blue-500/50 hover:text-blue-300 text-left transition-colors"
-                  >
-                    📟 Field Operator
-                  </button>
-                </div>
-              </div>
-
-              <button
-                type="submit"
-                disabled={isLoading || !ldapUsername.trim() || !ldapPassword.trim()}
-                className="w-full py-2.5 px-4 rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-medium text-xs flex items-center justify-center gap-2 shadow-lg shadow-blue-950/40 transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-              >
-                {isLoading ? (
-                  <>
-                    <RefreshCw className="w-4 h-4 animate-spin" />
-                    <span>Binding to Intranet LDAP...</span>
-                  </>
-                ) : (
-                  <>
-                    <Building2 className="w-4 h-4" />
-                    <span>Login with Corporate AD</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </>
-                )}
-              </button>
-            </form>
-          )}
-
-          {/* TAB 3: Local Standalone Fallback */}
-          {activeTab === 'local' && (
-            <form onSubmit={handleLocalSubmit} className="space-y-4">
-              <div className="space-y-1.5">
-                <label className="text-xs font-medium text-gray-300 flex items-center gap-1.5">
-                  <User className="w-3.5 h-3.5 text-purple-400" />
-                  <span>Local Administrator Username</span>
-                </label>
-                <input
-                  type="text"
-                  value={localUsername}
-                  onChange={(e) => {
-                    setLocalUsername(e.target.value);
-                    clearError();
-                  }}
-                  placeholder="admin or sovereign_user"
-                  className="w-full px-3 py-2 bg-[#090b10] border border-gray-800 rounded-lg text-xs font-mono text-gray-200 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500/50 transition-all placeholder:text-gray-600"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-xs font-medium text-gray-300 flex items-center gap-1.5">
-                  <Lock className="w-3.5 h-3.5 text-purple-400" />
-                  <span>Password</span>
-                </label>
-                <input
-                  type="password"
-                  value={localPassword}
-                  onChange={(e) => {
-                    setLocalPassword(e.target.value);
-                    clearError();
-                  }}
-                  placeholder="••••••••••••"
-                  className="w-full px-3 py-2 bg-[#090b10] border border-gray-800 rounded-lg text-xs font-mono text-gray-200 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500/50 transition-all placeholder:text-gray-600"
-                />
-              </div>
-
-              <div className="flex gap-2">
                 <button
                   type="button"
-                  onClick={() => {
-                    setLocalUsername('admin');
-                    setLocalPassword('admin123');
-                    clearError();
-                  }}
-                  className="py-1 px-2.5 text-[10px] font-mono rounded bg-gray-900 border border-gray-800 text-gray-300 hover:border-purple-500/50 hover:text-purple-300 transition-colors"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3.5 top-3.5 text-slate-400 hover:text-white transition-colors cursor-pointer"
+                  tabIndex={-1}
                 >
-                  Quick Fill (admin)
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
+            </div>
 
-              <button
-                type="submit"
-                disabled={isLoading || !localUsername.trim() || !localPassword.trim()}
-                className="w-full py-2.5 px-4 rounded-lg bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-medium text-xs flex items-center justify-center gap-2 shadow-lg shadow-purple-950/40 transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-              >
-                {isLoading ? (
-                  <>
-                    <RefreshCw className="w-4 h-4 animate-spin" />
-                    <span>Verifying Credentials...</span>
-                  </>
-                ) : (
-                  <>
-                    <Key className="w-4 h-4" />
-                    <span>Local Console Login</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </>
-                )}
-              </button>
-            </form>
-          )}
-        </div>
+            {/* Submit Action Button */}
+            <button
+              type="submit"
+              disabled={isLoading || !username.trim() || !password.trim()}
+              className="w-full mt-3 py-3 px-4 rounded-xl bg-gradient-to-r from-cyan-500 via-blue-600 to-indigo-600 hover:from-cyan-400 hover:to-indigo-500 active:scale-[0.99] text-white font-semibold text-xs tracking-wide uppercase flex items-center justify-center gap-2 shadow-lg shadow-cyan-950/40 border border-cyan-400/30 transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+            >
+              {isLoading ? (
+                <>
+                  <RefreshCw className="w-4 h-4 animate-spin" />
+                  <span>Verifying...</span>
+                </>
+              ) : (
+                <>
+                  <span>Authenticate </span>
+                  <ArrowRight className="w-4 h-4" />
+                </>
+              )}
+            </button>
+          </form>
+        </motion.div>
 
-        {/* Air-Gap Sovereignty Guarantees Footer Badges */}
-        <div className="grid grid-cols-2 gap-2 text-[11px] font-mono text-gray-400">
-          <div className="flex items-center gap-1.5 p-2 rounded-lg bg-[#0d1017] border border-gray-800/60">
-            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-            <span>100% Air-Gapped Auth</span>
-          </div>
-          <div className="flex items-center gap-1.5 p-2 rounded-lg bg-[#0d1017] border border-gray-800/60">
-            <ShieldCheck className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
-            <span>MRPL Root CA Verified</span>
-          </div>
-        </div>
+        
+
       </div>
     </div>
   );

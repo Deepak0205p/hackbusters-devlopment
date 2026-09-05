@@ -85,7 +85,10 @@ async def ingest_single_document(
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"RAG document ingestion failed: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail="Knowledge Base Ingestion Error: Unable to complete document indexing into the sovereign RAG vector store. Please ensure the document is readable and text content can be extracted."
+        )
 
 @router.post("/convert-document")
 async def convert_document(
@@ -183,7 +186,10 @@ async def convert_document(
             media_type = "text/plain"
 
         else:
-            raise HTTPException(status_code=400, detail=f"Unsupported target format '{target_format}'. Choose docx, xlsx, pptx, or txt.")
+            raise HTTPException(
+                status_code=400,
+                detail=f"Unsupported Format: The requested target format '{target_format}' is not supported. Please choose one of: docx, xlsx, pptx, or txt."
+            )
 
         return FileResponse(
             path=out_path,
@@ -195,7 +201,10 @@ async def convert_document(
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Document conversion failed: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail="Document Conversion Error: An unexpected failure occurred while converting the file. Please verify file integrity and try again."
+        )
 
 @router.get("/stats")
 async def get_rag_statistics():

@@ -60,9 +60,12 @@ async def upload_document(file: UploadFile = File(...)):
         result = multimodal_pipeline.process_document(filename, content)
         return result
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=f"Invalid document format or payload: {str(e)}")
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Multimodal ingestion failed: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail="Document Ingestion Error: Unable to process the uploaded file through the multimodal pipeline. Please ensure the file is valid and uncorrupted."
+        )
 
 @router.post("/base64", response_model=DocumentProcessingResult)
 async def upload_document_base64(payload: Base64OCRRequest):
@@ -80,9 +83,12 @@ async def upload_document_base64(payload: Base64OCRRequest):
         result = multimodal_pipeline.process_document(filename, content)
         return result
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=f"Invalid base64 payload: {str(e)}")
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Base64 OCR extraction failed: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail="OCR Extraction Error: Unable to parse the base64-encoded attachment. Please verify the image formatting and try again."
+        )
 
 # ==============================================================================
 # SESSION-SCOPED EPHEMERAL RAG INGESTION ENDPOINTS
@@ -131,11 +137,14 @@ async def upload_session_document(
             message=f"File '{filename}' indexed into session '{target_session_id}' ({receipt['chunks_indexed']} chunks)."
         )
     except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid document parameter or format: {str(e)}"
+        )
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Session document ingestion failed: {str(e)}"
+            detail="Session Ingestion Unavailable: An unexpected issue occurred while indexing the session document into the vector store. Please verify the document structure and retry."
         )
 
 @router.get("/session/{session_id}/files", response_model=SessionFileListResponse)

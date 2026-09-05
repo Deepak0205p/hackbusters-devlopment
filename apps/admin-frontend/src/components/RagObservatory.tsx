@@ -193,30 +193,7 @@ export function RagObservatory() {
     // Simulated local semantic search against sovereign vector base
     const query = searchQuery.toLowerCase();
     const matches = [
-      {
-        id: 'c-1',
-        document: 'SOP-MRPL-FURNACE-01',
-        clause: 'Clause 4.1.2 (Emergency Decoking)',
-        similarityScore: 0.94,
-        content:
-          'When furnace tube skin thermocouple exceeds 720°C or differential pressure exceeds 4.2 bar, immediately trip fuel gas shutoff valve XV-101 and initiate emergency steam purging sequence.',
-      },
-      {
-        id: 'c-2',
-        document: 'API 610 Centrifugal Pumps Standard',
-        clause: 'Section 6.8 (Vibration Severity & Shaft Seals)',
-        similarityScore: 0.89,
-        content:
-          'Crude charge pump P-101A overall vibration velocity must not exceed 4.5 mm/s RMS under normal load. Continuous acoustic monitoring is mandatory during crude diet transitions.',
-      },
-      {
-        id: 'c-3',
-        document: 'OISD-STD-105 Work Permit System',
-        clause: 'Clause 7.3 (Hot Work in Classified Zones)',
-        similarityScore: 0.86,
-        content:
-          'Hot work permit valid for maximum 8-hour shift. Continuous combustible LEL gas testing mandatory within 15-meter radius of active refinery processing units.',
-      },
+      
     ].filter(
       (m) =>
         m.content.toLowerCase().includes(query) ||
@@ -242,14 +219,10 @@ export function RagObservatory() {
             </div>
             <div>
               <h1 className="text-sm font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
-                <span>RAG Knowledge Base &amp; Vector Store Observatory</span>
-                <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-950/40 text-emerald-400 border border-emerald-800/50">
-                  CHROMA DB ACTIVE
-                </span>
+                <span>Knowledge Base Retrieval &amp; Vector Monitor</span>
+                
               </h1>
-              <p className="text-xs text-gray-500 dark:text-gray-400 font-mono">
-                Dense BGE-M3 (1024-dim) + Inverted BM25 Lexical Hybrid Index for Sovereign SOP Retrieval
-              </p>
+              
             </div>
           </div>
 
@@ -261,7 +234,7 @@ export function RagObservatory() {
                 className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-xs font-semibold shadow-md shadow-blue-950/40 transition-all cursor-pointer"
               >
                 <PlusCircle className="w-4 h-4" />
-                <span>Ingest Master Plant SOPs</span>
+                <span>Create RAG</span>
               </button>
             ) : (
               <div
@@ -282,7 +255,7 @@ export function RagObservatory() {
             <div className="text-lg font-bold font-mono text-cyan-600 dark:text-cyan-400">
               {vectorStats.totalChunks.toLocaleString()}
             </div>
-            <span className="text-[10px] font-mono text-gray-500">ChromaDB Indexed</span>
+            
           </div>
 
           <div className="p-3 rounded-lg bg-gray-50 dark:bg-[#0c0e14] border border-gray-100 dark:border-gray-800/70 space-y-1">
@@ -290,7 +263,7 @@ export function RagObservatory() {
             <div className="text-lg font-bold font-mono text-emerald-600 dark:text-emerald-400">
               {vectorStats.documentCount} Documents
             </div>
-            <span className="text-[10px] font-mono text-gray-500">OISD / API / MRPL</span>
+            
           </div>
 
           <div className="p-3 rounded-lg bg-gray-50 dark:bg-[#0c0e14] border border-gray-100 dark:border-gray-800/70 space-y-1">
@@ -298,9 +271,7 @@ export function RagObservatory() {
             <div className="text-xs font-bold font-mono text-gray-900 dark:text-gray-200 truncate">
               BGE-M3 (1024-dim)
             </div>
-            <span className="text-[10px] font-mono text-emerald-500 flex items-center gap-1">
-              <Check className="w-3 h-3" /> Dense + BM25 Hybrid
-            </span>
+            
           </div>
 
           <div className="p-3 rounded-lg bg-gray-50 dark:bg-[#0c0e14] border border-gray-100 dark:border-gray-800/70 space-y-1">
@@ -308,7 +279,7 @@ export function RagObservatory() {
             <div className="text-xs font-mono text-gray-900 dark:text-gray-200">
               {vectorStats.lastIndexed}
             </div>
-            <span className="text-[10px] font-mono text-cyan-500">100% Air-Gapped Local</span>
+            
           </div>
         </div>
       </div>
@@ -325,8 +296,8 @@ export function RagObservatory() {
           }`}
         >
           <UploadCloud className="w-3.5 h-3.5" />
-          <span>1. Ingest SOPs &amp; Semantic Search</span>
-          <span className="text-[10px] font-mono text-gray-400 ml-1">#ingest</span>
+          <span>RAG &amp; Vector creation</span>
+          
         </button>
 
         <button
@@ -339,8 +310,8 @@ export function RagObservatory() {
           }`}
         >
           <Download className="w-3.5 h-3.5" />
-          <span>2. Universal Document Converter</span>
-          <span className="text-[10px] font-mono text-gray-400 ml-1">#converter</span>
+          <span>Document Converter</span>
+          
         </button>
       </div>
 
@@ -352,16 +323,14 @@ export function RagObservatory() {
             <div className="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 pb-3">
               <h3 className="text-xs font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
                 <UploadCloud className="w-3.5 h-3.5 text-blue-600" />
-                <span>Single Document Vectorization (.pdf, .docx, .txt)</span>
+                <span>Vectorization </span>
               </h3>
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/50">
-                AUTO EMBEDDING
-              </span>
+              
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-1">
-                <label className="text-xs text-gray-500 dark:text-gray-400 font-mono">Knowledge Domain</label>
+                <label className="text-xs text-gray-500 dark:text-gray-400 font-mono">Domain</label>
                 <CustomDropdown
                   value={selectedCategory}
                   onChange={(val) => setSelectedCategory(val)}
@@ -393,7 +362,7 @@ export function RagObservatory() {
               className="w-full py-2.5 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white text-xs font-semibold rounded-lg transition-colors flex items-center justify-center gap-1.5 cursor-pointer font-mono"
             >
               <RefreshCw className={`w-3.5 h-3.5 ${isIngestingSingle ? 'animate-spin' : ''}`} />
-              <span>{isIngestingSingle ? 'Vectorizing Clauses...' : 'Vectorize & Commit to ChromaDB'}</span>
+              <span>{isIngestingSingle ? 'Vectorizing Clauses...' : 'Vectorize'}</span>
             </button>
 
             {ingestStatus && (
@@ -416,7 +385,7 @@ export function RagObservatory() {
           <div className="bg-white dark:bg-[#11141c] border border-gray-200 dark:border-[#262c3a] rounded-xl p-5 shadow-sm space-y-4">
             <h3 className="text-xs font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
               <Search className="w-3.5 h-3.5 text-blue-500" />
-              <span>Semantic RAG Knowledge Explorer</span>
+              <span>RAG Knowledge Base</span>
             </h3>
 
             <div className="flex gap-2">
@@ -475,7 +444,7 @@ export function RagObservatory() {
             <div className="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 pb-2.5">
               <h3 className="text-xs font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
                 <FileText className="w-3.5 h-3.5 text-cyan-500" />
-                <span>Ingested Master Documents &amp; Manuals Library</span>
+                <span>Ingested Documents &amp; Manuals</span>
               </h3>
               <span className="text-[10px] font-mono text-gray-500">
                 {documentsList.length} SOPs Active
@@ -505,10 +474,10 @@ export function RagObservatory() {
                       </td>
                       <td className="py-2 px-3 text-right text-gray-400">{doc.sizeKb} KB</td>
                       <td className="py-2 px-3 text-right">
-                        <span className="inline-flex items-center gap-1 text-[9px] px-1.5 py-0.5 rounded bg-emerald-950/40 text-emerald-400 border border-emerald-800/40">
-                          <Check className="w-2.5 h-2.5" />
+                        
+                          
                           <span>GROUNDED</span>
-                        </span>
+                        
                       </td>
                     </tr>
                   ))}
@@ -526,16 +495,14 @@ export function RagObservatory() {
             <div className="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 pb-3">
               <h3 className="text-xs font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
                 <Download className="w-3.5 h-3.5 text-emerald-500" />
-                <span>Universal Multi-Format Document Converter</span>
+                <span>Document Converter</span>
               </h3>
-              <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-950/40 text-emerald-400 border border-emerald-800/50">
-                AIR-GAP NATIVE
-              </span>
+              
             </div>
 
             <div className="space-y-4 max-w-2xl">
               <div className="space-y-1.5">
-                <label className="text-xs text-gray-400">Input Document (.pdf, .docx, .txt, .csv, .xlsx, .pptx)</label>
+                <label className="text-xs text-gray-400">Input Document</label>
                 <input
                   type="file"
                   accept=".pdf,.docx,.txt,.csv,.xlsx,.pptx"
@@ -563,7 +530,7 @@ export function RagObservatory() {
                         className={`p-3 rounded-lg border text-center flex flex-col items-center gap-1.5 transition-all ${
                           isSel
                             ? 'bg-emerald-950/30 border-emerald-500 text-emerald-300 font-semibold'
-                            : 'bg-gray-50 dark:bg-[#0c0e14] border-gray-200 dark:border-gray-800 text-gray-400 hover:border-gray-700'
+                            : 'bg-white dark:bg-[#0c0e14] border-gray-200 dark:border-gray-800 text-gray-400 hover:border-gray-700'
                         }`}
                       >
                         <Icon className={`w-4 h-4 ${isSel ? 'text-emerald-400' : 'text-gray-500'}`} />
@@ -580,7 +547,7 @@ export function RagObservatory() {
                 className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white disabled:opacity-50 text-xs font-semibold rounded-lg transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
               >
                 <Download className="w-3.5 h-3.5" />
-                <span>{isConverting ? 'Converting Document...' : 'Convert & Download File'}</span>
+                <span>{isConverting ? 'Converting Document...' : 'Download'}</span>
               </button>
 
               {convertStatus && (
@@ -607,7 +574,7 @@ export function RagObservatory() {
               <div className="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 pb-3">
                 <div className="flex items-center gap-2 text-cyan-600 dark:text-cyan-400 font-semibold text-sm">
                   <Sliders className="w-4 h-4" />
-                  <span>Master Plant SOP Ingestion &amp; Re-Indexing</span>
+                  <span>RAG &amp; Vector creation</span>
                 </div>
                 {!isReindexing && (
                   <button
@@ -657,8 +624,8 @@ export function RagObservatory() {
                     ) : (
                       <div className="space-y-1 text-gray-400">
                         <UploadCloud className="w-6 h-6 mx-auto text-gray-500" />
-                        <div className="font-semibold text-gray-200">Drag &amp; Drop Master SOP Files Here</div>
-                        <div className="text-[10px]">Supports OISD-105, API-510, Master ERDMP (.pdf, .docx)</div>
+                        <div className="font-semibold text-black">Drag &amp; Drop</div>
+                        
                       </div>
                     )}
                   </div>
@@ -691,10 +658,7 @@ export function RagObservatory() {
                       </select>
                     </div>
 
-                    <div className="col-span-2 flex items-center justify-between pt-1">
-                      <span className="text-[10px] text-gray-400">Hybrid Dense (BGE-M3) + Lexical (BM25):</span>
-                      <span className="text-[10px] font-bold text-emerald-400">ENABLED</span>
-                    </div>
+                    
                   </div>
                 </div>
               )}
@@ -741,8 +705,8 @@ export function RagObservatory() {
                       onClick={handleStartReindex}
                       className="px-4 py-1.5 rounded-lg bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white font-semibold font-mono text-xs disabled:opacity-50 flex items-center gap-1.5 cursor-pointer shadow-md shadow-cyan-950/40"
                     >
-                      <Sparkles className="w-3.5 h-3.5" />
-                      <span>Start Sovereign Vectorization</span>
+                      
+                      <span>Start Vectorization</span>
                     </button>
                   </>
                 )}

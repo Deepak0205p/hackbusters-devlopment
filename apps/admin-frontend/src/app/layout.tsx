@@ -5,8 +5,8 @@ import { GeistMono } from 'geist/font/mono';
 import { AuthGuard } from '@/components/AuthGuard';
 
 export const metadata = {
-  title: 'REVEAL 2.0 Admin | MRPL Sovereign AI Workbench',
-  description: 'On-premise air-gapped agentic AI workbench for MRPL refinery operations.',
+  title: 'REVEAL 2.0 Admin',
+  
 };
 
 export default function RootLayout({

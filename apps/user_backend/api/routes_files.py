@@ -131,7 +131,10 @@ async def download_file(filename: str):
             break
 
     if not target_file:
-        raise HTTPException(status_code=404, detail=f"Deliverable '{safe_filename}' not found. No demo generation — files must be created via agent with caller-provided data.")
+        raise HTTPException(
+            status_code=404,
+            detail=f"Deliverable Unavailable: The requested file '{safe_filename}' was not found in the deliverables vault. Please generate the artifact using the Workbench Agent before attempting download."
+        )
 
     ext = safe_filename.split(".")[-1].lower() if "." in safe_filename else "bin"
     media_type = MIME_MAP.get(ext, "application/octet-stream")

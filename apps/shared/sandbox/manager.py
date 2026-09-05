@@ -361,15 +361,10 @@ class DockerSandboxManager:
         else:
             # Log prominent warning on fallback to host subprocess
             fallback_reason = "Docker daemon offline" if not docker_available else "Sandbox image missing"
-            warning_msg = (
-                f"⚠ SANDBOX FALLBACK: {fallback_reason}. "
-                f"Executing in hardened host subprocess (--network none not enforced at container level). "
-                f"Run 'python scripts/build_sandbox_image.py' to build mrpl-sandbox-runtime:latest."
-            )
-            print(f"\033[93m{warning_msg}\033[0m")
+            fallback_details = f"{fallback_reason}. Falling back to hardened subprocess for code SHA256: {code_sha256[:16]}..."
             audit_log.append_event(
                 event_type="SANDBOX_FALLBACK_WARNING",
-                details=f"{fallback_reason}. Falling back to hardened subprocess for code SHA256: {code_sha256[:16]}..."
+                details=fallback_details
             )
             result = self.subprocess_backend.run_script(
                 script_code, self.memory_limit, self.cpu_quota, effective_timeout

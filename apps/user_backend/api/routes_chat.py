@@ -240,7 +240,10 @@ async def api_get_chat_session(session_id: str):
     """
     session = get_chat_session_by_id(session_id=session_id)
     if not session:
-        raise HTTPException(status_code=404, detail=f"Chat session '{session_id}' not found in XAMPP MySQL database.")
+        raise HTTPException(
+            status_code=404,
+            detail=f"Chat Session Not Found: No active session corresponds to ID '{session_id}'. Please verify the session identifier or initiate a new conversation."
+        )
     return {
         "status": "SUCCESS",
         "session": session
@@ -253,10 +256,13 @@ async def api_delete_chat_session(session_id: str):
     """
     deleted = delete_chat_session_by_id(session_id=session_id)
     if not deleted:
-        raise HTTPException(status_code=404, detail=f"Chat session '{session_id}' not found.")
+        raise HTTPException(
+            status_code=404,
+            detail=f"Chat Session Not Found: Cannot delete session '{session_id}' because it does not exist."
+        )
     return {
         "status": "SUCCESS",
-        "message": f"Chat session '{session_id}' and all associated messages successfully deleted from XAMPP MySQL."
+        "message": f"Chat session '{session_id}' and all associated records have been removed successfully."
     }
 
 @router.post("/api/chat/sessions/{session_id}/messages")
@@ -266,7 +272,10 @@ async def api_append_chat_message(session_id: str, req: AppendMessageRequest):
     """
     session = get_chat_session_by_id(session_id=session_id)
     if not session:
-        raise HTTPException(status_code=404, detail=f"Chat session '{session_id}' not found.")
+        raise HTTPException(
+            status_code=404,
+            detail=f"Chat Session Not Found: Unable to record message because session '{session_id}' does not exist."
+        )
 
     msg = add_chat_message(
         session_id=session_id,

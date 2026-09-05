@@ -97,7 +97,7 @@ export function Header() {
           )}
 
           <Link href="/" className="text-xs font-semibold tracking-tight text-gray-900 dark:text-[#ededed] hover:text-gray-700 dark:hover:text-white transition-colors">
-            MRPL Sovereign Workbench
+            R E V E A L  2.0  Workbench
           </Link>
           <span className="text-gray-300 dark:text-[#333333]">/</span>
           <span className="text-xs font-mono text-gray-500 dark:text-[#888888]">
@@ -153,48 +153,11 @@ export function Header() {
                     exit={{ opacity: 0, y: 6 }}
                     className="absolute right-0 mt-1.5 w-64 bg-white dark:bg-[#11141c] border border-gray-200 dark:border-gray-800 rounded-lg shadow-xl p-3 space-y-2.5 z-50 text-xs font-mono"
                   >
-                    <div className="border-b border-gray-100 dark:border-gray-800 pb-2 space-y-1">
-                      <div className="text-gray-500 dark:text-gray-400 text-[10px] uppercase">
-                        Sovereign Identity Details
-                      </div>
-                      <div className="font-semibold text-gray-900 dark:text-gray-100 text-xs flex items-center justify-between">
-                        <span>{user.username}</span>
-                        <span className="text-[10px] text-cyan-400">{user.role}</span>
-                      </div>
-                      {user.cert_serial && (
-                        <div className="text-[10px] text-emerald-400/90 truncate">
-                          CERT SERIAL: {user.cert_serial}
-                        </div>
-                      )}
-                      {user.ou && (
-                        <div className="text-[10px] text-gray-400 truncate">
-                          OU: {user.ou}
-                        </div>
-                      )}
-                    </div>
+                    
 
-                    <div className="space-y-1">
-                      <div className="text-gray-500 dark:text-gray-400 text-[10px] uppercase">
-                        Active Authorizations
-                      </div>
-                      <div className="flex flex-wrap gap-1">
-                        {user.permissions?.slice(0, 4).map((p) => (
-                          <span
-                            key={p}
-                            className="text-[9px] bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 px-1.5 py-0.5 rounded"
-                          >
-                            {p}
-                          </span>
-                        ))}
-                        {(user.permissions?.length || 0) > 4 && (
-                          <span className="text-[9px] text-gray-400 px-1">
-                            +{(user.permissions?.length || 0) - 4} more
-                          </span>
-                        )}
-                      </div>
-                    </div>
+                    
 
-                    <div className="border-t border-gray-100 dark:border-gray-800 pt-2">
+                    <div className="border-t border-gray-100">
                       <button
                         onClick={() => {
                           setShowUserMenu(false);
@@ -203,7 +166,7 @@ export function Header() {
                         className="w-full flex items-center justify-center gap-1.5 py-1.5 rounded bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-300 border border-rose-200 dark:border-rose-800/60 hover:bg-rose-100 dark:hover:bg-rose-900/40 transition-colors cursor-pointer text-xs"
                       >
                         <LogOut className="w-3.5 h-3.5" />
-                        <span>Terminate Session (Logout)</span>
+                        <span>Logout</span>
                       </button>
                     </div>
                   </motion.div>

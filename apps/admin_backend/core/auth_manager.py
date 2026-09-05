@@ -160,7 +160,12 @@ def get_db():
     except Exception as e:
         raise HTTPException(
             status_code=500,
-            detail=f"XAMPP MySQL connection error on {MYSQL_HOST}:{MYSQL_PORT}: {str(e)}"
+            detail=(
+                f"Database Connection Unavailable — Unable to establish a connection to the MySQL "
+                f"database server at {MYSQL_HOST}:{MYSQL_PORT}. The server is not reachable or is not "
+                f"currently running. Please ensure XAMPP is running and the MySQL service has been "
+                f"started, then retry."
+            )
         )
 
 def hash_password(password: str) -> str:
@@ -832,14 +837,23 @@ class EnterpriseAuthManager:
                 issuer=self.issuer
             )
         except jwt.ExpiredSignatureError:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Session token has expired. Re-authenticate.")
-        except jwt.InvalidTokenError as e:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=f"Invalid session token: {str(e)}")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Authentication Expired: Your session has timed out. Please sign in again to continue."
+            )
+        except jwt.InvalidTokenError:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Authentication Failed: The provided session token is invalid or corrupted. Please sign in again."
+            )
 
         # Check token blacklist
         jti = payload.get("jti")
         if jti and self.is_token_revoked(jti):
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Session has been terminated / logged out.")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Session Terminated: This session has been logged out or revoked. Please re-authenticate."
+            )
 
         return payload
 
@@ -925,7 +939,10 @@ class EnterpriseAuthManager:
                     "client_ip": client_ip
                 })
             )
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"PKI Authentication failed: {str(e)}")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="SmartCard Authentication Error: Failed to cryptographically validate the provided certificate against the Plant Root CA. Please verify the card insertion and certificate validity."
+            )
 
     def ldap_login(self, username: str, password: str, client_ip: str = "127.0.0.1") -> Dict[str, Any]:
         """
@@ -994,8 +1011,11 @@ async def get_current_active_user(
             identity["permissions"] = rbac_engine.get_permissions(identity["role"])
             identity["auth_method"] = "PKI_MTLS_DIRECT"
             return identity
-        except Exception as e:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=f"Direct mTLS verification failed: {str(e)}")
+        except Exception:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="mTLS Verification Failed: Direct client certificate handshake could not be validated. Ensure your hardware SmartCard is recognized."
+            )
 
     # 2. Bearer JWT Token Authentication
     if not authorization:

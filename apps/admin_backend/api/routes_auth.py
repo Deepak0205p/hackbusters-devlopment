@@ -259,7 +259,10 @@ async def api_register(req: RegisterRequest):
             "user": user
         }
     except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Registration failed: {str(e)}")
+        raise HTTPException(
+            status_code=400,
+            detail=f"Registration Error: Unable to complete operator account registration. Please ensure the username is unique and meets policy standards."
+        )
 
 @router.get("/api/v1/auth/users")
 @router.get("/api/auth/users")

@@ -1,71 +1,50 @@
-﻿'use client';
+'use client';
 
 import React, { useState } from 'react';
-import { GitFork, Send, Sparkles, CheckCircle2, Clock, Cpu, FileCode2, Terminal } from 'lucide-react';
+import { GitFork, Send, Sparkles, CheckCircle2, Clock, Cpu, FileCode2, RefreshCw, ShieldAlert, Building2 } from 'lucide-react';
+import { api } from '@/lib/api';
 
 export function RouterObservatory() {
   const [testQuery, setTestQuery] = useState('');
   const [isRouting, setIsRouting] = useState(false);
   const [routeResult, setRouteResult] = useState<any>(null);
 
-  const handleSimulateRoute = () => {
+  const handleSimulateRoute = async () => {
     if (!testQuery.trim()) return;
     setIsRouting(true);
-    setTimeout(() => {
-      const q = testQuery.toLowerCase();
-      let res: any = {};
-      if (q.includes('pump') || q.includes('calculate') || q.includes('furnace') && q.includes('efficiency') || q.includes('python')) {
-        res = {
-          domain: 'CALCULATION_AND_CODE',
-          targetModel: 'qwen2.5-coder:3b-q4_k_m',
-          stage1Match: true,
-          matchedRule: 'INDUSTRIAL_CALC_PATTERN',
-          stage1LatencyMs: 0.92,
-          stage2LatencyMs: null,
-          totalLatencyMs: 0.92,
-          confidence: 1.0,
-          requiredTools: ['python_sandbox_runner'],
-        };
-      } else if (q.includes('sop') || q.includes('policy') || q.includes('standard') || q.includes('mrpl') || q.includes('ongc')) {
-        res = {
-          domain: 'RAG_RETRIEVAL_AND_COMPLIANCE',
-          targetModel: 'qwen3:4b-q4_k_m',
-          stage1Match: true,
-          matchedRule: 'SOP_COMPLIANCE_KEYWORD',
-          stage1LatencyMs: 1.15,
-          stage2LatencyMs: null,
-          totalLatencyMs: 1.15,
-          confidence: 0.99,
-          requiredTools: ['chromadb_sop_search', 'provenance_citation_formatter'],
-        };
-      } else if (q.includes('drawing') || q.includes('p&id') || q.includes('diagram') || q.includes('pid') || q.includes('image')) {
-        res = {
-          domain: 'MULTIMODAL_VISION_AND_CAD',
-          targetModel: 'qwen2-vl:2b-q4_k_m',
-          stage1Match: true,
-          matchedRule: 'CAD_SCHEMATIC_TAG_REGEX',
-          stage1LatencyMs: 0.78,
-          stage2LatencyMs: null,
-          totalLatencyMs: 0.78,
-          confidence: 1.0,
-          requiredTools: ['paddleocr_extractor', 'isa_5_1_tag_parser'],
-        };
-      } else {
-        res = {
-          domain: 'GENERAL_ASSISTANT_FALLBACK',
-          targetModel: 'llama3.2:3b-q4_k_m',
-          stage1Match: false,
-          matchedRule: null,
-          stage1LatencyMs: 1.82,
-          stage2LatencyMs: 18.4,
-          totalLatencyMs: 20.22,
-          confidence: 0.94,
-          requiredTools: [],
-        };
-      }
-      setRouteResult(res);
+
+    try {
+      const data = await api.post<any>('/api/v1/router/evaluate', {
+        query: testQuery
+      });
+
+      setRouteResult({
+        domain: data.domain || 'GENERAL',
+        targetModel: data.targetModel || 'qwen3-4b',
+        stage1Match: Boolean(data.stage1Match),
+        routedBy: data.routedBy || 'stage1_regex',
+        totalLatencyMs: data.totalLatencyMs ?? 1.2,
+        confidence: data.confidence ?? 0.95,
+        isInScope: data.isInScope !== false,
+        department: data.department,
+        requiredTools: data.requiredTools || []
+      });
+    } catch (err: any) {
+      // Graceful fallback if backend is offline
+      setRouteResult({
+        domain: 'ROUTER_OFFLINE',
+        targetModel: 'Unknown (Backend Offline)',
+        stage1Match: false,
+        routedBy: 'error',
+        totalLatencyMs: 0,
+        confidence: 0,
+        isInScope: true,
+        department: null,
+        requiredTools: []
+      });
+    } finally {
       setIsRouting(false);
-    }, 400);
+    }
   };
 
   return (
@@ -176,6 +155,26 @@ export function RouterObservatory() {
                   <span className="text-xs font-mono font-semibold text-emerald-600">{routeResult.totalLatencyMs} ms</span>
                 </div>
 
+                {routeResult.department && (
+                  <div className="flex items-center justify-between p-3 rounded bg-gray-100 border border-gray-200">
+                    <div className="flex items-center gap-2">
+                      <Building2 className="w-4 h-4 text-purple-600" />
+                      <span className="text-xs text-gray-500">Department</span>
+                    </div>
+                    <span className="text-xs font-medium text-gray-900">{routeResult.department.name}</span>
+                  </div>
+                )}
+
+                <div className="flex items-center justify-between p-3 rounded bg-gray-100 border border-gray-200">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                    <span className="text-xs text-gray-500">Routing Method</span>
+                  </div>
+                  <span className="text-xs font-mono font-medium text-gray-900">
+                    {routeResult.stage1Match ? 'Stage 1 (Regex / Rule Match)' : 'Stage 2 (Dense Centroid)'}
+                  </span>
+                </div>
+
                 <div className="flex items-center justify-between p-3 rounded bg-gray-100 border border-gray-200">
                   <div className="flex items-center gap-2">
                     <CheckCircle2 className="w-4 h-4 text-emerald-600" />
@@ -192,7 +191,7 @@ export function RouterObservatory() {
                   <div className="flex flex-wrap gap-1.5">
                     {routeResult.requiredTools && routeResult.requiredTools.length > 0 ? (
                       routeResult.requiredTools.map((t: string) => (
-                        <span key={t} className="px-2 py-0.5 rounded bg-gray-100 text-gray-900 border border-gray-200 text-[10px] font-mono">
+                        <span key={t} className="px-2 py-0.5 rounded bg-white text-gray-900 border border-gray-200 text-[10px] font-mono">
                           {t}
                         </span>
                       ))

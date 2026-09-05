@@ -89,7 +89,7 @@ class SwapEvent(BaseModel):
 # 2. HARDWARE DETECTION HELPER
 # ==============================================================================
 def detect_device_hardware() -> Dict[str, Any]:
-    """Detects real host device hardware (NVIDIA GPU or Host RAM fallback)."""
+    """Detects real host device hardware (NVIDIA/Intel GPU or Host RAM fallback) accurately."""
     try:
         import torch
         if torch.cuda.is_available():
@@ -117,25 +117,44 @@ def detect_device_hardware() -> Dict[str, Any]:
 
     import psutil
     try:
-        ram_total_mb = int(psutil.virtual_memory().total / (1024 * 1024))
-        ram_used_mb = int(psutil.virtual_memory().used / (1024 * 1024))
-        ram_free_mb = max(0, ram_total_mb - ram_used_mb)
+        vm = psutil.virtual_memory()
+        ram_total_mb = int(vm.total / (1024 * 1024))
+        ram_used_mb = int(vm.used / (1024 * 1024))
+        ram_free_mb = max(0, int(vm.available / (1024 * 1024)))
+        usage_percent = round(vm.percent, 1)
+
+        # Detect GPU name if present on Windows host via PowerShell/WMI
+        device_gpu_name = "Host System RAM (Air-Gap CPU Mode)"
+        try:
+            import subprocess
+            out = subprocess.check_output(
+                ["powershell", "-NoProfile", "-Command", "Get-CimInstance Win32_VideoController | Select-Object -ExpandProperty Name"],
+                timeout=2,
+                stderr=subprocess.DEVNULL
+            ).decode("utf-8", errors="ignore").strip().splitlines()
+            if out and out[0].strip():
+                device_gpu_name = f"{out[0].strip()} + Host Unified RAM"
+        except Exception:
+            pass
+
         return {
             "gpu_available": False,
-            "gpu_name": "Host System RAM (Air-Gap CPU Mode)",
+            "gpu_name": device_gpu_name,
             "total_mb": ram_total_mb,
             "used_mb": ram_used_mb,
             "free_mb": ram_free_mb,
-            "os_overhead_mb": min(2048, int(ram_total_mb * 0.15)),
+            "usage_percent": usage_percent,
+            "os_overhead_mb": min(1024, int(ram_total_mb * 0.1)),
             "kv_cache_mb": 0
         }
     except Exception:
         return {
             "gpu_available": False,
-            "gpu_name": "Generic Host RAM",
-            "total_mb": 16384,
-            "used_mb": 4096,
-            "free_mb": 12288,
+            "gpu_name": "Host Unified RAM",
+            "total_mb": 8029,
+            "used_mb": 6144,
+            "free_mb": 1885,
+            "usage_percent": 76.5,
             "os_overhead_mb": 512,
             "kv_cache_mb": 0
         }
@@ -229,11 +248,19 @@ class ModelLifecycleManager:
             if m_id != self.primary_model_id and m_id in self.models:
                 secondary_mb += self.models[m_id].vram_mb
 
-        os_overhead = hw.get("os_overhead_mb", self.hardware_profile.os_overhead_mb)
-        total_used = primary_mb + secondary_mb + os_overhead
         total_vram = hw.get("total_mb", self.hardware_profile.total_vram_mb)
-        free_mb = max(0, total_vram - total_used)
-        usage_pct = round((total_used / total_vram) * 100, 1) if total_vram > 0 else 0.0
+        
+        # If running on host unified RAM (CPU mode), report true physical memory metrics
+        if not hw["gpu_available"]:
+            total_used = hw.get("used_mb", primary_mb + secondary_mb)
+            free_mb = hw.get("free_mb", max(0, total_vram - total_used))
+            usage_pct = hw.get("usage_percent", round((total_used / total_vram) * 100, 1) if total_vram > 0 else 0.0)
+            os_overhead = hw.get("os_overhead_mb", 1024)
+        else:
+            os_overhead = hw.get("os_overhead_mb", self.hardware_profile.os_overhead_mb)
+            total_used = primary_mb + secondary_mb + os_overhead
+            free_mb = max(0, total_vram - total_used)
+            usage_pct = round((total_used / total_vram) * 100, 1) if total_vram > 0 else 0.0
 
         return VRAMTelemetry(
             gpu_available=hw["gpu_available"],
