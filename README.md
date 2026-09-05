@@ -249,49 +249,126 @@ Provides live interactive editing and preview for synthesized outputs:
 
 ## 🚀 Step-by-Step Setup & Running Locally
 
-### Step 1: Clone Repository
+### ⚡ Method 1: 1-Click Parallel Installation (Recommended for Windows)
+
+We provide an automated multi-threaded parallel installer script: [`install_dependencies.bat`](file:///G:/SIH/p/install_dependencies.bat).
+
+Double-click `install_dependencies.bat` or run in your terminal:
+```cmd
+install_dependencies.bat
+```
+
+**How it works:**
+* Automatically checks for Python and Node.js/npm prerequisites.
+* Spawns **4 concurrent worker processes** in parallel:
+  1. **Worker 1 (Python Backend):** Upgrades pip and installs all unified backend dependencies (`requirements.txt`) including FastAPI, Uvicorn, ChromaDB, Sentence-Transformers, PyYAML, PyMySQL, etc.
+  2. **Worker 2 (Chat Frontend):** Installs Next.js 14, UniverJS (Sheets, Docs, Slides), Monaco Editor, Tailwind CSS in [`apps/chat-frontend`](file:///G:/SIH/p/apps/chat-frontend).
+  3. **Worker 3 (Admin Frontend):** Installs Next.js 14, Radix UI, Zustand, Tailwind CSS in [`apps/admin-frontend`](file:///G:/SIH/p/apps/admin-frontend).
+  4. **Worker 4 (Root Tooling):** Installs root dependencies, Prisma CLI, and Playwright.
+* Displays a **live terminal progress dashboard** monitoring the completion status of all 4 workers in real time.
+
+---
+
+### 🛠 Method 2: Manual Step-by-Step Installation
+
+If you prefer installing dependencies manually or are running on Linux/macOS:
+
+#### Step 1: Clone Repository
 ```bash
 git clone https://github.com/Deepak0205p/hackbusters-devlopment.git
 cd hackbusters-devlopment
 ```
 
----
-
-### Step 2: Start Python Backend (Port 8000)
-Start either the Admin Gateway or the User Gateway:
-
+#### Step 2: Install Python Backend Dependencies
 ```bash
-# Start Admin Observatory Gateway
-$env:PYTHONPATH = "G:\SIH\p"
-python -m uvicorn apps.admin_backend.main:app --host 0.0.0.0 --port 8000 --reload
+# Upgrade pip
+python -m pip install --upgrade pip
 
-# OR Start User Chat Gateway
-$env:PYTHONPATH = "G:\SIH\p"
-python -m uvicorn apps.user_backend.main:app --host 0.0.0.0 --port 8000 --reload
+# Install unified requirements
+python -m pip install -r requirements.txt
 ```
-👉 Backend API Docs: **`http://localhost:8000/api/docs`**
+
+#### Step 3: Install Frontend Dependencies
+```bash
+# 1. Chat & Canvas Frontend
+cd apps/chat-frontend
+npm.cmd install        # On Linux/macOS: npm install
+cd ../..
+
+# 2. Admin Observatory Frontend
+cd apps/admin-frontend
+npm.cmd install        # On Linux/macOS: npm install
+cd ../..
+
+# 3. Root Workspace (Prisma & Tooling)
+npm.cmd install        # On Linux/macOS: npm install
+```
 
 ---
 
-### Step 3: Run Public Chat Frontend (Port 3000)
-In a new terminal:
+### 🦙 Step 3: Setup Local Ollama Model Daemon
+
+Ensure Ollama is installed and running locally ([https://ollama.com/](https://ollama.com/)):
+```bash
+# Start Ollama service (if not already running in background)
+ollama serve
+
+# Pull required local LLMs (in a separate terminal)
+ollama pull qwen2.5:7b
+ollama pull deepseek-r1:7b
+```
+
+---
+
+### 🗄 Step 4: Database Setup (XAMPP MySQL)
+
+1. Start **Apache** and **MySQL** in your **XAMPP Control Panel**.
+2. Create the database via phpMyAdmin or MySQL CLI (`127.0.0.1:3306`):
+```sql
+CREATE DATABASE IF NOT EXISTS mrpl_reveal_auth;
+```
+3. Generate Prisma client bindings (optional for DB sync):
+```bash
+npm.cmd run prisma:generate
+```
+
+---
+
+### 🏃 Step 5: Launching the Platform
+
+#### Option A: 1-Click Multi-Service Launcher (Windows)
+Double-click or execute:
+```cmd
+start_services.bat
+```
+This automatically launches the **Python Backend Gateway** (Port 8000), **Chat Frontend** (Port 3000), and **Admin Observatory** (Port 3001) in separate synchronized windows.
+
+#### Option B: Manual Individual Terminals
+
+**Terminal 1 — Python Backend Gateway (Port 8000):**
+```bash
+# Windows PowerShell
+$env:PYTHONPATH = "."
+python -m uvicorn apps.user_backend.main:app --host 0.0.0.0 --port 8000 --reload
+
+# Linux/macOS
+PYTHONPATH=. python -m uvicorn apps.user_backend.main:app --host 0.0.0.0 --port 8000 --reload
+```
+👉 Backend API Docs: [http://localhost:8000/api/docs](http://localhost:8000/api/docs)
+
+**Terminal 2 — Public Chat Frontend (Port 3000):**
 ```bash
 cd apps/chat-frontend
-npm.cmd install    # (or npm install)
-npm.cmd run dev:http
+npm.cmd run dev:http    # On Linux/macOS: npm run dev:http
 ```
-👉 Access Public Chat UI: **`http://localhost:3000`**
+👉 Public Chat UI: [http://localhost:3000](http://localhost:3000)
 
----
-
-### Step 4: Run Admin Observatory Frontend (Port 3001)
-In a new terminal:
+**Terminal 3 — Admin Observatory Frontend (Port 3001):**
 ```bash
 cd apps/admin-frontend
-npm.cmd install    # (or npm install)
-npm.cmd run dev
+npm.cmd run dev         # On Linux/macOS: npm run dev
 ```
-👉 Access Admin Observatory: **`http://localhost:3001`**
+👉 Admin Observatory UI: [http://localhost:3001](http://localhost:3001)
 
 ---
 
